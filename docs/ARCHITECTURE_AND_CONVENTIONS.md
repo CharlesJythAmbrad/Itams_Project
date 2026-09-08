@@ -30,6 +30,7 @@
    - **Global Client State**: Handled through **Redux Toolkit** (`src/redux/`) for complex, multi-component client state (e.g., UI modals, drawers, filters, carts).
    - **Components**: Presentational and declarative only. No direct Supabase queries or network calls in JSX.
 4. **Hook-First Priority**: Encapsulate all stateful logic, Supabase database queries, API communications, and reusable side-effects in **Custom Hooks** (`src/hooks/`). Components simply call hooks and render UI.
+5. **Deterministic Package Management (pnpm)**: All dependency management and build scripts MUST use **`pnpm`** (`pnpm install`, `pnpm dev`, `pnpm build`, `pnpm preview`). Standard `npm` or `yarn` should not be used to prevent lockfile divergence.
 
 ---
 

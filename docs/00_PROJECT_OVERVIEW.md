@@ -50,12 +50,20 @@ Rather than a shared monolithic dashboard, ITAMS separates layouts and pages by 
 | Layer | Technology | Description |
 | :--- | :--- | :--- |
 | **Framework** | React 19 + Vite 6 | Fast SPA rendering, tree-shaking, fast HMR |
+| **Package Manager** | pnpm (v9+) | Fast, disk-efficient dependency resolution and strict lockfile |
 | **Routing** | React Router DOM v6 | Protected routing (`ProtectedRoute.jsx`), role guards |
 | **Styling** | Tailwind CSS v4 | Curated color system, atomic tokens, `rounded-[5px]` |
 | **Animations** | Framer Motion | Smooth dialog entry/exits, layout overlays, progress bars |
 | **Icons** | Lucide React | Clean, recognizable system icons (`LayoutDashboard`, `LogOut`, etc.) |
 | **Backend / DB** | Supabase (PostgreSQL 15) | Real-time database, Row-Level Security (RLS) policies |
 | **Auth Provider** | Supabase GoTrue | Encrypted JWT tokens, password hashing, user metadata |
+
+### 3.1. Package Management & Execution (pnpm)
+This project standardizes on **`pnpm`** exclusively for deterministic dependency management, caching, and build commands:
+- Install packages: `pnpm install`
+- Launch local development: `pnpm dev`
+- Compile production bundle: `pnpm build`
+- Preview production build: `pnpm preview`
 
 ---
 

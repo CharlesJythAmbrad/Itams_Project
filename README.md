@@ -10,6 +10,7 @@
   </p>
 
   <p align="center">
+    <img src="https://img.shields.io/badge/pnpm-9.x-F69220?style=for-the-badge&logo=pnpm&logoColor=white" alt="pnpm" />
     <img src="https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
     <img src="https://img.shields.io/badge/Vite-6.0-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 6" />
     <img src="https://img.shields.io/badge/Supabase-GoTrue_&_Postgres-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
@@ -127,7 +128,7 @@ Institutional Master Password: **`Password123!`**
 
 ### 1. Prerequisites
 - **Node.js**: v18+ or v20+
-- **Package Manager**: `npm` or `pnpm`
+- **Package Manager**: [pnpm](https://pnpm.io/) (`npm install -g pnpm`)
 - **Supabase Project**: Free or Pro Supabase cloud instance (or local Supabase CLI)
 
 ### 2. Environment Configuration
@@ -142,13 +143,19 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 2. Paste the contents of [`supabase/seed.sql`](supabase/seed.sql).
 3. Execute the query. This configures the schema, RLS policies, GoTrue identities, and all seed accounts.
 
-### 4. Install & Run
+### 4. Install & Run with pnpm
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Preview production build
+pnpm preview
 ```
 
 Visit `http://localhost:5173/signin` and log in with any of the seed accounts above.
