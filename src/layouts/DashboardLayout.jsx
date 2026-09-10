@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown"
 import {
   LayoutDashboard,
   Laptop,
@@ -16,7 +17,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Bell,
   Search,
   CheckCircle2,
   HardDrive,
@@ -291,15 +291,8 @@ export function DashboardLayout({ children, activeTab = "overview", onTabChange 
               </kbd>
             </div>
 
-            {/* Notification bell */}
-            <button
-              type="button"
-              className="relative p-2 rounded-[5px] text-zinc-600 dark:text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell className="size-4.5" />
-              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-600" />
-            </button>
+            {/* Notification Dropdown */}
+            <NotificationsDropdown />
 
             {/* Role Badge Indicator */}
             <span className={`hidden sm:inline-flex text-xs font-semibold px-2.5 py-1 rounded-[5px] border ${currentRole.badgeColor}`}>
@@ -312,7 +305,7 @@ export function DashboardLayout({ children, activeTab = "overview", onTabChange 
         </header>
 
         {/* Dashboard Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl w-full mx-auto space-y-6">
+        <main className="flex-1 p-3 sm:p-4 md:p-5 max-w-7xl w-full mx-auto space-y-4">
           {children}
         </main>
       </div>
