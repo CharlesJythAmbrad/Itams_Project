@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { DataTablePagination } from "@/components/common/DataTablePagination"
 import {
   ShieldCheck,
   AlertTriangle,
@@ -21,11 +23,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function WarrantyPage() {
   const { profile } = useAuth()
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchParams] = useSearchParams()
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+
+  useEffect(() => {
+    const q = searchParams.get("search")
+    if (q !== null) {
+      setSearchTerm(q)
+    }
+  }, [searchParams])
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [assets, setAssets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
   // Fetch assets from Supabase
   const fetchAssets = async () => {
@@ -100,6 +112,16 @@ export function WarrantyPage() {
     const matchesStatus = selectedStatus === "all" || asset.warranty_status === selectedStatus
     return matchesSearch && matchesStatus
   })
+
+  // Reset pagination when search or filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedStatus])
+
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -283,90 +305,98 @@ export function WarrantyPage() {
               </Button>
             </CardContent>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
-                  <tr>
-                    <th className="px-4 py-3">Asset Name</th>
-                    <th className="px-4 py-3">Purchase Date</th>
-                    <th className="px-4 py-3">Warranty Coverage</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
-                  {filteredAssets.map((asset) => {
-                    const StatusIcon = getStatusIcon(asset.warranty_status)
-                    const daysUntilExpiry = getDaysUntilExpiry(asset.warranty_end_date)
-                    
-                    return (
-                      <tr key={asset.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                        {/* Asset Name */}
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-red-50 dark:bg-red-950/30 rounded-[5px]">
-                              <Package className="size-4 text-red-700 dark:text-red-400" />
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
+                    <tr>
+                      <th className="px-4 py-3">Asset Name</th>
+                      <th className="px-4 py-3">Purchase Date</th>
+                      <th className="px-4 py-3">Warranty Coverage</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
+                    {paginatedAssets.map((asset) => {
+                      const StatusIcon = getStatusIcon(asset.warranty_status)
+                      const daysUntilExpiry = getDaysUntilExpiry(asset.warranty_end_date)
+                      
+                      return (
+                        <tr key={asset.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                          {/* Asset Name */}
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-red-50 dark:bg-red-950/30 rounded-[5px]">
+                                <Package className="size-4 text-red-700 dark:text-red-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">{asset.name}</p>
+                                <p className="text-xs font-mono text-muted-foreground">{asset.asset_tag}</p>
+                                {asset.brand && (
+                                 <p className="text-xs text-muted-foreground">{asset.brand}</p>
+                                )}
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium text-foreground">{asset.name}</p>
-                              <p className="text-xs font-mono text-muted-foreground">{asset.asset_tag}</p>
-                              {asset.brand && (
-                                <p className="text-xs text-muted-foreground">{asset.brand}</p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Purchase Date */}
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="size-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {formatDate(asset.purchase_date)}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Warranty Coverage */}
-                        <td className="px-4 py-4">
-                          <div className="space-y-1">
+                          {/* Purchase Date */}
+                          <td className="px-4 py-4">
                             <div className="flex items-center gap-2">
-                              <StatusIcon className="size-4" />
-                              <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(asset.warranty_status)}`}>
-                                {getStatusLabel(asset.warranty_status)}
+                              <Calendar className="size-4 text-muted-foreground" />
+                              <span className="text-sm">
+                                {formatDate(asset.purchase_date)}
                               </span>
                             </div>
-                            
-                            {asset.warranty_end_date ? (
-                              <div className="text-xs text-muted-foreground">
-                                <div>Expires: {formatDate(asset.warranty_end_date)}</div>
-                                {asset.warranty_status === "active" && daysUntilExpiry > 0 && (
-                                  <div className="text-emerald-600">
-                                    {daysUntilExpiry} days remaining
-                                  </div>
-                                )}
-                                {asset.warranty_status === "expiring_soon" && daysUntilExpiry > 0 && (
-                                  <div className="text-amber-600 font-medium">
-                                    Expires in {daysUntilExpiry} days!
-                                  </div>
-                                )}
-                                {asset.warranty_status === "expired" && daysUntilExpiry < 0 && (
-                                  <div className="text-red-600 font-medium">
-                                    Expired {Math.abs(daysUntilExpiry)} days ago
-                                  </div>
-                                )}
+                          </td>
+
+                          {/* Warranty Coverage */}
+                          <td className="px-4 py-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <StatusIcon className="size-4" />
+                                <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(asset.warranty_status)}`}>
+                                  {getStatusLabel(asset.warranty_status)}
+                                </span>
                               </div>
-                            ) : (
-                              <div className="text-xs text-gray-500">
-                                No warranty information
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                              
+                              {asset.warranty_end_date ? (
+                                <div className="text-xs text-muted-foreground">
+                                  <div>Expires: {formatDate(asset.warranty_end_date)}</div>
+                                  {asset.warranty_status === "active" && daysUntilExpiry > 0 && (
+                                    <div className="text-emerald-600">
+                                      {daysUntilExpiry} days remaining
+                                    </div>
+                                  )}
+                                  {asset.warranty_status === "expiring_soon" && daysUntilExpiry > 0 && (
+                                    <div className="text-amber-600 font-medium">
+                                      Expires in {daysUntilExpiry} days!
+                                    </div>
+                                  )}
+                                  {asset.warranty_status === "expired" && daysUntilExpiry < 0 && (
+                                    <div className="text-red-600 font-medium">
+                                      Expired {Math.abs(daysUntilExpiry)} days ago
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-gray-500">
+                                  No warranty information
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <DataTablePagination
+                currentPage={currentPage}
+                totalItems={filteredAssets.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+              />
+            </>
           )}
         </Card>
 
