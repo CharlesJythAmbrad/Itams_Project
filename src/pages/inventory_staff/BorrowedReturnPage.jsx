@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { AssignmentDetailsDialog } from "@/components/inventory/AssignmentDetailsDialog"
+import { DataTablePagination } from "@/components/common/DataTablePagination"
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -27,12 +30,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function BorrowedReturnPage() {
   const { profile } = useAuth()
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchParams] = useSearchParams()
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+
+  useEffect(() => {
+    const q = searchParams.get("search")
+    if (q !== null) {
+      setSearchTerm(q)
+    }
+  }, [searchParams])
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
   const [assignments, setAssignments] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [selectedRecordForDetails, setSelectedRecordForDetails] = useState(null)
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedStatus, selectedType])
 
   // Fetch assignments and borrowing records from both tables
   const fetchAssignments = async () => {
@@ -48,15 +68,15 @@ export function BorrowedReturnPage() {
         .select(`
           id,
           asset_id,
-          assignee_name as borrower_name,
-          assignee_email as borrower_email,
-          assignee_department as borrower_department,
-          assignee_employee_id as borrower_employee_id,
-          assignee_phone as borrower_phone,
+          assignee_name,
+          assignee_email,
+          assignee_department,
+          assignee_employee_id,
+          assignee_phone,
           assignment_location,
           purpose,
           assigned_date,
-          expected_end_date as expected_return_date,
+          expected_end_date,
           status,
           special_instructions,
           supervisor_name,
@@ -83,9 +103,9 @@ export function BorrowedReturnPage() {
           borrower_department,
           borrower_employee_id,
           borrower_phone,
-          borrow_location as assignment_location,
+          borrow_location,
           purpose,
-          borrowed_date as assigned_date,
+          borrowed_date,
           expected_return_date,
           status,
           special_instructions,
@@ -105,16 +125,33 @@ export function BorrowedReturnPage() {
 
       // Handle errors more gracefully
       if (assignmentsError && borrowingError) {
-        setError(`Database tables not found. Please run the 'simple_assignment_borrowing_setup.sql' script in your Supabase SQL Editor first.`)
+        console.error("Assignments Error:", assignmentsError)
+        console.error("Borrowing Error:", borrowingError)
+        setError(`Failed to fetch records: ${assignmentsError?.message || borrowingError?.message}`)
         setAssignments([])
         return
       }
 
-      // Combine the results and add assignment_type field
-      const combinedData = [
-        ...(assignmentsData || []).map(item => ({ ...item, assignment_type: 'assign' })),
-        ...(borrowingData || []).map(item => ({ ...item, assignment_type: 'borrow' }))
-      ]
+      // Format and normalize the results
+      const formattedAssignments = (assignmentsData || []).map(item => ({
+        ...item,
+        borrower_name: item.assignee_name,
+        borrower_email: item.assignee_email,
+        borrower_department: item.assignee_department,
+        borrower_employee_id: item.assignee_employee_id,
+        borrower_phone: item.assignee_phone,
+        expected_return_date: item.expected_end_date,
+        assignment_type: 'assign'
+      }))
+
+      const formattedBorrowing = (borrowingData || []).map(item => ({
+        ...item,
+        assignment_location: item.borrow_location,
+        assigned_date: item.borrowed_date,
+        assignment_type: 'borrow'
+      }))
+
+      const combinedData = [...formattedAssignments, ...formattedBorrowing]
 
       // Sort by assigned_date (most recent first)
       combinedData.sort((a, b) => new Date(b.assigned_date) - new Date(a.assigned_date))
@@ -195,6 +232,11 @@ export function BorrowedReturnPage() {
     
     return matchesSearch && matchesStatus && matchesType
   })
+
+  const paginatedAssignments = filteredAssignments.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
 
   const typeOptions = [
     { value: "all", label: "All Transactions" },
@@ -342,7 +384,8 @@ export function BorrowedReturnPage() {
               </Button>
             </CardContent>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
                   <tr>
@@ -353,7 +396,7 @@ export function BorrowedReturnPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
-                  {filteredAssignments.map((assignment) => {
+                  {paginatedAssignments.map((assignment) => {
                     const TypeIcon = getTypeIcon(assignment.assignment_type)
                     const StatusIcon = getStatusIcon(assignment)
                     
@@ -436,7 +479,16 @@ export function BorrowedReturnPage() {
                         {/* Actions */}
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="View Details">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0" 
+                              title="View Details"
+                              onClick={() => {
+                                setSelectedRecordForDetails(assignment)
+                                setIsDetailsDialogOpen(true)
+                              }}
+                            >
                               <Eye className="size-4" />
                             </Button>
                             {assignment.status === 'active' && (
@@ -452,7 +504,16 @@ export function BorrowedReturnPage() {
                 </tbody>
               </table>
             </div>
-          )}
+
+            {/* Pagination */}
+            <DataTablePagination
+              currentPage={currentPage}
+              totalItems={filteredAssignments.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )}
         </Card>
 
         {filteredAssignments.length === 0 && !isLoading && !error && (
@@ -466,6 +527,13 @@ export function BorrowedReturnPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Assignment / Borrowing Details Modal */}
+        <AssignmentDetailsDialog
+          isOpen={isDetailsDialogOpen}
+          onClose={() => setIsDetailsDialogOpen(false)}
+          record={selectedRecordForDetails}
+        />
       </div>
     </InventoryStaffLayout>
   )
