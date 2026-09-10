@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
 import { AddRepairDialog } from "@/components/inventory/AddRepairDialog"
+import { RepairDetailsDialog } from "@/components/inventory/RepairDetailsDialog"
+import { EditRepairDialog } from "@/components/inventory/EditRepairDialog"
+import { DeleteRepairDialog } from "@/components/inventory/DeleteRepairDialog"
 import { DataTablePagination } from "@/components/common/DataTablePagination"
+import { PesoSign } from "@/components/common/PesoSign"
 import {
   Wrench,
   AlertTriangle,
@@ -15,9 +19,10 @@ import {
   Search,
   Filter,
   Eye,
+  Edit,
+  Trash2,
   Plus,
   FileText,
-  DollarSign,
   Calendar,
   User,
   MapPin,
@@ -42,12 +47,19 @@ export function RepairsPage() {
       setSearchTerm(q)
     }
   }, [searchParams])
+  const navigate = useNavigate()
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedPriority, setSelectedPriority] = useState("all")
   const [repairs, setRepairs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [selectedRepairForDetails, setSelectedRepairForDetails] = useState(null)
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  const [selectedRepairForEdit, setSelectedRepairForEdit] = useState(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [selectedRepairForDelete, setSelectedRepairForDelete] = useState(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
@@ -95,6 +107,40 @@ export function RepairsPage() {
     setRepairs(prev => [newRepair, ...prev])
     setSuccessMessage(`Repair request ${newRepair.repair_ticket} created successfully!`)
     setTimeout(() => setSuccessMessage(""), 5000)
+    fetchRepairs()
+  }
+
+  const handleRepairUpdated = (updatedRepair) => {
+    setRepairs(prev => prev.map(r => r.id === updatedRepair.id ? updatedRepair : r))
+    setSuccessMessage(`Repair request ${updatedRepair.repair_ticket} updated successfully!`)
+    setTimeout(() => setSuccessMessage(""), 5000)
+    fetchRepairs()
+  }
+
+  const handleRepairDeleted = (deletedId) => {
+    setRepairs(prev => prev.filter(r => r.id !== deletedId))
+    setSuccessMessage("Repair request deleted successfully!")
+    setTimeout(() => setSuccessMessage(""), 5000)
+    fetchRepairs()
+  }
+
+  const handleViewRepair = (repair) => {
+    setSelectedRepairForDetails(repair)
+    setIsDetailsDialogOpen(true)
+  }
+
+  const handleEditRepair = (repair) => {
+    setSelectedRepairForEdit(repair)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDeleteRepair = (repair) => {
+    setSelectedRepairForDelete(repair)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleNavigateToAsset = (assetTag) => {
+    navigate(`/dashboard/inventory/assets?search=${encodeURIComponent(assetTag)}`)
   }
 
   const filteredRepairs = repairs.filter(repair => {
@@ -189,7 +235,7 @@ export function RepairsPage() {
       case "in_progress":
         return Wrench
       case "quote_pending":
-        return DollarSign
+        return PesoSign
       case "completed":
         return CheckCircle
       case "cancelled":
@@ -212,9 +258,9 @@ export function RepairsPage() {
 
   return (
     <InventoryStaffLayout activeTab="repairs">
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Repairs & Maintenance</h1>
             <p className="text-sm text-muted-foreground">
@@ -231,6 +277,7 @@ export function RepairsPage() {
               Export Report
             </Button>
             <Button 
+              size="sm"
               className="rounded-[5px] gap-2 bg-red-700 hover:bg-red-800"
               onClick={() => setIsAddDialogOpen(true)}
             >
@@ -253,9 +300,9 @@ export function RepairsPage() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Pending Repairs</p>
@@ -267,7 +314,7 @@ export function RepairsPage() {
           </Card>
           
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">In Progress</p>
@@ -279,7 +326,7 @@ export function RepairsPage() {
           </Card>
 
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Completed</p>
@@ -291,13 +338,13 @@ export function RepairsPage() {
           </Card>
 
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Total Repair Cost</p>
                   <p className="text-2xl font-bold text-foreground">₱{totalCost.toLocaleString()}</p>
                 </div>
-                <DollarSign className="size-8 text-green-600" />
+                <PesoSign className="size-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
@@ -305,8 +352,8 @@ export function RepairsPage() {
 
         {/* Filters and Search */}
         <Card className="rounded-[5px]">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
+          <CardContent className="p-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
@@ -373,13 +420,13 @@ export function RepairsPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
                     <tr>
-                      <th className="px-4 py-3">Repair Request</th>
-                      <th className="px-4 py-3">Asset</th>
-                      <th className="px-4 py-3">Issue & Priority</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Technician</th>
-                      <th className="px-4 py-3">Timeline & Cost</th>
-                      <th className="px-4 py-3">Actions</th>
+                      <th className="px-3.5 py-2.5">Repair Request</th>
+                      <th className="px-3.5 py-2.5">Asset</th>
+                      <th className="px-3.5 py-2.5">Issue & Priority</th>
+                      <th className="px-3.5 py-2.5">Status</th>
+                      <th className="px-3.5 py-2.5">Technician</th>
+                      <th className="px-3.5 py-2.5">Timeline & Cost</th>
+                      <th className="px-3.5 py-2.5">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
@@ -388,7 +435,7 @@ export function RepairsPage() {
                       
                       return (
                         <tr key={repair.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div className="flex items-center gap-3">
                               <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-[5px]">
                                 <Wrench className="size-4 text-blue-600 dark:text-blue-400" />
@@ -403,7 +450,7 @@ export function RepairsPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div>
                               <p className="font-medium text-foreground">
                                 {repair.assets?.name || 'Unknown Asset'}
@@ -419,7 +466,7 @@ export function RepairsPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div className="space-y-2">
                               <p className="text-sm text-foreground">{repair.issue_description}</p>
                               <span className={`px-2 py-1 rounded-[5px] text-xs font-medium uppercase ${getPriorityColor(repair.priority)}`}>
@@ -427,7 +474,7 @@ export function RepairsPage() {
                               </span>
                             </div>
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div className="flex items-center gap-2">
                               <StatusIcon className="size-4" />
                               <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(repair.status)}`}>
@@ -435,7 +482,7 @@ export function RepairsPage() {
                               </span>
                             </div>
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div>
                               <p className="text-sm font-medium text-foreground">
                                 {repair.assigned_technician || 'Not assigned'}
@@ -450,7 +497,7 @@ export function RepairsPage() {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div className="space-y-1">
                               <div className="flex items-center gap-1">
                                 <Calendar className="size-3 text-muted-foreground" />
@@ -467,7 +514,7 @@ export function RepairsPage() {
                                 </div>
                               )}
                               <div className="flex items-center gap-1">
-                                <DollarSign className="size-3 text-muted-foreground" />
+                                <PesoSign className="size-3 text-muted-foreground" />
                                 <span className="text-xs text-muted-foreground">Cost:</span>
                                 <span className="text-xs font-medium text-green-600">
                                   ₱{repair.actual_cost || repair.estimated_cost || 'TBD'}
@@ -475,16 +522,43 @@ export function RepairsPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 hover:text-blue-600"
+                                title="View Details"
+                                onClick={() => handleViewRepair(repair)}
+                              >
                                 <Eye className="size-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <FileText className="size-4" />
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 hover:text-green-600"
+                                title="Edit Repair Request"
+                                onClick={() => handleEditRepair(repair)}
+                              >
+                                <Edit className="size-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 hover:text-purple-600"
+                                title="View Asset in Inventory"
+                                onClick={() => handleNavigateToAsset(repair.assets?.asset_tag || repair.asset_id)}
+                              >
                                 <ExternalLink className="size-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                title="Delete Repair Request"
+                                onClick={() => handleDeleteRepair(repair)}
+                              >
+                                <Trash2 className="size-4" />
                               </Button>
                             </div>
                           </td>
@@ -521,6 +595,43 @@ export function RepairsPage() {
           isOpen={isAddDialogOpen}
           onClose={() => setIsAddDialogOpen(false)}
           onRepairAdded={handleRepairAdded}
+        />
+
+        {/* View Repair Details Dialog */}
+        <RepairDetailsDialog
+          isOpen={isDetailsDialogOpen}
+          onClose={() => {
+            setIsDetailsDialogOpen(false)
+            setSelectedRepairForDetails(null)
+          }}
+          repair={selectedRepairForDetails}
+          onEdit={(repair) => {
+            setIsDetailsDialogOpen(false)
+            handleEditRepair(repair)
+          }}
+          onViewAsset={handleNavigateToAsset}
+        />
+
+        {/* Edit Repair Dialog */}
+        <EditRepairDialog
+          isOpen={isEditDialogOpen}
+          onClose={() => {
+            setIsEditDialogOpen(false)
+            setSelectedRepairForEdit(null)
+          }}
+          repair={selectedRepairForEdit}
+          onRepairUpdated={handleRepairUpdated}
+        />
+
+        {/* Delete Repair Dialog */}
+        <DeleteRepairDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false)
+            setSelectedRepairForDelete(null)
+          }}
+          repair={selectedRepairForDelete}
+          onRepairDeleted={handleRepairDeleted}
         />
       </div>
     </InventoryStaffLayout>
