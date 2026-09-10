@@ -305,15 +305,15 @@ export function InventoryStaffDashboardPage() {
 
   return (
     <InventoryStaffLayout activeTab={activeTab} onTabChange={setActiveTab}>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Top Hero Banner */}
-        <div className="rounded-[5px] bg-gradient-to-r from-red-900 via-red-800 to-zinc-900 text-white p-6 sm:p-8 shadow-md relative overflow-hidden">
-          <div className="relative z-10 max-w-2xl space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[5px] text-xs font-semibold bg-white/15 backdrop-blur-xs text-red-100">
+        <div className="rounded-[5px] bg-gradient-to-r from-red-900 via-red-800 to-zinc-900 text-white p-4 sm:p-5 shadow-md relative overflow-hidden">
+          <div className="relative z-10 max-w-2xl space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[5px] text-xs font-semibold bg-white/15 backdrop-blur-xs text-red-100">
               <Activity className="size-3.5" />
               Dashboard Overview
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
               IT Asset Management Dashboard
             </h2>
             <p className="text-xs sm:text-sm text-red-100/80 leading-relaxed">
@@ -342,7 +342,7 @@ export function InventoryStaffDashboardPage() {
         ) : (
           <>
             {/* Main Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {dashboardMetrics.map((metric, i) => {
                 const Icon = metric.icon
                 const colorClasses = {
@@ -353,7 +353,7 @@ export function InventoryStaffDashboardPage() {
                 }
                 return (
                   <Card key={i} variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
-                    <CardContent className="p-5 flex items-center justify-between">
+                    <CardContent className="p-3.5 flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
                         <p className="text-xl font-extrabold text-foreground">{metric.value}</p>
@@ -368,31 +368,31 @@ export function InventoryStaffDashboardPage() {
               })}
             </div>
 
-            {/* Status Overview Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Asset Status Breakdown */}
+            {/* Secondary Analytics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Asset Status Distribution */}
               <Card className="rounded-[5px]">
-                <div className="p-4 border-b">
+                <div className="p-3 border-b">
                   <h3 className="font-semibold text-sm flex items-center gap-2">
                     <Package className="size-4" />
-                    Asset Status Overview
+                    Asset Distribution
                   </h3>
                 </div>
-                <div className="p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">In Stock</span>
+                <div className="p-3 space-y-2.5">
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-muted-foreground">In Stock</span>
                     <span className="font-medium text-emerald-600">{statistics.inStock}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Assigned</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Assigned</span>
                     <span className="font-medium text-red-600">{statistics.assigned}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Borrowed</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Borrowed</span>
                     <span className="font-medium text-purple-600">{statistics.borrowed}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Under Maintenance</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Under Maintenance</span>
                     <span className="font-medium text-amber-600">{statistics.maintenance}</span>
                   </div>
                 </div>
@@ -400,23 +400,23 @@ export function InventoryStaffDashboardPage() {
 
               {/* Warranty Status */}
               <Card className="rounded-[5px]">
-                <div className="p-4 border-b">
+                <div className="p-3 border-b">
                   <h3 className="font-semibold text-sm flex items-center gap-2">
                     <ShieldCheck className="size-4" />
                     Warranty Status
                   </h3>
                 </div>
-                <div className="p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Active Warranties</span>
+                <div className="p-3 space-y-2.5">
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Active Warranties</span>
                     <span className="font-medium text-emerald-600">{statistics.activeWarranties}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Expiring Soon (30 days)</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Expiring Soon (30 days)</span>
                     <span className="font-medium text-amber-600">{statistics.expiringSoon}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Expired</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Expired</span>
                     <span className="font-medium text-red-600">{statistics.expired}</span>
                   </div>
                 </div>
@@ -424,16 +424,16 @@ export function InventoryStaffDashboardPage() {
             </div>
 
             {/* Recent Activity & Repairs Status */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Recent Activity */}
               <Card className="rounded-[5px] lg:col-span-2">
-                <div className="p-4 border-b">
+                <div className="p-3 border-b">
                   <h3 className="font-semibold text-sm flex items-center gap-2">
                     <Activity className="size-4" />
                     Recent Activity
                   </h3>
                 </div>
-                <div className="p-4">
+                <div className="p-3">
                   <div className="space-y-3">
                     {getRecentActivity().map((activity, i) => {
                       const Icon = activity.icon
