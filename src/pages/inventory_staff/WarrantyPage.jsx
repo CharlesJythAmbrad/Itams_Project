@@ -185,12 +185,12 @@ export function WarrantyPage() {
 
   return (
     <InventoryStaffLayout activeTab="warranty">
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Warranty Management</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Warranty Management</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Track warranties, service contracts, and support coverage for all assets
             </p>
           </div>
@@ -203,51 +203,51 @@ export function WarrantyPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Active Warranties</p>
-                  <p className="text-2xl font-bold text-emerald-600">{activeWarranties}</p>
+                  <p className="text-xl font-bold text-emerald-600">{activeWarranties}</p>
                 </div>
-                <CheckCircle className="size-8 text-emerald-600" />
+                <CheckCircle className="size-7 text-emerald-600" />
               </div>
             </CardContent>
           </Card>
           
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Expiring Soon</p>
-                  <p className="text-2xl font-bold text-amber-600">{expiringSoon}</p>
+                  <p className="text-xl font-bold text-amber-600">{expiringSoon}</p>
                 </div>
-                <Clock className="size-8 text-amber-600" />
+                <Clock className="size-7 text-amber-600" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Expired</p>
-                  <p className="text-2xl font-bold text-red-600">{expiredWarranties}</p>
+                  <p className="text-xl font-bold text-red-600">{expiredWarranties}</p>
                 </div>
-                <AlertTriangle className="size-8 text-red-600" />
+                <AlertTriangle className="size-7 text-red-600" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">No Warranty</p>
-                  <p className="text-2xl font-bold text-gray-600">{noWarranty}</p>
+                  <p className="text-xl font-bold text-gray-600">{noWarranty}</p>
                 </div>
-                <Package className="size-8 text-gray-600" />
+                <Package className="size-7 text-gray-600" />
               </div>
             </CardContent>
           </Card>
@@ -255,7 +255,7 @@ export function WarrantyPage() {
 
         {/* Filters and Search */}
         <Card className="rounded-[5px]">
-          <CardContent className="p-4">
+          <CardContent className="p-3">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
@@ -310,9 +310,9 @@ export function WarrantyPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
                     <tr>
-                      <th className="px-4 py-3">Asset Name</th>
-                      <th className="px-4 py-3">Purchase Date</th>
-                      <th className="px-4 py-3">Warranty Coverage</th>
+                      <th className="px-3.5 py-2.5">Asset Name</th>
+                      <th className="px-3.5 py-2.5">Purchase Date</th>
+                      <th className="px-3.5 py-2.5">Warranty Coverage</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
@@ -323,7 +323,7 @@ export function WarrantyPage() {
                       return (
                         <tr key={asset.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
                           {/* Asset Name */}
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div className="flex items-center gap-3">
                               <div className="p-2 bg-red-50 dark:bg-red-950/30 rounded-[5px]">
                                 <Package className="size-4 text-red-700 dark:text-red-400" />
@@ -339,7 +339,7 @@ export function WarrantyPage() {
                           </td>
 
                           {/* Purchase Date */}
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div className="flex items-center gap-2">
                               <Calendar className="size-4 text-muted-foreground" />
                               <span className="text-sm">
@@ -349,7 +349,7 @@ export function WarrantyPage() {
                           </td>
 
                           {/* Warranty Coverage */}
-                          <td className="px-4 py-4">
+                          <td className="px-3.5 py-2.5">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <StatusIcon className="size-4" />
