@@ -27,8 +27,10 @@ import {
   HardDrive,
   Package,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  QrCode
 } from "lucide-react"
+import { generateUniqueTrackingId } from "@/utils/qrCodeGenerator"
 
 const categoryOptions = [
   { value: "computer", label: "Desktop Computer", icon: Monitor },
@@ -212,6 +214,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
         weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
         
         notes: formData.notes.trim() || null,
+        qr_code: `${window.location.origin}/dashboard/inventory/assets?search=${generateUniqueTrackingId("ITAMS")}`,
         created_by: user?.id,
         updated_by: user?.id
       }
@@ -223,6 +226,16 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
         .single()
 
       if (error) throw error
+
+      // If database generated an asset_tag, update qr_code to point to the exact asset tag URL
+      if (data?.asset_tag) {
+        const finalTrackingUrl = `${window.location.origin}/dashboard/inventory/assets?search=${encodeURIComponent(data.asset_tag)}`
+        await supabase
+          .from("assets")
+          .update({ qr_code: finalTrackingUrl })
+          .eq("id", data.id)
+        data.qr_code = finalTrackingUrl
+      }
 
       // Reset form and close dialog
       setFormData({
@@ -474,6 +487,22 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <span className="text-sm text-red-600">{error}</span>
             </div>
           )}
+
+          {/* Unique Live Tracking QR Code Banner */}
+          <div className="p-3.5 bg-red-50/70 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/50 rounded-[5px] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white dark:bg-zinc-800 rounded-[5px] border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 shrink-0">
+                <QrCode className="size-4.5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-foreground">Unique QR Live Tracking Auto-Assigned</p>
+                <p className="text-[11px] text-muted-foreground">A unique QR code and mobile link will be generated upon creation for physical tagging, camera scanning, and real-time detail tracking.</p>
+              </div>
+            </div>
+            <span className="hidden sm:inline-flex text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 uppercase tracking-wider shrink-0">
+              Auto-Generated
+            </span>
+          </div>
 
           {/* Basic Information */}
           <Card className="rounded-[5px]">
