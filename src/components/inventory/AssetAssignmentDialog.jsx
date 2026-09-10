@@ -145,7 +145,7 @@ export function AssetAssignmentDialog({
         
         // Check if it's a schema cache issue
         if (recordError.message.includes("schema cache") || recordError.message.includes("assignee_department") || recordError.message.includes("borrow_location")) {
-          throw new Error(`Database tables not ready. Please run the 'create_separate_assignment_borrow_tables.sql' script in your Supabase SQL editor first, then try again. Error: ${recordError.message}`)
+          throw new Error(`Database tables not ready. Please run the 'MASTER_INVENTORY_SETUP.sql' script in your Supabase SQL editor first, then try again. Error: ${recordError.message}`)
         }
         
         throw new Error(`Failed to create ${assignmentType} record: ${recordError.message}`)
