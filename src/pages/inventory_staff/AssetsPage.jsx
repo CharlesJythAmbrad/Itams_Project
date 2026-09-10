@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
@@ -6,6 +7,8 @@ import { SimpleAddAssetDialog } from "@/components/inventory/SimpleAddAssetDialo
 import { AssetAssignmentDialog } from "@/components/inventory/AssetAssignmentDialog"
 import { EditAssetDialog } from "@/components/inventory/EditAssetDialog"
 import { DeleteAssetDialog } from "@/components/inventory/DeleteAssetDialog"
+import { AssetDetailsDialog } from "@/components/inventory/AssetDetailsDialog"
+import { DataTablePagination } from "@/components/common/DataTablePagination"
 import {
   Package,
   QrCode,
@@ -41,7 +44,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function AssetsPage() {
   const { profile } = useAuth()
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchParams] = useSearchParams()
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+
+  useEffect(() => {
+    const q = searchParams.get("search")
+    if (q !== null) {
+      setSearchTerm(q)
+    }
+  }, [searchParams])
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [assets, setAssets] = useState([])
@@ -49,7 +60,8 @@ export function AssetsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [error, setError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
-  const [expandedAsset, setExpandedAsset] = useState(null)
+  const [selectedAssetForDetails, setSelectedAssetForDetails] = useState(null)
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [showInStockOnly, setShowInStockOnly] = useState(false)
   const [activeFilter, setActiveFilter] = useState("all") // "all", "in_stock", "deployed", "allocated"
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
@@ -59,6 +71,13 @@ export function AssetsPage() {
   const [selectedAssetForEdit, setSelectedAssetForEdit] = useState(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedAssetForDelete, setSelectedAssetForDelete] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
+
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory, selectedStatus, activeFilter])
 
   // Fetch assets from Supabase
   const fetchAssets = async () => {
@@ -290,6 +309,11 @@ export function AssetsPage() {
     return matchesSearch && matchesCategory && matchesStatus && matchesActiveFilter
   })
 
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
+
   const getStatusColor = (status) => {
     switch (status) {
       case "in_stock":
@@ -460,49 +484,36 @@ export function AssetsPage() {
 
         {/* Filters and Search */}
         <Card className="rounded-[5px]">
-          <CardContent className="p-4 space-y-4">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Search assets by name, ID, or serial..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 rounded-[5px]"
-              />
-            </div>
-            
-            {/* Category Filter Buttons */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">Filter by Category:</h4>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => {
-                  const isActive = selectedCategory === category.value
-                  const count = category.value === "all" 
-                    ? assets.length 
-                    : assets.filter(asset => asset.category === category.value).length
-                  
-                  return (
-                    <button
-                      key={category.value}
-                      onClick={() => setSelectedCategory(category.value)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                        isActive 
-                          ? 'bg-blue-600 text-white border-blue-600' 
-                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {category.label} {count > 0 && `(${count})`}
-                    </button>
-                  )
-                })}
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-3 items-center">
+              {/* Search Bar */}
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search assets by name, ID, or serial..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 rounded-[5px] w-full"
+                />
               </div>
-            </div>
-            
-            {/* Status Filter */}
-            <div className="flex items-center gap-4">
+              
+              {/* Category Filter Dropdown */}
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full sm:w-[190px] rounded-[5px]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Status Filter Dropdown */}
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-[150px] rounded-[5px]">
+                <SelectTrigger className="w-full sm:w-[150px] rounded-[5px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -514,9 +525,27 @@ export function AssetsPage() {
                 </SelectContent>
               </Select>
 
-              <Button variant="outline" size="icon" className="rounded-[5px]">
-                <Filter className="size-4" />
-              </Button>
+              {/* Filter / Reset Icon Button */}
+              {(selectedCategory !== "all" || selectedStatus !== "all" || searchTerm) ? (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-[5px] text-xs h-9 px-3 w-full sm:w-auto"
+                  onClick={() => {
+                    setSelectedCategory("all")
+                    setSelectedStatus("all")
+                    setSearchTerm("")
+                    setActiveFilter("all")
+                  }}
+                  title="Reset Filters"
+                >
+                  Reset
+                </Button>
+              ) : (
+                <Button variant="outline" size="icon" className="rounded-[5px] h-9 w-9 shrink-0 hidden sm:flex">
+                  <Filter className="size-4" />
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -539,7 +568,8 @@ export function AssetsPage() {
               </Button>
             </CardContent>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
                   <tr>
@@ -550,240 +580,140 @@ export function AssetsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
-                  {filteredAssets.map((asset) => {
+                  {paginatedAssets.map((asset) => {
                     const IconComponent = getCategoryIcon(asset.category)
-                    const isExpanded = expandedAsset === asset.id
-                    const isWarrantyExpiring = asset.warranty_end_date && 
-                      new Date(asset.warranty_end_date) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                    const isWarrantyExpired = asset.warranty_end_date && 
-                      new Date(asset.warranty_end_date) < new Date()
                     
                     return (
-                      <React.Fragment key={asset.id}>
-                        {/* Main Asset Row */}
-                        <tr className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                          {/* Asset Info */}
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-red-50 dark:bg-red-950/30 rounded-[5px]">
-                                <IconComponent className="size-4 text-red-700 dark:text-red-400" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-foreground">{asset.name}</p>
-                                <p className="text-xs font-mono text-red-700">{asset.asset_tag}</p>
-                                <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium capitalize mt-1">
-                                  {asset.category.replace('_', ' ')}
-                                </span>
-                              </div>
+                      <tr key={asset.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                        {/* Asset Info */}
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-red-50 dark:bg-red-950/30 rounded-[5px]">
+                              <IconComponent className="size-4 text-red-700 dark:text-red-400" />
                             </div>
-                          </td>
-
-                          {/* Brand & Status */}
-                          <td className="px-4 py-4">
-                            <div className="space-y-1">
-                              {asset.brand && (
-                                <p className="font-medium text-foreground">{asset.brand}</p>
-                              )}
-                              {asset.model && (
-                                <p className="text-xs text-muted-foreground">{asset.model}</p>
-                              )}
-                              <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(asset.status)}`}>
-                                {getStatusLabel(asset.status)}
+                            <div>
+                              <p className="font-medium text-foreground">{asset.name}</p>
+                              <p className="text-xs font-mono text-red-700">{asset.asset_tag}</p>
+                              <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium capitalize mt-1">
+                                {asset.category.replace('_', ' ')}
                               </span>
                             </div>
-                          </td>
+                          </div>
+                        </td>
 
-                          {/* Location */}
-                          <td className="px-4 py-4">
-                            <div className="flex items-start gap-1">
-                              <MapPin className="size-3 text-muted-foreground mt-0.5 shrink-0" />
-                              <div className="text-xs">
-                                <div className="font-medium text-foreground">{asset.location}</div>
-                              </div>
+                        {/* Brand & Status */}
+                        <td className="px-4 py-4">
+                          <div className="space-y-1">
+                            {asset.brand && (
+                              <p className="font-medium text-foreground">{asset.brand}</p>
+                            )}
+                            {asset.model && (
+                              <p className="text-xs text-muted-foreground">{asset.model}</p>
+                            )}
+                            <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(asset.status)}`}>
+                              {getStatusLabel(asset.status)}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Location */}
+                        <td className="px-4 py-4">
+                          <div className="flex items-start gap-1">
+                            <MapPin className="size-3 text-muted-foreground mt-0.5 shrink-0" />
+                            <div className="text-xs">
+                              <div className="font-medium text-foreground">{asset.location}</div>
                             </div>
-                          </td>
+                          </div>
+                        </td>
 
-                          {/* Actions */}
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-1">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 px-2 text-xs" 
-                                onClick={() => setExpandedAsset(isExpanded ? null : asset.id)}
-                              >
-                                <Eye className="size-4 mr-1" />
-                                {isExpanded ? 'Hide' : 'Details'}
-                              </Button>
+                        {/* Actions */}
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 px-2 text-xs" 
+                              onClick={() => {
+                                setSelectedAssetForDetails(asset)
+                                setIsDetailsDialogOpen(true)
+                              }}
+                            >
+                              <Eye className="size-4 mr-1" />
+                              Details
+                            </Button>
                               
-                              {/* Show Assign/Borrow buttons only for in_stock assets */}
-                              {asset.status === 'in_stock' && (
-                                <>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700" 
-                                    onClick={() => handleAssignAsset(asset, 'assign')}
-                                    title="Assign Asset"
-                                  >
-                                    <User className="size-4 mr-1" />
-                                    Assign
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-8 px-2 text-xs text-purple-600 hover:text-purple-700" 
-                                    onClick={() => handleAssignAsset(asset, 'borrow')}
-                                    title="Borrow Asset"
-                                  >
-                                    <Calendar className="size-4 mr-1" />
-                                    Borrow
-                                  </Button>
-                                </>
-                              )}
+                            {/* Show Assign/Borrow buttons only for in_stock assets */}
+                            {asset.status === 'in_stock' && (
+                              <>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700" 
+                                  onClick={() => handleAssignAsset(asset, 'assign')}
+                                  title="Assign Asset"
+                                >
+                                  <User className="size-4 mr-1" />
+                                  Assign
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 px-2 text-xs text-purple-600 hover:text-purple-700" 
+                                  onClick={() => handleAssignAsset(asset, 'borrow')}
+                                  title="Borrow Asset"
+                                >
+                                  <Calendar className="size-4 mr-1" />
+                                  Borrow
+                                </Button>
+                              </>
+                            )}
                               
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700" 
-                                title="Report Repair"
-                                onClick={() => {/* TODO: Open repair dialog with this asset */}}
-                              >
-                                <Wrench className="size-4" />
-                              </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700" 
+                              title="Report Repair"
+                              onClick={() => {/* TODO: Open repair dialog with this asset */}}
+                            >
+                              <Wrench className="size-4" />
+                            </Button>
                               
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0" 
-                                title="Edit Asset"
-                                onClick={() => handleEditAsset(asset)}
-                              >
-                                <Edit className="size-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                onClick={() => handleDeleteClick(asset)}
-                                title="Delete Asset"
-                              >
-                                <Trash2 className="size-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-
-                        {/* Expanded Details Row */}
-                        {isExpanded && (
-                          <tr className="bg-zinc-50/50 dark:bg-zinc-800/20">
-                            <td colSpan={4} className="px-4 py-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {/* Technical Specifications */}
-                                <div>
-                                  <h4 className="font-semibold text-sm mb-2">Technical Specifications</h4>
-                                  <div className="space-y-1 text-xs">
-                                    {asset.serial_number && <div><span className="font-medium">Serial:</span> {asset.serial_number}</div>}
-                                    
-                                    {/* Computer/Laptop Specs */}
-                                    {(asset.category === 'computer' || asset.category === 'laptop') && (
-                                      <>
-                                        {asset.processor && <div><span className="font-medium">CPU:</span> {asset.processor}</div>}
-                                        {asset.ram_gb && <div><span className="font-medium">RAM:</span> {asset.ram_gb}GB</div>}
-                                        {asset.storage_gb && <div><span className="font-medium">Storage:</span> {asset.storage_gb}GB</div>}
-                                        {asset.operating_system && <div><span className="font-medium">OS:</span> {asset.operating_system}</div>}
-                                        {asset.computer_name && <div><span className="font-medium">Computer Name:</span> {asset.computer_name}</div>}
-                                        {asset.mac_address && <div><span className="font-medium">MAC:</span> {asset.mac_address}</div>}
-                                        {asset.ip_address && <div><span className="font-medium">IP:</span> {asset.ip_address}</div>}
-                                      </>
-                                    )}
-                                    
-                                    {/* CCTV Specs */}
-                                    {asset.category === 'cctv' && (
-                                      <>
-                                        {asset.camera_resolution && <div><span className="font-medium">Resolution:</span> {asset.camera_resolution}</div>}
-                                        {asset.camera_type && <div><span className="font-medium">Type:</span> {asset.camera_type}</div>}
-                                        {asset.ip_address && <div><span className="font-medium">IP:</span> {asset.ip_address}</div>}
-                                        {asset.mac_address && <div><span className="font-medium">MAC:</span> {asset.mac_address}</div>}
-                                      </>
-                                    )}
-                                    
-                                    {/* Network Equipment Specs */}
-                                    {asset.category === 'networking' && (
-                                      <>
-                                        {asset.port_count && <div><span className="font-medium">Ports:</span> {asset.port_count}</div>}
-                                        {asset.management_ip && <div><span className="font-medium">Mgmt IP:</span> {asset.management_ip}</div>}
-                                        {asset.firmware_version && <div><span className="font-medium">Firmware:</span> {asset.firmware_version}</div>}
-                                      </>
-                                    )}
-
-                                    {/* Physical Specs */}
-                                    {asset.power_consumption_watts && <div><span className="font-medium">Power:</span> {asset.power_consumption_watts}W</div>}
-                                    {asset.weight_kg && <div><span className="font-medium">Weight:</span> {asset.weight_kg}kg</div>}
-                                    {asset.dimensions && <div><span className="font-medium">Dimensions:</span> {asset.dimensions}</div>}
-                                  </div>
-                                </div>
-
-                                {/* Financial Information */}
-                                <div>
-                                  <h4 className="font-semibold text-sm mb-2">Financial Information</h4>
-                                  <div className="space-y-1 text-xs">
-                                    {asset.purchase_cost && (
-                                      <div><span className="font-medium">Purchase Cost:</span> ₱{asset.purchase_cost.toLocaleString()}</div>
-                                    )}
-                                    {asset.purchase_date && (
-                                      <div><span className="font-medium">Purchase Date:</span> {new Date(asset.purchase_date).toLocaleDateString()}</div>
-                                    )}
-                                    {asset.vendor && (
-                                      <div><span className="font-medium">Vendor:</span> {asset.vendor}</div>
-                                    )}
-                                    {asset.warranty_end_date && (
-                                      <div>
-                                        <span className="font-medium">Warranty:</span> 
-                                        <span className={`ml-1 ${
-                                          isWarrantyExpired ? 'text-red-600' :
-                                          isWarrantyExpiring ? 'text-amber-600' :
-                                          'text-emerald-600'
-                                        }`}>
-                                          {isWarrantyExpired ? 'Expired' :
-                                           isWarrantyExpiring ? 'Expiring Soon' :
-                                           'Active'}
-                                        </span>
-                                        <div className="text-muted-foreground">Until: {new Date(asset.warranty_end_date).toLocaleDateString()}</div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Additional Information */}
-                                <div>
-                                  <h4 className="font-semibold text-sm mb-2">Additional Information</h4>
-                                  <div className="space-y-1 text-xs">
-                                    {asset.condition && (
-                                      <div><span className="font-medium">Condition:</span> <span className="capitalize">{asset.condition}</span></div>
-                                    )}
-                                    {asset.created_at && (
-                                      <div><span className="font-medium">Added:</span> {new Date(asset.created_at).toLocaleDateString()}</div>
-                                    )}
-                                    {asset.notes && (
-                                      <div className="mt-2">
-                                        <span className="font-medium">Notes:</span>
-                                        <p className="mt-1 text-muted-foreground">{asset.notes}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0" 
+                              title="Edit Asset"
+                              onClick={() => handleEditAsset(asset)}
+                            >
+                              <Edit className="size-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteClick(asset)}
+                              title="Delete Asset"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
                     )
                   })}
                 </tbody>
               </table>
             </div>
-          )}
+
+            {/* Pagination */}
+            <DataTablePagination
+              currentPage={currentPage}
+              totalItems={filteredAssets.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )}
         </Card>
 
         {filteredAssets.length === 0 && !isLoading && !error && (
@@ -828,6 +758,16 @@ export function AssetsPage() {
           onClose={() => setIsDeleteDialogOpen(false)}
           asset={selectedAssetForDelete}
           onConfirmDelete={handleDeleteAsset}
+        />
+
+        {/* Asset Details Modal */}
+        <AssetDetailsDialog
+          isOpen={isDetailsDialogOpen}
+          onClose={() => setIsDetailsDialogOpen(false)}
+          asset={selectedAssetForDetails}
+          onAssign={(asset) => handleAssignAsset(asset, 'assign')}
+          onBorrow={(asset) => handleAssignAsset(asset, 'borrow')}
+          onEdit={handleEditAsset}
         />
       </div>
     </InventoryStaffLayout>
