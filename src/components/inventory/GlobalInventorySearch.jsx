@@ -9,12 +9,15 @@ import {
   UserCheck,
   Wrench,
   ArrowRight,
-  Laptop
+  Laptop,
+  QrCode
 } from "lucide-react"
+import { ScanAssetDialog } from "@/components/inventory/ScanAssetDialog"
 
 export function GlobalInventorySearch() {
   const [query, setQuery] = useState("")
   const [isOpen, setIsOpen] = useState(false)
+  const [isScanOpen, setIsScanOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState({
     assets: [],
@@ -234,11 +237,32 @@ export function GlobalInventorySearch() {
             <X className="size-3.5" />
           </button>
         ) : (
-          <kbd className="hidden sm:inline-flex text-[10px] bg-white dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-600 font-mono text-zinc-500">
-            ⌘K
-          </kbd>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsScanOpen(true)}
+              className="p-1 rounded text-zinc-500 hover:text-red-600 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+              title="Scan Asset QR Code"
+            >
+              <QrCode className="size-3.5" />
+            </button>
+            <kbd className="hidden sm:inline-flex text-[10px] bg-white dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-600 font-mono text-zinc-500">
+              ⌘K
+            </kbd>
+          </div>
         )}
       </div>
+
+      {/* Camera Scan Dialog */}
+      <ScanAssetDialog
+        isOpen={isScanOpen}
+        onClose={() => setIsScanOpen(false)}
+        onScanSuccess={(scannedTag) => {
+          setIsScanOpen(false)
+          setQuery(scannedTag)
+          navigate(`/dashboard/inventory/assets?search=${encodeURIComponent(scannedTag)}`)
+        }}
+      />
 
       {/* Search Results Dropdown */}
       {isOpen && query.trim().length > 0 && (
