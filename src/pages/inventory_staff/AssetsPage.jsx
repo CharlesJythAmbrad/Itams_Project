@@ -8,6 +8,9 @@ import { AssetAssignmentDialog } from "@/components/inventory/AssetAssignmentDia
 import { EditAssetDialog } from "@/components/inventory/EditAssetDialog"
 import { DeleteAssetDialog } from "@/components/inventory/DeleteAssetDialog"
 import { AssetDetailsDialog } from "@/components/inventory/AssetDetailsDialog"
+import { ScanAssetDialog } from "@/components/inventory/ScanAssetDialog"
+import { AssetRepairTrackingDialog } from "@/components/inventory/AssetRepairTrackingDialog"
+import { AddRepairDialog } from "@/components/inventory/AddRepairDialog"
 import { DataTablePagination } from "@/components/common/DataTablePagination"
 import {
   Package,
@@ -71,8 +74,56 @@ export function AssetsPage() {
   const [selectedAssetForEdit, setSelectedAssetForEdit] = useState(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedAssetForDelete, setSelectedAssetForDelete] = useState(null)
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false)
+  const [isRepairTrackingOpen, setIsRepairTrackingOpen] = useState(false)
+  const [selectedAssetForRepair, setSelectedAssetForRepair] = useState(null)
+  const [isNewRepairOpen, setIsNewRepairOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
+
+  // Handle scanned QR code result
+  const handleScanSuccess = async (scannedTag, rawValue) => {
+    setIsScanDialogOpen(false)
+    if (!scannedTag) return
+
+    // Set search term so the table immediately filters to this asset
+    setSearchTerm(scannedTag)
+
+    // Check if the asset is already in current loaded assets
+    const matchedAsset = assets.find(a => 
+      a.asset_tag?.toLowerCase() === scannedTag.toLowerCase() ||
+      a.id === scannedTag ||
+      a.serial_number?.toLowerCase() === scannedTag.toLowerCase()
+    )
+
+    if (matchedAsset) {
+      setSelectedAssetForDetails(matchedAsset)
+      setIsDetailsDialogOpen(true)
+      setSuccessMessage(`Asset "${matchedAsset.name}" found and opened!`)
+      setTimeout(() => setSuccessMessage(""), 4000)
+    } else {
+      // Look up directly from Supabase in case it wasn't loaded or matches by qr_code
+      try {
+        const { data, error } = await supabase
+          .from("assets")
+          .select("*")
+          .or(`asset_tag.eq.${scannedTag},id.eq.${scannedTag},serial_number.eq.${scannedTag}`)
+          .maybeSingle()
+
+        if (data) {
+          setSelectedAssetForDetails(data)
+          setIsDetailsDialogOpen(true)
+          setSuccessMessage(`Scanned asset "${data.name}" retrieved!`)
+          setTimeout(() => setSuccessMessage(""), 4000)
+        } else {
+          setSuccessMessage(`Scanned tag "${scannedTag}". Filter applied.`)
+          setTimeout(() => setSuccessMessage(""), 4000)
+        }
+      } catch (err) {
+        console.warn("Error looking up scanned asset:", err)
+      }
+    }
+  }
 
   // Reset page to 1 when filters or search change
   useEffect(() => {
@@ -119,6 +170,7 @@ export function AssetsPage() {
           dimensions,
           weight_kg,
           notes,
+          qr_code,
           created_at,
           updated_at,
           assigned_to
@@ -351,14 +403,30 @@ export function AssetsPage() {
     }
   }
 
+  const getConditionBadge = (condition) => {
+    switch (condition?.toLowerCase()) {
+      case "excellent":
+        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+      case "good":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
+      case "fair":
+        return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+      case "poor":
+      case "damaged":
+        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-950/60 dark:text-gray-300"
+    }
+  }
+
   return (
     <InventoryStaffLayout activeTab="assets">
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Assets Management</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Assets Management</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Manage and track all inventory assets across warehouse locations
             </p>
           </div>
@@ -367,11 +435,17 @@ export function AssetsPage() {
               <RefreshCw className="size-4" />
               Refresh
             </Button>
-            <Button variant="outline" size="sm" className="rounded-[5px] gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-[5px] gap-2 border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+              onClick={() => setIsScanDialogOpen(true)}
+            >
               <QrCode className="size-4" />
               Scan Asset
             </Button>
             <Button 
+              size="sm"
               className="rounded-[5px] gap-2 bg-red-700 hover:bg-red-800"
               onClick={() => setIsAddDialogOpen(true)}
             >
@@ -394,23 +468,23 @@ export function AssetsPage() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Card 
             className={`rounded-[5px] cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/20 ${
               activeFilter === "all" ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' : ''
             }`}
             onClick={() => handleFilterClick("all")}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">
                     Total Assets {activeFilter === "all" ? '(All)' : ''}
                   </p>
-                  <p className="text-2xl font-bold text-blue-600">{assets.length}</p>
-                  <p className="text-xs text-blue-600 mt-1">Click to show all</p>
+                  <p className="text-xl font-bold text-blue-600">{assets.length}</p>
+                  <p className="text-[11px] text-blue-600 mt-0.5">Click to show all</p>
                 </div>
-                <Package className="size-8 text-blue-600" />
+                <Package className="size-7 text-blue-600" />
               </div>
             </CardContent>
           </Card>
@@ -421,18 +495,18 @@ export function AssetsPage() {
             }`}
             onClick={() => handleFilterClick("in_stock")}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">
                     In Stock {activeFilter === "in_stock" ? '(Filtered)' : ''}
                   </p>
-                  <p className="text-2xl font-bold text-emerald-600">
+                  <p className="text-xl font-bold text-emerald-600">
                     {assets.filter(a => a.status === "in_stock").length}
                   </p>
-                  <p className="text-xs text-emerald-600 mt-1">Click to filter</p>
+                  <p className="text-[11px] text-emerald-600 mt-0.5">Click to filter</p>
                 </div>
-                <Package className="size-8 text-emerald-600" />
+                <Package className="size-7 text-emerald-600" />
               </div>
             </CardContent>
           </Card>
@@ -443,18 +517,18 @@ export function AssetsPage() {
             }`}
             onClick={() => handleFilterClick("deployed")}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">
                     Deployed {activeFilter === "deployed" ? '(Filtered)' : ''}
                   </p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-xl font-bold text-purple-600">
                     {assets.filter(a => a.status === "deployed").length}
                   </p>
-                  <p className="text-xs text-purple-600 mt-1">Click to filter</p>
+                  <p className="text-[11px] text-purple-600 mt-0.5">Click to filter</p>
                 </div>
-                <Tag className="size-8 text-purple-600" />
+                <Tag className="size-7 text-purple-600" />
               </div>
             </CardContent>
           </Card>
@@ -465,18 +539,18 @@ export function AssetsPage() {
             }`}
             onClick={() => handleFilterClick("allocated")}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">
                     Allocated/Borrowed {activeFilter === "allocated" ? '(Filtered)' : ''}
                   </p>
-                  <p className="text-2xl font-bold text-amber-600">
+                  <p className="text-xl font-bold text-amber-600">
                     {assets.filter(a => a.status === "allocated").length}
                   </p>
-                  <p className="text-xs text-amber-600 mt-1">Click to filter</p>
+                  <p className="text-[11px] text-amber-600 mt-0.5">Click to filter</p>
                 </div>
-                <HardDrive className="size-8 text-amber-600" />
+                <HardDrive className="size-7 text-amber-600" />
               </div>
             </CardContent>
           </Card>
@@ -484,7 +558,7 @@ export function AssetsPage() {
 
         {/* Filters and Search */}
         <Card className="rounded-[5px]">
-          <CardContent className="p-4">
+          <CardContent className="p-3">
             <div className="flex flex-col sm:flex-row gap-3 items-center">
               {/* Search Bar */}
               <div className="relative flex-1 w-full">
@@ -573,10 +647,10 @@ export function AssetsPage() {
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
                   <tr>
-                    <th className="px-4 py-3">Asset Info</th>
-                    <th className="px-4 py-3">Brand & Status</th>
-                    <th className="px-4 py-3">Location</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className="px-3.5 py-2.5">Asset Info</th>
+                    <th className="px-3.5 py-2.5">Brand & Status</th>
+                    <th className="px-3.5 py-2.5">Location</th>
+                    <th className="px-3.5 py-2.5">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
@@ -586,7 +660,7 @@ export function AssetsPage() {
                     return (
                       <tr key={asset.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
                         {/* Asset Info */}
-                        <td className="px-4 py-4">
+                        <td className="px-3.5 py-2.5">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-red-50 dark:bg-red-950/30 rounded-[5px]">
                               <IconComponent className="size-4 text-red-700 dark:text-red-400" />
@@ -594,7 +668,7 @@ export function AssetsPage() {
                             <div>
                               <p className="font-medium text-foreground">{asset.name}</p>
                               <p className="text-xs font-mono text-red-700">{asset.asset_tag}</p>
-                              <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium capitalize mt-1">
+                              <span className="inline-block px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[11px] font-medium capitalize mt-0.5">
                                 {asset.category.replace('_', ' ')}
                               </span>
                             </div>
@@ -602,7 +676,7 @@ export function AssetsPage() {
                         </td>
 
                         {/* Brand & Status */}
-                        <td className="px-4 py-4">
+                        <td className="px-3.5 py-2.5">
                           <div className="space-y-1">
                             {asset.brand && (
                               <p className="font-medium text-foreground">{asset.brand}</p>
@@ -610,24 +684,27 @@ export function AssetsPage() {
                             {asset.model && (
                               <p className="text-xs text-muted-foreground">{asset.model}</p>
                             )}
-                            <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(asset.status)}`}>
+                            <span className={`px-2 py-0.5 rounded-[5px] text-[11px] font-medium ${getStatusColor(asset.status)}`}>
                               {getStatusLabel(asset.status)}
                             </span>
                           </div>
                         </td>
 
                         {/* Location */}
-                        <td className="px-4 py-4">
-                          <div className="flex items-start gap-1">
-                            <MapPin className="size-3 text-muted-foreground mt-0.5 shrink-0" />
-                            <div className="text-xs">
-                              <div className="font-medium text-foreground">{asset.location}</div>
-                            </div>
+                        <td className="px-3.5 py-2.5">
+                          <div className="flex items-center gap-1.5 text-foreground">
+                            <MapPin className="size-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{asset.location || 'Not specified'}</span>
                           </div>
+                          {asset.condition && (
+                            <span className={`inline-block px-2 py-0.5 rounded-[5px] text-[11px] font-medium mt-1 ${getConditionBadge(asset.condition)}`}>
+                              {asset.condition.charAt(0).toUpperCase() + asset.condition.slice(1)}
+                            </span>
+                          )}
                         </td>
 
                         {/* Actions */}
-                        <td className="px-4 py-4">
+                        <td className="px-3.5 py-2.5">
                           <div className="flex items-center gap-1">
                             <Button 
                               variant="ghost" 
@@ -671,9 +748,12 @@ export function AssetsPage() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700" 
-                              title="Report Repair"
-                              onClick={() => {/* TODO: Open repair dialog with this asset */}}
+                              className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/30" 
+                              title="Track / View Repairs"
+                              onClick={() => {
+                                setSelectedAssetForRepair(asset)
+                                setIsRepairTrackingOpen(true)
+                              }}
                             >
                               <Wrench className="size-4" />
                             </Button>
@@ -768,6 +848,44 @@ export function AssetsPage() {
           onAssign={(asset) => handleAssignAsset(asset, 'assign')}
           onBorrow={(asset) => handleAssignAsset(asset, 'borrow')}
           onEdit={handleEditAsset}
+          onDelete={handleDeleteClick}
+          onRepair={(asset) => {
+            setSelectedAssetForRepair(asset)
+            setIsRepairTrackingOpen(true)
+          }}
+        />
+
+        {/* Scan Asset Camera Dialog */}
+        <ScanAssetDialog
+          isOpen={isScanDialogOpen}
+          onClose={() => setIsScanDialogOpen(false)}
+          onScanSuccess={handleScanSuccess}
+        />
+
+        {/* Repair & Maintenance Tracking Dialog */}
+        <AssetRepairTrackingDialog
+          isOpen={isRepairTrackingOpen}
+          onClose={() => setIsRepairTrackingOpen(false)}
+          asset={selectedAssetForRepair}
+          onOpenNewRepair={(assetToRepair) => {
+            setSelectedAssetForRepair(assetToRepair)
+            setIsNewRepairOpen(true)
+          }}
+        />
+
+        {/* Add New Repair Dialog */}
+        <AddRepairDialog
+          isOpen={isNewRepairOpen}
+          onClose={() => setIsNewRepairOpen(false)}
+          preSelectedAsset={selectedAssetForRepair}
+          onRepairAdded={(newRepair) => {
+            setSuccessMessage(`Repair request ${newRepair.repair_ticket} submitted successfully!`)
+            setTimeout(() => setSuccessMessage(""), 5000)
+            setIsNewRepairOpen(false)
+            fetchAssets()
+            // Refresh repair tracking if opened
+            setIsRepairTrackingOpen(true)
+          }}
         />
       </div>
     </InventoryStaffLayout>
