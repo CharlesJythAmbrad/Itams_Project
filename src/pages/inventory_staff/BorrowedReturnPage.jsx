@@ -11,9 +11,10 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  User,
+  Building,
   Package,
   Calendar,
+  Mail,
   Search,
   Filter,
   Eye,
@@ -175,6 +176,12 @@ export function BorrowedReturnPage() {
     
     return () => clearInterval(interval)
   }, [])
+
+  // Format date helper function
+  const formatDate = (dateString) => {
+    if (!dateString) return "Not specified"
+    return new Date(dateString).toLocaleDateString()
+  }
 
   // Calculate if assignment is overdue
   const isOverdue = (assignment) => {
