@@ -1,8 +1,8 @@
 import React from "react"
-import { Menu, Bell, Package } from "lucide-react"
+import { Menu, Package } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { UserMenuDropdown } from "@/components/common/UserMenuDropdown"
-
+import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown"
 import { GlobalInventorySearch } from "@/components/inventory/GlobalInventorySearch"
 
 export function InventoryStaffHeader({ onToggleMobile, activeTitle = "Stock Ledger" }) {
@@ -26,7 +26,7 @@ export function InventoryStaffHeader({ onToggleMobile, activeTitle = "Stock Ledg
           <h1 className="text-sm sm:text-base font-bold text-foreground capitalize">
             {activeTitle}
           </h1>
-          <p className="text-[11px] text-muted-foreground hidden sm:block">
+          <p className="text-[11px] text-muted-foreground hidden lg:block">
             Asset Custody • Warehouse & Stock Logistics
           </p>
         </div>
@@ -37,15 +37,8 @@ export function InventoryStaffHeader({ onToggleMobile, activeTitle = "Stock Ledg
         {/* Global Inventory Search */}
         <GlobalInventorySearch />
 
-        {/* Notifications */}
-        <button
-          type="button"
-          className="relative p-2 rounded-[5px] text-zinc-600 dark:text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell className="size-4.5" />
-          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-600" />
-        </button>
+        {/* Notifications Dropdown */}
+        <NotificationsDropdown />
 
         {/* Role Badge */}
         <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-[5px] bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-900">
