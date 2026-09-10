@@ -154,6 +154,7 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
         dimensions: formData.dimensions.trim() || null,
         weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
         notes: formData.notes.trim() || null,
+        qr_code: asset.qr_code || `${window.location.origin}/dashboard/inventory/assets?search=${encodeURIComponent(asset.asset_tag || asset.id)}`,
         updated_by: user?.id
       }
 
