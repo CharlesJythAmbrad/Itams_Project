@@ -447,7 +447,7 @@ export function RepairsPage() {
                               <DollarSign className="size-3 text-muted-foreground" />
                               <span className="text-xs text-muted-foreground">Cost:</span>
                               <span className="text-xs font-medium text-green-600">
-                                ${repair.actual_cost || repair.estimated_cost || 'TBD'}
+                                ₱{repair.actual_cost || repair.estimated_cost || 'TBD'}
                               </span>
                             </div>
                           </div>

@@ -371,7 +371,7 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Estimated Cost ($)</label>
+                <label className="block text-xs font-medium mb-1">Estimated Cost (₱)</label>
                 <input
                   type="number"
                   step="0.01"
