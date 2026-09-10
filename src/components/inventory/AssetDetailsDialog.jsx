@@ -1,10 +1,10 @@
 import React from "react"
+import { PesoSign } from "@/components/common/PesoSign"
 import {
   X,
   Tag,
   MapPin,
   Calendar,
-  DollarSign,
   ShieldCheck,
   HardDrive,
   Cpu,
@@ -22,9 +22,12 @@ import {
   Clock,
   Building,
   Edit,
-  FileText
+  FileText,
+  Trash2,
+  Wrench
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { AssetQRCodeDisplay } from "@/components/inventory/AssetQRCodeDisplay"
 
 export function AssetDetailsDialog({ 
   isOpen, 
@@ -32,7 +35,9 @@ export function AssetDetailsDialog({
   asset, 
   onAssign, 
   onBorrow, 
-  onEdit 
+  onEdit,
+  onDelete,
+  onRepair
 }) {
   if (!isOpen || !asset) return null
 
@@ -189,6 +194,9 @@ export function AssetDetailsDialog({
         {/* Modal Body - Scrollable */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
           
+          {/* Unique Live Tracking QR Code */}
+          <AssetQRCodeDisplay asset={asset} />
+
           {/* General Information */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
@@ -328,7 +336,7 @@ export function AssetDetailsDialog({
           {/* Financial & Warranty Information */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-              <DollarSign className="size-3.5" />
+              <PesoSign className="size-3.5" />
               Financial & Warranty
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-zinc-50 dark:bg-zinc-800/30 p-3.5 rounded-lg border border-zinc-100 dark:border-zinc-800/60">
@@ -451,6 +459,36 @@ export function AssetDetailsDialog({
               >
                 <Edit className="size-3.5" />
                 Edit
+              </Button>
+            )}
+
+            {onRepair && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg text-xs gap-1.5 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/30 border-orange-200 dark:border-orange-900/50"
+                onClick={() => {
+                  onClose()
+                  onRepair(asset)
+                }}
+              >
+                <Wrench className="size-3.5" />
+                Repairs
+              </Button>
+            )}
+
+            {onDelete && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg text-xs gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900/50"
+                onClick={() => {
+                  onClose()
+                  onDelete(asset)
+                }}
+              >
+                <Trash2 className="size-3.5" />
+                Delete
               </Button>
             )}
 
