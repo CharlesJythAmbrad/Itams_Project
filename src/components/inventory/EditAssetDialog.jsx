@@ -314,7 +314,7 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Purchase Cost ($)</label>
+                <label className="block text-xs font-medium mb-1">Purchase Cost (₱)</label>
                 <input
                   type="number"
                   step="0.01"

@@ -729,7 +729,7 @@ export function AssetsPage() {
                                   <h4 className="font-semibold text-sm mb-2">Financial Information</h4>
                                   <div className="space-y-1 text-xs">
                                     {asset.purchase_cost && (
-                                      <div><span className="font-medium">Purchase Cost:</span> ${asset.purchase_cost.toLocaleString()}</div>
+                                      <div><span className="font-medium">Purchase Cost:</span> ₱{asset.purchase_cost.toLocaleString()}</div>
                                     )}
                                     {asset.purchase_date && (
                                       <div><span className="font-medium">Purchase Date:</span> {new Date(asset.purchase_date).toLocaleDateString()}</div>

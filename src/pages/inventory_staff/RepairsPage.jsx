@@ -273,7 +273,7 @@ export function RepairsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Total Repair Cost</p>
-                  <p className="text-2xl font-bold text-foreground">${totalCost.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-foreground">₱{totalCost.toLocaleString()}</p>
                 </div>
                 <DollarSign className="size-8 text-green-600" />
               </div>

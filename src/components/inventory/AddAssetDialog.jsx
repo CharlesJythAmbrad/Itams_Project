@@ -596,7 +596,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="purchase_cost" className="text-xs font-medium">Purchase Cost ($)</Label>
+                  <Label htmlFor="purchase_cost" className="text-xs font-medium">Purchase Cost (₱)</Label>
                   <Input
                     id="purchase_cost"
                     type="number"

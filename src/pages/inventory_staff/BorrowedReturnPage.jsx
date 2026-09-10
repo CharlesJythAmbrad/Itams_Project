@@ -34,18 +34,33 @@ export function BorrowedReturnPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
 
-  // Fetch assignments from database
+  // Fetch assignments and borrowing records from both tables
   const fetchAssignments = async () => {
     try {
       setIsLoading(true)
       setError("")
       
-      console.log("Fetching assignments from database...")
+      console.log("Fetching assignments and borrowing records...")
       
-      const { data, error } = await supabase
+      // Fetch assignments from asset_assignments table
+      const { data: assignmentsData, error: assignmentsError } = await supabase
         .from("asset_assignments")
         .select(`
-          *,
+          id,
+          asset_id,
+          assignee_name as borrower_name,
+          assignee_email as borrower_email,
+          assignee_department as borrower_department,
+          assignee_employee_id as borrower_employee_id,
+          assignee_phone as borrower_phone,
+          assignment_location,
+          purpose,
+          assigned_date,
+          expected_end_date as expected_return_date,
+          status,
+          special_instructions,
+          supervisor_name,
+          supervisor_email,
           assets (
             asset_tag,
             name,
@@ -54,12 +69,58 @@ export function BorrowedReturnPage() {
             model
           )
         `)
+        .eq("status", "active")
         .order("assigned_date", { ascending: false })
 
-      if (error) throw error
+      // Fetch borrowing from asset_borrowing table  
+      const { data: borrowingData, error: borrowingError } = await supabase
+        .from("asset_borrowing")
+        .select(`
+          id,
+          asset_id,
+          borrower_name,
+          borrower_email,
+          borrower_department,
+          borrower_employee_id,
+          borrower_phone,
+          borrow_location as assignment_location,
+          purpose,
+          borrowed_date as assigned_date,
+          expected_return_date,
+          status,
+          special_instructions,
+          supervisor_name,
+          supervisor_email,
+          project_name,
+          assets (
+            asset_tag,
+            name,
+            category,
+            brand,
+            model
+          )
+        `)
+        .eq("status", "active")
+        .order("borrowed_date", { ascending: false })
 
-      console.log("Assignments fetched:", data)
-      setAssignments(data || [])
+      // Handle errors more gracefully
+      if (assignmentsError && borrowingError) {
+        setError(`Database tables not found. Please run the 'simple_assignment_borrowing_setup.sql' script in your Supabase SQL Editor first.`)
+        setAssignments([])
+        return
+      }
+
+      // Combine the results and add assignment_type field
+      const combinedData = [
+        ...(assignmentsData || []).map(item => ({ ...item, assignment_type: 'assign' })),
+        ...(borrowingData || []).map(item => ({ ...item, assignment_type: 'borrow' }))
+      ]
+
+      // Sort by assigned_date (most recent first)
+      combinedData.sort((a, b) => new Date(b.assigned_date) - new Date(a.assigned_date))
+
+      console.log("Combined assignments and borrowing fetched:", combinedData)
+      setAssignments(combinedData)
     } catch (error) {
       console.error("Error fetching assignments:", error)
       setError(`Failed to load assignments: ${error.message}`)
@@ -68,9 +129,14 @@ export function BorrowedReturnPage() {
     }
   }
 
-  // Load assignments on component mount
+  // Load assignments on component mount and set up auto-refresh
   useEffect(() => {
     fetchAssignments()
+    
+    // Set up auto-refresh every 30 seconds to catch new assignments
+    const interval = setInterval(fetchAssignments, 30000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   // Calculate if assignment is overdue

@@ -86,7 +86,74 @@ export function AssetAssignmentDialog({
     setError("")
 
     try {
-      // Update asset status and assignment
+      // First, create the assignment/borrowing record to ensure it works
+      // before updating the asset status
+      let recordData, tableName;
+      
+      if (assignmentType === "assign") {
+        // For assignments - use asset_assignments table
+        tableName = "asset_assignments";
+        recordData = {
+          asset_id: asset.id,
+          assignee_name: formData.borrower_name.trim(),
+          assignee_email: formData.borrower_email.trim(),
+          assignee_department: formData.borrower_department.trim(),
+          assignee_employee_id: formData.borrower_employee_id.trim() || null,
+          assignee_phone: formData.borrower_phone.trim() || null,
+          assignment_location: formData.assignment_location.trim(),
+          purpose: formData.purpose.trim(),
+          assignment_reason: "Manual assignment via ITAMS",
+          supervisor_name: formData.supervisor_name.trim() || null,
+          supervisor_email: formData.supervisor_email.trim() || null,
+          special_instructions: formData.special_instructions.trim() || null,
+          assigned_by: user?.id,
+          status: 'active'
+        };
+      } else {
+        // For borrowing - use asset_borrowing table  
+        tableName = "asset_borrowing";
+        recordData = {
+          asset_id: asset.id,
+          borrower_name: formData.borrower_name.trim(),
+          borrower_email: formData.borrower_email.trim(),
+          borrower_department: formData.borrower_department.trim(),
+          borrower_employee_id: formData.borrower_employee_id.trim() || null,
+          borrower_phone: formData.borrower_phone.trim() || null,
+          borrow_location: formData.assignment_location.trim(),
+          purpose: formData.purpose.trim(),
+          project_name: formData.project_name.trim() || null,
+          expected_return_date: formData.expected_return_date,
+          supervisor_name: formData.supervisor_name.trim() || null,
+          supervisor_email: formData.supervisor_email.trim() || null,
+          special_instructions: formData.special_instructions.trim() || null,
+          borrowed_by: user?.id,
+          status: 'active'
+        };
+      }
+
+      // Create the record in the appropriate table FIRST
+      console.log(`Creating ${assignmentType} record in ${tableName}:`, recordData)
+
+      const { data: result, error: recordError } = await supabase
+        .from(tableName)
+        .insert([recordData])
+        .select()
+        .single()
+
+      if (recordError) {
+        console.error(`${assignmentType} creation error:`, recordError)
+        
+        // Check if it's a schema cache issue
+        if (recordError.message.includes("schema cache") || recordError.message.includes("assignee_department") || recordError.message.includes("borrow_location")) {
+          throw new Error(`Database tables not ready. Please run the 'create_separate_assignment_borrow_tables.sql' script in your Supabase SQL editor first, then try again. Error: ${recordError.message}`)
+        }
+        
+        throw new Error(`Failed to create ${assignmentType} record: ${recordError.message}`)
+      }
+
+      console.log(`${assignmentType} record created successfully:`, result)
+
+      // Only update asset status AFTER successful record creation
       const newStatus = assignmentType === "borrow" ? "allocated" : "deployed"
       
       const { error: updateError } = await supabase
@@ -98,43 +165,16 @@ export function AssetAssignmentDialog({
         })
         .eq("id", asset.id)
 
-      if (updateError) throw updateError
-
-      // Create assignment record (if table exists)
-      const assignmentData = {
-        asset_id: asset.id,
-        borrower_name: formData.borrower_name.trim(),
-        borrower_email: formData.borrower_email.trim(),
-        borrower_department: formData.borrower_department.trim(),
-        borrower_employee_id: formData.borrower_employee_id.trim() || null,
-        borrower_phone: formData.borrower_phone.trim() || null,
-        assignment_location: formData.assignment_location.trim(),
-        purpose: formData.purpose.trim(),
-        assignment_type: assignmentType,
-        expected_return_date: formData.expected_return_date || null,
-        special_instructions: formData.special_instructions.trim() || null,
-        project_name: formData.project_name.trim() || null,
-        supervisor_name: formData.supervisor_name.trim() || null,
-        supervisor_email: formData.supervisor_email.trim() || null,
-        assigned_by: user?.id,
-        status: 'active'
+      if (updateError) {
+        console.error("Asset update error:", updateError)
+        
+        // If asset update fails, we should delete the record we just created
+        await supabase.from(tableName).delete().eq("id", result.id)
+        
+        throw new Error(`Failed to update asset status: ${updateError.message}`)
       }
 
-      // Create assignment record in the assignments table
-      console.log("Creating assignment record:", assignmentData)
-
-      const { data: assignmentResult, error: assignmentError } = await supabase
-        .from("asset_assignments")
-        .insert([assignmentData])
-        .select()
-        .single()
-
-      if (assignmentError) {
-        console.error("Assignment creation error:", assignmentError)
-        throw new Error(`Failed to create assignment record: ${assignmentError.message}`)
-      }
-
-      console.log("Assignment created successfully:", assignmentResult)
+      console.log("Asset status updated successfully")
 
       // Reset form and close dialog
       setFormData({
@@ -148,8 +188,14 @@ export function AssetAssignmentDialog({
       onAssignmentComplete?.({
         ...asset,
         status: newStatus,
-        assignment: assignmentResult
+        [assignmentType]: result
       })
+      
+      // Force a page refresh or data reload after successful assignment
+      if (window.location.pathname.includes('borrowed')) {
+        window.location.reload()
+      }
+      
       onClose()
       
     } catch (error) {

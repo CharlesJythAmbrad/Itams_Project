@@ -65,11 +65,16 @@ export function InventoryStaffDashboardPage() {
 
       if (assetsError) throw assetsError
 
-      // Fetch assignments
+      // Fetch assignments from both tables
       const { data: assignments, error: assignmentsError } = await supabase
         .from("asset_assignments")
         .select(`
-          *,
+          id,
+          asset_id,
+          assignee_name as borrower_name,
+          assignee_department as borrower_department,
+          assigned_date,
+          status,
           assets (
             name,
             asset_tag,
@@ -78,9 +83,42 @@ export function InventoryStaffDashboardPage() {
         `)
         .eq("status", "active")
         .order("assigned_date", { ascending: false })
-        .limit(5)
+        .limit(3)
 
-      if (assignmentsError) throw assignmentsError
+      // Fetch borrowing records
+      const { data: borrowingRecords, error: borrowingError } = await supabase
+        .from("asset_borrowing")
+        .select(`
+          id,
+          asset_id,
+          borrower_name,
+          borrower_department,
+          borrowed_date as assigned_date,
+          status,
+          assets (
+            name,
+            asset_tag,
+            category
+          )
+        `)
+        .eq("status", "active")
+        .order("borrowed_date", { ascending: false })
+        .limit(3)
+
+      // Don't throw error if tables don't exist or have issues
+      if (assignmentsError) {
+        console.warn("Assignments table error (table may not exist yet):", assignmentsError)
+      }
+
+      if (borrowingError) {
+        console.warn("Borrowing table error (table may not exist yet):", borrowingError)
+      }
+
+      // Combine assignments and borrowing for display
+      const combinedAssignments = [
+        ...(assignments || []).map(item => ({ ...item, assignment_type: 'assign' })),
+        ...(borrowingRecords || []).map(item => ({ ...item, assignment_type: 'borrow' }))
+      ].sort((a, b) => new Date(b.assigned_date) - new Date(a.assigned_date)).slice(0, 5)
 
       // Fetch repairs
       const { data: repairs, error: repairsError } = await supabase
@@ -105,12 +143,25 @@ export function InventoryStaffDashboardPage() {
 
       if (allAssetsError) throw allAssetsError
 
-      // Get all assignments for statistics
+      // Get all assignments and borrowing for statistics
       const { data: allAssignments, error: allAssignmentsError } = await supabase
         .from("asset_assignments")
-        .select("assignment_type, status")
+        .select("status")
+        .eq("status", "active")
 
-      if (allAssignmentsError) throw allAssignmentsError
+      const { data: allBorrowing, error: allBorrowingError } = await supabase
+        .from("asset_borrowing")
+        .select("status")
+        .eq("status", "active")
+
+      // Don't throw error if tables don't exist
+      if (allAssignmentsError) {
+        console.warn("All assignments query error:", allAssignmentsError)
+      }
+
+      if (allBorrowingError) {
+        console.warn("All borrowing query error:", allBorrowingError)
+      }
 
       // Get all repairs for statistics
       const { data: allRepairs, error: allRepairsError } = await supabase
@@ -138,20 +189,20 @@ export function InventoryStaffDashboardPage() {
       const statistics = {
         totalAssets: allAssets.length,
         inStock: allAssets.filter(a => a.status === "in_stock").length,
-        assigned: allAssignments.filter(a => a.assignment_type === "assign" && a.status === "active").length,
-        borrowed: allAssignments.filter(a => a.assignment_type === "borrow" && a.status === "active").length,
+        assigned: (allAssignments || []).length,
+        borrowed: (allBorrowing || []).length,
         maintenance: allAssets.filter(a => a.status === "maintenance").length,
         activeWarranties: warrantyStats.active,
         expiringSoon: warrantyStats.expiringSoon,
         expired: warrantyStats.expired,
-        pendingRepairs: allRepairs.filter(r => r.status === "pending").length,
-        inProgressRepairs: allRepairs.filter(r => r.status === "in_progress").length,
-        completedRepairs: allRepairs.filter(r => r.status === "completed").length
+        pendingRepairs: (allRepairs || []).filter(r => r.status === "pending").length,
+        inProgressRepairs: (allRepairs || []).filter(r => r.status === "in_progress").length,
+        completedRepairs: (allRepairs || []).filter(r => r.status === "completed").length
       }
 
       setDashboardData({
         assets: assets || [],
-        assignments: assignments || [],
+        assignments: combinedAssignments || [],
         repairs: repairs || [],
         statistics
       })
@@ -255,18 +306,6 @@ export function InventoryStaffDashboardPage() {
             <p className="text-xs sm:text-sm text-red-100/80 leading-relaxed">
               Real-time overview of assets, assignments, warranties, and repairs across the IT infrastructure.
             </p>
-            <div className="flex gap-2 pt-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="rounded-[5px] text-xs gap-1.5 border-white/20 text-white hover:bg-white/10"
-                onClick={fetchDashboardData}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`size-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh Data
-              </Button>
-            </div>
           </div>
           <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 opacity-10 pointer-events-none">
             <TrendingUp className="size-72" />

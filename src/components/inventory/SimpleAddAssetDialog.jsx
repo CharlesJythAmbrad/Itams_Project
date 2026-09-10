@@ -285,7 +285,7 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Purchase Cost ($)</label>
+                <label className="block text-xs font-medium mb-1">Purchase Cost (₱)</label>
                 <input
                   type="number"
                   step="0.01"
