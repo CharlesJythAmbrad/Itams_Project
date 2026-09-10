@@ -34,15 +34,15 @@ export function ITSDDashboardPage() {
 
   return (
     <ITSDLayout activeTab={activeTab} onTabChange={setActiveTab}>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Top ITSD Hero Banner */}
-        <div className="rounded-[5px] bg-gradient-to-r from-red-900 via-red-800 to-zinc-900 text-white p-6 sm:p-8 shadow-md relative overflow-hidden">
-          <div className="relative z-10 max-w-2xl space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[5px] text-xs font-semibold bg-white/15 backdrop-blur-xs text-red-100">
+        <div className="rounded-[5px] bg-gradient-to-r from-red-900 via-red-800 to-zinc-900 text-white p-4 sm:p-5 shadow-md relative overflow-hidden">
+          <div className="relative z-10 max-w-2xl space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[5px] text-xs font-semibold bg-white/15 backdrop-blur-xs text-red-100">
               <Activity className="size-3.5" />
               Tier: {roleDetails?.admin_level || "Lead ITSD Administrator"}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
               IT Systems Desk & Infrastructure Console
             </h2>
             <p className="text-xs sm:text-sm text-red-100/80 leading-relaxed">
@@ -55,19 +55,19 @@ export function ITSDDashboardPage() {
         </div>
 
         {/* Metrics Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {fleetMetrics.map((metric, i) => {
             const Icon = metric.icon
             return (
               <Card key={i} variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
-                <CardContent className="p-5 flex items-center justify-between">
+                <CardContent className="p-3.5 flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
                     <p className="text-xl font-extrabold text-foreground">{metric.value}</p>
                     <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{metric.change}</p>
                   </div>
-                  <div className="size-11 rounded-[5px] bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 flex items-center justify-center">
-                    <Icon className="size-5.5" />
+                  <div className="size-9 rounded-[5px] bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 flex items-center justify-center">
+                    <Icon className="size-4.5" />
                   </div>
                 </CardContent>
               </Card>
