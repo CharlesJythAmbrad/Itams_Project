@@ -117,6 +117,13 @@ BEGIN
     ) THEN
         ALTER TABLE public.assets ADD COLUMN condition asset_condition DEFAULT 'excellent';
     END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'assets' AND column_name = 'qr_code'
+    ) THEN
+        ALTER TABLE public.assets ADD COLUMN qr_code TEXT;
+    END IF;
 END $$;
 
 
