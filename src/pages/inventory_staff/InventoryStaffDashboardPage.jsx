@@ -71,8 +71,8 @@ export function InventoryStaffDashboardPage() {
         .select(`
           id,
           asset_id,
-          assignee_name as borrower_name,
-          assignee_department as borrower_department,
+          assignee_name,
+          assignee_department,
           assigned_date,
           status,
           assets (
@@ -93,7 +93,7 @@ export function InventoryStaffDashboardPage() {
           asset_id,
           borrower_name,
           borrower_department,
-          borrowed_date as assigned_date,
+          borrowed_date,
           status,
           assets (
             name,
@@ -115,9 +115,22 @@ export function InventoryStaffDashboardPage() {
       }
 
       // Combine assignments and borrowing for display
+      const formattedAssignments = (assignments || []).map(item => ({
+        ...item,
+        borrower_name: item.assignee_name,
+        borrower_department: item.assignee_department,
+        assignment_type: 'assign'
+      }))
+
+      const formattedBorrowing = (borrowingRecords || []).map(item => ({
+        ...item,
+        assigned_date: item.borrowed_date,
+        assignment_type: 'borrow'
+      }))
+
       const combinedAssignments = [
-        ...(assignments || []).map(item => ({ ...item, assignment_type: 'assign' })),
-        ...(borrowingRecords || []).map(item => ({ ...item, assignment_type: 'borrow' }))
+        ...formattedAssignments,
+        ...formattedBorrowing
       ].sort((a, b) => new Date(b.assigned_date) - new Date(a.assigned_date)).slice(0, 5)
 
       // Fetch repairs
