@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
 import { AddRepairDialog } from "@/components/inventory/AddRepairDialog"
+import { DataTablePagination } from "@/components/common/DataTablePagination"
 import {
   Wrench,
   AlertTriangle,
@@ -31,7 +33,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function RepairsPage() {
   const { profile } = useAuth()
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchParams] = useSearchParams()
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+
+  useEffect(() => {
+    const q = searchParams.get("search")
+    if (q !== null) {
+      setSearchTerm(q)
+    }
+  }, [searchParams])
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedPriority, setSelectedPriority] = useState("all")
   const [repairs, setRepairs] = useState([])
@@ -39,6 +49,8 @@ export function RepairsPage() {
   const [error, setError] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
   // Fetch repairs from database
   const fetchRepairs = async () => {
@@ -97,6 +109,16 @@ export function RepairsPage() {
     const matchesPriority = selectedPriority === "all" || repair.priority === selectedPriority
     return matchesSearch && matchesStatus && matchesPriority
   })
+
+  // Reset pagination when search or filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedStatus, selectedPriority])
+
+  const paginatedRepairs = filteredRepairs.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
 
   // Calculate statistics
   const pendingRepairs = repairs.filter(r => r.status === "pending").length
@@ -346,131 +368,139 @@ export function RepairsPage() {
               </Button>
             </CardContent>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
-                  <tr>
-                    <th className="px-4 py-3">Repair Request</th>
-                    <th className="px-4 py-3">Asset</th>
-                    <th className="px-4 py-3">Issue & Priority</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Technician</th>
-                    <th className="px-4 py-3">Timeline & Cost</th>
-                    <th className="px-4 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
-                  {filteredRepairs.map((repair) => {
-                    const StatusIcon = getStatusIcon(repair.status)
-                    
-                    return (
-                      <tr key={repair.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-[5px]">
-                              <Wrench className="size-4 text-blue-600 dark:text-blue-400" />
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
+                    <tr>
+                      <th className="px-4 py-3">Repair Request</th>
+                      <th className="px-4 py-3">Asset</th>
+                      <th className="px-4 py-3">Issue & Priority</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Technician</th>
+                      <th className="px-4 py-3">Timeline & Cost</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
+                    {paginatedRepairs.map((repair) => {
+                      const StatusIcon = getStatusIcon(repair.status)
+                      
+                      return (
+                        <tr key={repair.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-[5px]">
+                                <Wrench className="size-4 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">{repair.repair_ticket}</p>
+                                <p className="text-xs text-muted-foreground">WO: {repair.work_order_number || 'N/A'}</p>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <User className="size-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">{repair.reported_by_name}</span>
+                                </div>
+                              </div>
                             </div>
+                          </td>
+                          <td className="px-4 py-4">
                             <div>
-                              <p className="font-medium text-foreground">{repair.repair_ticket}</p>
-                              <p className="text-xs text-muted-foreground">WO: {repair.work_order_number || 'N/A'}</p>
+                              <p className="font-medium text-foreground">
+                                {repair.assets?.name || 'Unknown Asset'}
+                              </p>
+                              <p className="text-xs font-mono text-muted-foreground">
+                                {repair.assets?.asset_tag || 'No Tag'}
+                              </p>
                               <div className="flex items-center gap-1 mt-1">
-                                <User className="size-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">{repair.reported_by_name}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div>
-                            <p className="font-medium text-foreground">
-                              {repair.assets?.name || 'Unknown Asset'}
-                            </p>
-                            <p className="text-xs font-mono text-muted-foreground">
-                              {repair.assets?.asset_tag || 'No Tag'}
-                            </p>
-                            <div className="flex items-center gap-1 mt-1">
-                              <MapPin className="size-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">
-                                {repair.repair_location || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="space-y-2">
-                            <p className="text-sm text-foreground">{repair.issue_description}</p>
-                            <span className={`px-2 py-1 rounded-[5px] text-xs font-medium uppercase ${getPriorityColor(repair.priority)}`}>
-                              {repair.priority}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            <StatusIcon className="size-4" />
-                            <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(repair.status)}`}>
-                              {getStatusLabel(repair.status)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {repair.assigned_technician || 'Not assigned'}
-                            </p>
-                            {repair.technician_contact && (
-                              <div className="flex items-center gap-1 mt-1">
-                                <Phone className="size-3 text-muted-foreground" />
-                                <span className="text-xs text-blue-600 hover:underline cursor-pointer">
-                                  {repair.technician_contact}
+                                <MapPin className="size-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">
+                                  {repair.repair_location || 'Not specified'}
                                 </span>
                               </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="size-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">Reported:</span>
-                              <span className="text-xs font-medium">{formatDate(repair.reported_date)}</span>
                             </div>
-                            {repair.estimated_completion_date && (
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="space-y-2">
+                              <p className="text-sm text-foreground">{repair.issue_description}</p>
+                              <span className={`px-2 py-1 rounded-[5px] text-xs font-medium uppercase ${getPriorityColor(repair.priority)}`}>
+                                {repair.priority}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-2">
+                              <StatusIcon className="size-4" />
+                              <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(repair.status)}`}>
+                                {getStatusLabel(repair.status)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">
+                                {repair.assigned_technician || 'Not assigned'}
+                              </p>
+                              {repair.technician_contact && (
+                                <div className="flex items-center gap-1 mt-1">
+                                  <Phone className="size-3 text-muted-foreground" />
+                                  <span className="text-xs text-blue-600 hover:underline cursor-pointer">
+                                    {repair.technician_contact}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="space-y-1">
                               <div className="flex items-center gap-1">
-                                <Clock className="size-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">Est. Complete:</span>
-                                <span className="text-xs font-medium">
-                                  {formatDate(repair.estimated_completion_date)}
+                                <Calendar className="size-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">Reported:</span>
+                                <span className="text-xs font-medium">{formatDate(repair.reported_date)}</span>
+                              </div>
+                              {repair.estimated_completion_date && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="size-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">Est. Complete:</span>
+                                  <span className="text-xs font-medium">
+                                    {formatDate(repair.estimated_completion_date)}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="size-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">Cost:</span>
+                                <span className="text-xs font-medium text-green-600">
+                                  ₱{repair.actual_cost || repair.estimated_cost || 'TBD'}
                                 </span>
                               </div>
-                            )}
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="size-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">Cost:</span>
-                              <span className="text-xs font-medium text-green-600">
-                                ₱{repair.actual_cost || repair.estimated_cost || 'TBD'}
-                              </span>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="size-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <FileText className="size-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <ExternalLink className="size-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-1">
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Eye className="size-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <FileText className="size-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <ExternalLink className="size-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <DataTablePagination
+                currentPage={currentPage}
+                totalItems={filteredRepairs.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+              />
+            </>
           )}
         </Card>
 
