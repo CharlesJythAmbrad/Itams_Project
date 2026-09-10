@@ -52,11 +52,11 @@ export function InventoryStaffHeader({ onToggleMobile, activeTitle = "Stock Ledg
           aria-label="Notifications"
         >
           <Bell className="size-4.5" />
-          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-blue-600" />
+          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-600" />
         </button>
 
         {/* Role Badge */}
-        <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-[5px] bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-900">
+        <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-[5px] bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-900">
           <Package className="size-3.5" />
           Inventory Staff
         </span>

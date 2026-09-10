@@ -7,6 +7,10 @@ import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { ITSDDashboardPage } from "@/pages/itsd/ITSDDashboardPage"
 import { InventoryStaffDashboardPage } from "@/pages/inventory_staff/InventoryStaffDashboardPage"
+import { AssetsPage } from "@/pages/inventory_staff/AssetsPage"
+import { BorrowedReturnPage } from "@/pages/inventory_staff/BorrowedReturnPage"
+import { WarrantyPage } from "@/pages/inventory_staff/WarrantyPage"
+import { RepairsPage } from "@/pages/inventory_staff/RepairsPage"
 import { EndUsersDashboardPage } from "@/pages/end_users/EndUsersDashboardPage"
 import { ProfileSettingsPage } from "@/pages/ProfileSettingsPage"
 import { AuthLoadingScreen } from "@/components/common/AuthLoadingScreen"
@@ -82,6 +86,38 @@ export function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={["inventory_staff"]}>
                   <InventoryStaffDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/inventory/assets"
+              element={
+                <ProtectedRoute allowedRoles={["inventory_staff"]}>
+                  <AssetsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/inventory/borrowed-return"
+              element={
+                <ProtectedRoute allowedRoles={["inventory_staff"]}>
+                  <BorrowedReturnPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/inventory/warranty"
+              element={
+                <ProtectedRoute allowedRoles={["inventory_staff"]}>
+                  <WarrantyPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/inventory/repairs"
+              element={
+                <ProtectedRoute allowedRoles={["inventory_staff"]}>
+                  <RepairsPage />
                 </ProtectedRoute>
               }
             />

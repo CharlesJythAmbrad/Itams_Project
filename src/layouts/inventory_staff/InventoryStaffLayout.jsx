@@ -4,7 +4,7 @@ import { useSidebar } from "@/hooks/useSidebar"
 import { InventoryStaffHeader } from "./InventoryStaffHeader"
 import { InventoryStaffSidebar } from "./InventoryStaffSidebar"
 
-export function InventoryStaffLayout({ children, activeTab = "stock", onTabChange }) {
+export function InventoryStaffLayout({ children, activeTab = "dashboard", onTabChange }) {
   const { isCollapsed, toggleCollapse, isMobileOpen, openMobile, closeMobile } = useSidebar()
 
   return (
@@ -40,7 +40,11 @@ export function InventoryStaffLayout({ children, activeTab = "stock", onTabChang
       >
         <InventoryStaffHeader
           onToggleMobile={openMobile}
-          activeTitle={activeTab === "stock" ? "Dashboard" : activeTab}
+          activeTitle={activeTab === "dashboard" ? "Dashboard" : 
+                      activeTab === "assets" ? "Assets" :
+                      activeTab === "borrowed-return" ? "Borrowed and Assigned" :
+                      activeTab === "warranty" ? "Warranty" :
+                      activeTab === "repairs" ? "Repairs" : activeTab}
         />
 
         <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl w-full mx-auto space-y-6">

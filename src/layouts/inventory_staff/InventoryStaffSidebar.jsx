@@ -37,7 +37,11 @@ export function InventoryStaffSidebar({
   const isExpanded = !isCollapsed || isHovered || isMobileOpen
 
   const navItems = [
-    { id: "stock", label: "Dashboard", icon: LayoutDashboard },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "assets", label: "Assets", icon: Package },
+    { id: "borrowed-return", label: "Borrowed and Assigned", icon: UserCheck },
+    { id: "warranty", label: "Warranty", icon: Layers },
+    { id: "repairs", label: "Repairs", icon: HardDrive },
   ]
 
   const handleConfirmSignOut = async () => {
@@ -114,12 +118,16 @@ export function InventoryStaffSidebar({
               type="button"
               onClick={() => {
                 onSelectNav?.(item.id)
-                navigate("/dashboard")
+                if (item.id === "dashboard") {
+                  navigate("/dashboard/inventory")
+                } else {
+                  navigate(`/dashboard/inventory/${item.id}`)
+                }
                 onCloseMobile()
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer text-left ${
                 isActive
-                  ? "bg-blue-700 text-white font-semibold shadow-xs"
+                  ? "bg-red-700 text-white font-semibold shadow-xs"
                   : "text-zinc-600 dark:text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
               } ${!isExpanded ? "justify-center px-2" : ""}`}
               title={!isExpanded ? item.label : undefined}

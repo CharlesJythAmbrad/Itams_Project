@@ -37,8 +37,8 @@ export function UserMenuDropdown() {
     },
     inventory_staff: {
       title: "Inventory Staff",
-      badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border-blue-300 dark:border-blue-800",
-      avatarGrad: "from-blue-700 to-indigo-600",
+      badgeColor: "bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300 border-red-300 dark:border-red-800",
+      avatarGrad: "from-red-700 to-rose-600",
       icon: Package,
       detail: profile?.roleDetails?.badge_number ? `Badge: ${profile.roleDetails.badge_number}` : "Warehouse Logistics",
     },
