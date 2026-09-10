@@ -257,12 +257,12 @@ export function BorrowedReturnPage() {
 
   return (
     <InventoryStaffLayout activeTab="borrowed-return">
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Borrowed and Assigned Management</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Borrowed and Assigned Management</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Track asset assignments and borrowing processes
             </p>
           </div>
@@ -279,41 +279,41 @@ export function BorrowedReturnPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Active Borrowed</p>
-                  <p className="text-2xl font-bold text-blue-600">{activeBorrows}</p>
+                  <p className="text-xl font-bold text-blue-600">{activeBorrows}</p>
                 </div>
-                <ArrowDownLeft className="size-8 text-blue-600" />
+                <ArrowDownLeft className="size-7 text-blue-600" />
               </div>
             </CardContent>
           </Card>
           
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Active Assigned</p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-xl font-bold text-purple-600">
                     {filteredAssignments.filter(a => a.assignment_type === "assign" && a.status === "active" && !isOverdue(a)).length}
                   </p>
                 </div>
-                <ArrowUpRight className="size-8 text-purple-600" />
+                <ArrowUpRight className="size-7 text-purple-600" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-[5px]">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Overdue Items</p>
-                  <p className="text-2xl font-bold text-red-600">{overdueBorrows}</p>
+                  <p className="text-xl font-bold text-red-600">{overdueBorrows}</p>
                 </div>
-                <AlertTriangle className="size-8 text-red-600" />
+                <AlertTriangle className="size-7 text-red-600" />
               </div>
             </CardContent>
           </Card>
@@ -321,7 +321,7 @@ export function BorrowedReturnPage() {
 
         {/* Filters and Search */}
         <Card className="rounded-[5px]">
-          <CardContent className="p-4">
+          <CardContent className="p-3">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
@@ -389,87 +389,75 @@ export function BorrowedReturnPage() {
               <table className="w-full text-left text-sm">
                 <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-500 font-semibold uppercase tracking-wider text-xs">
                   <tr>
-                    <th className="px-4 py-3">Asset & Borrower</th>
-                    <th className="px-4 py-3">Assignment Details</th>
-                    <th className="px-4 py-3">Dates & Status</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className="px-3.5 py-2.5">Asset & Borrower</th>
+                    <th className="px-3.5 py-2.5">Assignment Details</th>
+                    <th className="px-3.5 py-2.5">Dates & Status</th>
+                    <th className="px-3.5 py-2.5">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
                   {paginatedAssignments.map((assignment) => {
                     const TypeIcon = getTypeIcon(assignment.assignment_type)
                     const StatusIcon = getStatusIcon(assignment)
+                    const overdue = isOverdue(assignment)
                     
                     return (
                       <tr key={assignment.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
                         {/* Asset & Borrower */}
-                        <td className="px-4 py-4">
-                          <div className="space-y-2">
-                            {/* Asset Info */}
-                            <div className="flex items-center gap-2">
-                              <div className="p-1.5 bg-blue-50 dark:bg-blue-950/30 rounded">
-                                <Package className="size-3 text-blue-600 dark:text-blue-400" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-foreground text-xs">
-                                  {assignment.assets?.name || 'Unknown Asset'}
-                                </p>
-                                <p className="text-xs font-mono text-blue-600">
-                                  {assignment.assets?.asset_tag || 'No Tag'}
-                                </p>
-                              </div>
+                        <td className="px-3.5 py-2.5">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-red-50 dark:bg-red-950/30 rounded-[5px]">
+                              <TypeIcon className="size-4 text-red-700 dark:text-red-400" />
                             </div>
-                            
-                            {/* Borrower Info */}
-                            <div className="flex items-center gap-2">
-                              <div className="p-1.5 bg-emerald-50 dark:bg-emerald-950/30 rounded">
-                                <User className="size-3 text-emerald-600 dark:text-emerald-400" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-foreground text-xs">{assignment.borrower_name}</p>
-                                <p className="text-xs text-muted-foreground">{assignment.borrower_department}</p>
+                            <div>
+                              <p className="font-medium text-foreground">{assignment.assets?.name || 'Unknown Asset'}</p>
+                              <p className="text-xs font-mono text-red-700">{assignment.assets?.asset_tag}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-muted-foreground">To:</span>
+                                <span className="text-xs font-medium text-foreground">{assignment.borrower_name}</span>
                               </div>
                             </div>
                           </div>
                         </td>
 
                         {/* Assignment Details */}
-                        <td className="px-4 py-4">
-                          <div className="space-y-1 text-xs">
-                            <div className="flex items-center gap-2">
-                              <TypeIcon className="size-3" />
-                              <span className="capitalize font-medium">{assignment.assignment_type}</span>
+                        <td className="px-3.5 py-2.5">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Building className="size-3" />
+                              <span>{assignment.borrower_department}</span>
                             </div>
-                            <div className="flex items-start gap-1">
-                              <MapPin className="size-3 text-muted-foreground mt-0.5 shrink-0" />
-                              <span className="text-muted-foreground">{assignment.assignment_location}</span>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Mail className="size-3" />
+                              <span>{assignment.borrower_email}</span>
                             </div>
-                            <p className="text-muted-foreground">{assignment.purpose}</p>
+                            {assignment.assignment_location && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <MapPin className="size-3" />
+                                <span>{assignment.assignment_location}</span>
+                              </div>
+                            )}
                           </div>
                         </td>
 
                         {/* Dates & Status */}
-                        <td className="px-4 py-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="size-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(assignment.assigned_date).toLocaleDateString()}
-                              </span>
+                        <td className="px-3.5 py-2.5">
+                          <div className="space-y-1">
+                            <div className="text-xs">
+                              <span className="text-muted-foreground">Assigned: </span>
+                              <span className="font-medium">{formatDate(assignment.assigned_date)}</span>
                             </div>
-                            
                             {assignment.expected_return_date && (
-                              <div className="flex items-center gap-2">
-                                <Clock className="size-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">
-                                  Due: {new Date(assignment.expected_return_date).toLocaleDateString()}
+                              <div className="text-xs">
+                                <span className="text-muted-foreground">Expected Return: </span>
+                                <span className={`font-medium ${overdue ? 'text-red-600' : ''}`}>
+                                  {formatDate(assignment.expected_return_date)}
                                 </span>
                               </div>
                             )}
-                            
-                            <div className="flex items-center gap-2">
-                              <StatusIcon className="size-3" />
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(assignment)}`}>
+                            <div className="flex items-center gap-1">
+                              <StatusIcon className={`size-3 ${getStatusColor(assignment)}`} />
+                              <span className={`text-xs font-medium ${getStatusColor(assignment)}`}>
                                 {getStatusLabel(assignment)}
                               </span>
                             </div>
@@ -477,7 +465,7 @@ export function BorrowedReturnPage() {
                         </td>
 
                         {/* Actions */}
-                        <td className="px-4 py-4">
+                        <td className="px-3.5 py-2.5">
                           <div className="flex items-center gap-1">
                             <Button 
                               variant="ghost" 
