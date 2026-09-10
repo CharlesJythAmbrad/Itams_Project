@@ -43,7 +43,7 @@ export function EndUsersLayout({ children, activeTab = "equipment", onTabChange 
           activeTitle={activeTab === "equipment" ? "Dashboard" : activeTab}
         />
 
-        <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl w-full mx-auto space-y-6">
+        <main className="flex-1 p-3 sm:p-4 md:p-5 max-w-7xl w-full mx-auto space-y-4">
           {children}
         </main>
       </div>
