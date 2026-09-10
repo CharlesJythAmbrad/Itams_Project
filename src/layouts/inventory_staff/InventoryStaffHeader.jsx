@@ -1,7 +1,9 @@
 import React from "react"
-import { Menu, Search, Bell, Package } from "lucide-react"
+import { Menu, Bell, Package } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { UserMenuDropdown } from "@/components/common/UserMenuDropdown"
+
+import { GlobalInventorySearch } from "@/components/inventory/GlobalInventorySearch"
 
 export function InventoryStaffHeader({ onToggleMobile, activeTitle = "Stock Ledger" }) {
   const { profile, user } = useAuth()
@@ -32,18 +34,8 @@ export function InventoryStaffHeader({ onToggleMobile, activeTitle = "Stock Ledg
 
       {/* Right Header Tools */}
       <div className="flex items-center gap-3">
-        {/* Search */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-[5px] bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700 text-xs text-muted-foreground">
-          <Search className="size-3.5 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search tags, serials, bays..."
-            className="bg-transparent text-xs text-foreground outline-none w-36 lg:w-48 placeholder:text-muted-foreground/70"
-          />
-          <kbd className="text-[10px] bg-white dark:bg-zinc-700 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-600 font-mono">
-            ⌘K
-          </kbd>
-        </div>
+        {/* Global Inventory Search */}
+        <GlobalInventorySearch />
 
         {/* Notifications */}
         <button
