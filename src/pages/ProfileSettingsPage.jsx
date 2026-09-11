@@ -102,9 +102,9 @@ export function ProfileSettingsPage() {
       ],
     },
     inventory_staff: {
-      name: "Inventory Staff",
-      badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border-blue-300 dark:border-blue-800",
-      accentGrad: "from-blue-700 via-indigo-600 to-blue-800",
+      name: "IT Specialist",
+      badgeColor: "bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300 border-red-300 dark:border-red-800",
+      accentGrad: "from-red-900 via-red-800 to-zinc-900",
       icon: Package,
       desc: "Asset Custody & Warehouse Stock Logistics Specialist",
       permissions: [
@@ -469,8 +469,8 @@ export function ProfileSettingsPage() {
                         </p>
                       </div>
                       <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
-                        <p className="text-[11px] text-muted-foreground font-medium">Warehouse Depot</p>
-                        <p className="text-xs font-bold text-foreground mt-0.5">Central Logistics Depot Alpha (Bay 3)</p>
+                        <p className="text-[11px] text-muted-foreground font-medium">Department</p>
+                        <p className="text-xs font-bold text-foreground mt-0.5">ITSD</p>
                       </div>
                       <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
                         <p className="text-[11px] text-muted-foreground font-medium">Custody Scope</p>

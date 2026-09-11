@@ -27,7 +27,7 @@ export function InventoryStaffHeader({ onToggleMobile, activeTitle = "Stock Ledg
             {activeTitle}
           </h1>
           <p className="text-[11px] text-muted-foreground hidden lg:block">
-            Asset Custody • Warehouse & Stock Logistics
+            Asset Management • ITSD 
           </p>
         </div>
       </div>
@@ -43,7 +43,7 @@ export function InventoryStaffHeader({ onToggleMobile, activeTitle = "Stock Ledg
         {/* Role Badge */}
         <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-[5px] bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-900">
           <Package className="size-3.5" />
-          Inventory Staff
+          IT Specialist
         </span>
 
         {/* User Dropdown Menu */}

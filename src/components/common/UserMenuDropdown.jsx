@@ -36,7 +36,7 @@ export function UserMenuDropdown() {
       detail: profile?.roleDetails?.admin_level || "Tier 3 Lead Admin",
     },
     inventory_staff: {
-      title: "Inventory Staff",
+      title: "IT Specialist",
       badgeColor: "bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300 border-red-300 dark:border-red-800",
       avatarGrad: "from-red-700 to-rose-600",
       icon: Package,

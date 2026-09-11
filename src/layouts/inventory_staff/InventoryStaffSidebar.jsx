@@ -162,17 +162,17 @@ export function InventoryStaffSidebar({
           )}
         </button>
 
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
+          type="button"
           onClick={() => setShowSignOutModal(true)}
-          className={`w-full justify-start gap-2.5 text-xs text-muted-foreground hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-[5px] cursor-pointer ${
-            !isExpanded ? "justify-center px-0" : ""
+          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer text-left text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border border-red-200/50 dark:border-red-800/50 bg-red-50/50 dark:bg-red-950/20 ${
+            !isExpanded ? "justify-center px-2" : "justify-start"
           }`}
+          title={!isExpanded ? "Sign Out" : undefined}
         >
           <LogOut className="size-4 shrink-0" />
           {isExpanded && <span>Sign Out</span>}
-        </Button>
+        </button>
       </div>
 
       {/* Confirmation Dialog */}
