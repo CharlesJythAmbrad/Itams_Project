@@ -8,7 +8,6 @@ import { RepairDetailsDialog } from "@/components/inventory/RepairDetailsDialog"
 import { EditRepairDialog } from "@/components/inventory/EditRepairDialog"
 import { DeleteRepairDialog } from "@/components/inventory/DeleteRepairDialog"
 import { DataTablePagination } from "@/components/common/DataTablePagination"
-import { PesoSign } from "@/components/common/PesoSign"
 import {
   Wrench,
   AlertTriangle,
@@ -170,9 +169,6 @@ export function RepairsPage() {
   const pendingRepairs = repairs.filter(r => r.status === "pending").length
   const inProgressRepairs = repairs.filter(r => r.status === "in_progress").length
   const completedRepairs = repairs.filter(r => r.status === "completed").length
-  const totalCost = repairs
-    .filter(r => r.actual_cost)
-    .reduce((sum, r) => sum + parseFloat(r.actual_cost), 0)
 
   const statusOptions = [
     { value: "all", label: "All Statuses" },
@@ -333,18 +329,6 @@ export function RepairsPage() {
                   <p className="text-2xl font-bold text-emerald-600">{completedRepairs}</p>
                 </div>
                 <CheckCircle className="size-8 text-emerald-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[5px]">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">Total Repair Cost</p>
-                  <p className="text-2xl font-bold text-foreground">₱{totalCost.toLocaleString()}</p>
-                </div>
-                <PesoSign className="size-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
@@ -513,13 +497,6 @@ export function RepairsPage() {
                                   </span>
                                 </div>
                               )}
-                              <div className="flex items-center gap-1">
-                                <PesoSign className="size-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">Cost:</span>
-                                <span className="text-xs font-medium text-green-600">
-                                  ₱{repair.actual_cost || repair.estimated_cost || 'TBD'}
-                                </span>
-                              </div>
                             </div>
                           </td>
                           <td className="px-3.5 py-2.5">

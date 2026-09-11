@@ -27,8 +27,6 @@ export function EditRepairDialog({ isOpen, onClose, repair, onRepairUpdated }) {
     reported_by_department: "",
     assigned_technician: "",
     technician_contact: "",
-    estimated_cost: "",
-    actual_cost: "",
     estimated_completion_date: "",
     actual_completion_date: "",
     repair_location: "",
@@ -46,8 +44,6 @@ export function EditRepairDialog({ isOpen, onClose, repair, onRepairUpdated }) {
         reported_by_department: repair.reported_by_department || "",
         assigned_technician: repair.assigned_technician || "",
         technician_contact: repair.technician_contact || "",
-        estimated_cost: repair.estimated_cost !== null && repair.estimated_cost !== undefined ? repair.estimated_cost : "",
-        actual_cost: repair.actual_cost !== null && repair.actual_cost !== undefined ? repair.actual_cost : "",
         estimated_completion_date: repair.estimated_completion_date ? repair.estimated_completion_date.split("T")[0] : "",
         actual_completion_date: (repair.actual_completion_date || repair.completion_date) ? (repair.actual_completion_date || repair.completion_date).split("T")[0] : "",
         repair_location: repair.repair_location || "",
@@ -99,8 +95,6 @@ export function EditRepairDialog({ isOpen, onClose, repair, onRepairUpdated }) {
         reported_by_department: formData.reported_by_department.trim() || null,
         assigned_technician: formData.assigned_technician.trim() || null,
         technician_contact: formData.technician_contact.trim() || null,
-        estimated_cost: formData.estimated_cost !== "" ? parseFloat(formData.estimated_cost) : null,
-        actual_cost: formData.actual_cost !== "" ? parseFloat(formData.actual_cost) : null,
         estimated_completion_date: formData.estimated_completion_date || null,
         actual_completion_date: formData.actual_completion_date || null,
         repair_location: formData.repair_location.trim() || null,
@@ -255,32 +249,10 @@ export function EditRepairDialog({ isOpen, onClose, repair, onRepairUpdated }) {
             />
           </div>
 
-          {/* Financials & Dates */}
+          {/* Schedule Only */}
           <div className="space-y-2">
-            <h4 className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">Financials & Schedule</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              <div>
-                <label className="block font-medium mb-1 text-foreground">Est. Cost (₱)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.estimated_cost}
-                  onChange={(e) => handleInputChange("estimated_cost", e.target.value)}
-                  placeholder="0.00"
-                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-md text-xs bg-white dark:bg-zinc-800 text-foreground"
-                />
-              </div>
-              <div>
-                <label className="block font-medium mb-1 text-foreground">Actual Cost (₱)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.actual_cost}
-                  onChange={(e) => handleInputChange("actual_cost", e.target.value)}
-                  placeholder="0.00"
-                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-md text-xs bg-white dark:bg-zinc-800 text-foreground"
-                />
-              </div>
+            <h4 className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">Schedule</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block font-medium mb-1 text-foreground">Est. Completion</label>
                 <input

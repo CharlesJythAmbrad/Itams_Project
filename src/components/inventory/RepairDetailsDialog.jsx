@@ -198,9 +198,9 @@ export function RepairDetailsDialog({ isOpen, onClose, repair, onEdit, onViewAss
                 <span className="font-medium text-foreground">{formatDate(repair.actual_completion_date || repair.completion_date)}</span>
               </div>
               <div>
-                <span className="text-muted-foreground block mb-0.5">Total / Est. Cost</span>
+                <span className="text-muted-foreground block mb-0.5">Service Cost</span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {repair.actual_cost ? `₱${Number(repair.actual_cost).toLocaleString()}` : repair.estimated_cost ? `₱${Number(repair.estimated_cost).toLocaleString()} (Est)` : "TBD"}
+                  FREE
                 </span>
               </div>
             </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
-import { PesoSign } from "@/components/common/PesoSign"
 import {
   X,
   Wrench,
@@ -296,9 +295,9 @@ export function AssetRepairTrackingDialog({
                       </div>
 
                       <div className="flex items-center gap-1.5 truncate">
-                        <PesoSign className="size-3.5 shrink-0 text-zinc-400" />
+                        <CheckCircle2 className="size-3.5 shrink-0 text-emerald-600" />
                         <span>
-                          Cost: <strong className="text-emerald-600 dark:text-emerald-400">₱{repair.actual_cost || repair.estimated_cost || "TBD"}</strong>
+                          Cost: <strong className="text-emerald-600 dark:text-emerald-400">FREE</strong>
                         </span>
                       </div>
 

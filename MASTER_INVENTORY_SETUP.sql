@@ -232,9 +232,7 @@ CREATE TABLE IF NOT EXISTS public.asset_repairs (
     technician_contact TEXT,
     service_provider TEXT,
     
-    -- Cost & Dates
-    estimated_cost DECIMAL(10,2),
-    actual_cost DECIMAL(10,2),
+    -- Dates (No cost tracking - repairs are free)
     estimated_completion_date DATE,
     actual_completion_date DATE,
     

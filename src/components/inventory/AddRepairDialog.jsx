@@ -27,7 +27,6 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
     reported_by_department: "",
     assigned_technician: "",
     technician_contact: "",
-    estimated_cost: "",
     estimated_completion_date: "",
     repair_location: "",
     notes: ""
@@ -122,7 +121,6 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
         reported_by_department: formData.reported_by_department.trim() || null,
         assigned_technician: formData.assigned_technician.trim() || null,
         technician_contact: formData.technician_contact.trim() || null,
-        estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : null,
         estimated_completion_date: formData.estimated_completion_date || null,
         repair_location: formData.repair_location.trim() || null,
         notes: formData.notes.trim() || null,
@@ -166,7 +164,6 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
         reported_by_department: "IT Department",
         assigned_technician: "",
         technician_contact: "",
-        estimated_cost: "",
         estimated_completion_date: "",
         repair_location: "",
         notes: ""
@@ -367,16 +364,6 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
                   value={formData.technician_contact}
                   onChange={(e) => handleInputChange("technician_contact", e.target.value)}
                   placeholder="Phone or email"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Estimated Cost (₱)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.estimated_cost}
-                  onChange={(e) => handleInputChange("estimated_cost", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
                 />
               </div>
