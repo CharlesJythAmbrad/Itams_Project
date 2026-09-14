@@ -25,19 +25,23 @@ export function WarrantyPage() {
   const { profile } = useAuth()
   const [searchParams] = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
-
-  useEffect(() => {
-    const q = searchParams.get("search")
-    if (q !== null) {
-      setSearchTerm(q)
-    }
-  }, [searchParams])
-  const [selectedStatus, setSelectedStatus] = useState("all")
+  
+  // Initialize status from URL params
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get("status") || "all")
   const [assets, setAssets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
+
+  // Update filters when URL params change
+  useEffect(() => {
+    const search = searchParams.get("search")
+    const status = searchParams.get("status")
+    
+    if (search !== null) setSearchTerm(search)
+    if (status !== null) setSelectedStatus(status)
+  }, [searchParams])
 
   // Fetch assets from Supabase
   const fetchAssets = async () => {
@@ -204,7 +208,10 @@ export function WarrantyPage() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => setSelectedStatus("active")}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -216,7 +223,10 @@ export function WarrantyPage() {
             </CardContent>
           </Card>
           
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => setSelectedStatus("expiring_soon")}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -228,7 +238,10 @@ export function WarrantyPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => setSelectedStatus("expired")}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -240,7 +253,10 @@ export function WarrantyPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => setSelectedStatus("no_warranty")}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>

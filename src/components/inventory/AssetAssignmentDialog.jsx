@@ -271,7 +271,7 @@ export function AssetAssignmentDialog({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1">Full Name *</label>
+                <label className="block text-xs font-medium mb-1">Full Name <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required
@@ -282,7 +282,7 @@ export function AssetAssignmentDialog({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Email Address *</label>
+                <label className="block text-xs font-medium mb-1">Email Address <span className="text-red-600">*</span></label>
                 <input
                   type="email"
                   required
@@ -293,7 +293,7 @@ export function AssetAssignmentDialog({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Department *</label>
+                <label className="block text-xs font-medium mb-1">Department <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required
@@ -334,7 +334,7 @@ export function AssetAssignmentDialog({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1">Assignment Location *</label>
+                <label className="block text-xs font-medium mb-1">Assignment Location <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required
@@ -346,7 +346,7 @@ export function AssetAssignmentDialog({
               </div>
               {assignmentType === "borrow" && (
                 <div>
-                  <label className="block text-xs font-medium mb-1">Expected Return Date *</label>
+                  <label className="block text-xs font-medium mb-1">Expected Return Date <span className="text-red-600">*</span></label>
                   <input
                     type="date"
                     required
@@ -357,7 +357,7 @@ export function AssetAssignmentDialog({
                 </div>
               )}
               <div className={assignmentType === "assign" ? "md:col-span-1" : ""}>
-                <label className="block text-xs font-medium mb-1">Purpose/Reason *</label>
+                <label className="block text-xs font-medium mb-1">Purpose/Reason <span className="text-red-600">*</span></label>
                 <textarea
                   required
                   placeholder="e.g., Remote work setup, Training program, Project development"

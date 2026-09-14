@@ -209,7 +209,7 @@ export function EditRepairDialog({ isOpen, onClose, repair, onRepairUpdated }) {
           {/* Status & Priority */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-medium mb-1 text-foreground">Status *</label>
+              <label className="block font-medium mb-1 text-foreground">Status <span className="text-red-600">*</span></label>
               <select
                 value={formData.status}
                 onChange={(e) => handleInputChange("status", e.target.value)}
@@ -223,7 +223,7 @@ export function EditRepairDialog({ isOpen, onClose, repair, onRepairUpdated }) {
               </select>
             </div>
             <div>
-              <label className="block font-medium mb-1 text-foreground">Priority *</label>
+              <label className="block font-medium mb-1 text-foreground">Priority <span className="text-red-600">*</span></label>
               <select
                 value={formData.priority}
                 onChange={(e) => handleInputChange("priority", e.target.value)}
@@ -239,7 +239,7 @@ export function EditRepairDialog({ isOpen, onClose, repair, onRepairUpdated }) {
 
           {/* Issue Details */}
           <div>
-            <label className="block font-medium mb-1 text-foreground">Issue Description *</label>
+            <label className="block font-medium mb-1 text-foreground">Issue Description <span className="text-red-600">*</span></label>
             <textarea
               required
               rows={3}
@@ -316,7 +316,7 @@ export function EditRepairDialog({ isOpen, onClose, repair, onRepairUpdated }) {
             <h4 className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">Reporter Information</h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block font-medium mb-1 text-foreground">Reporter Name *</label>
+                <label className="block font-medium mb-1 text-foreground">Reporter Name <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required

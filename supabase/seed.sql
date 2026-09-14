@@ -26,6 +26,8 @@ CREATE TABLE public.users (
   email TEXT NOT NULL UNIQUE,
   full_name TEXT,
   role user_role NOT NULL DEFAULT 'end_user'::user_role,
+  is_deactivated BOOLEAN DEFAULT FALSE,
+  last_login_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -75,15 +77,51 @@ RETURNS user_role AS $$
   SELECT role FROM public.users WHERE id = auth.uid();
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
+-- Function to check if user is deactivated during authentication
+CREATE OR REPLACE FUNCTION check_user_access_on_login()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Check if user exists and is deactivated
+  IF EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE id = NEW.id 
+    AND is_deactivated = TRUE
+  ) THEN
+    -- Prevent login by raising an exception
+    RAISE EXCEPTION 'ACCOUNT_DEACTIVATED: Your account has been deactivated. Please contact an administrator.'
+      USING ERRCODE = 'P0001';
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to update last login timestamp
+CREATE OR REPLACE FUNCTION update_user_last_login()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.users
+  SET last_login_at = NOW()
+  WHERE id = NEW.id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Drop existing policies first so re-running seed.sql is 100% idempotent
 DROP POLICY IF EXISTS "Users can view own user record" ON public.users;
 DROP POLICY IF EXISTS "ITSD can view all users" ON public.users;
+DROP POLICY IF EXISTS "ITSD can manage all users" ON public.users;
+DROP POLICY IF EXISTS "Users can update own record" ON public.users;
+DROP POLICY IF EXISTS "Block deactivated users from all access" ON public.users;
 DROP POLICY IF EXISTS "ITSD users can view own role record" ON public.itsd_users;
 DROP POLICY IF EXISTS "Inventory staff can view own role record" ON public.inventory_staff_users;
 DROP POLICY IF EXISTS "End users can view own role record" ON public.end_users;
 DROP POLICY IF EXISTS "ITSD can view all role tables" ON public.itsd_users;
 DROP POLICY IF EXISTS "ITSD can view all inventory" ON public.inventory_staff_users;
 DROP POLICY IF EXISTS "ITSD can view all end_users" ON public.end_users;
+DROP POLICY IF EXISTS "Block deactivated users from itsd table" ON public.itsd_users;
+DROP POLICY IF EXISTS "Block deactivated users from inventory table" ON public.inventory_staff_users;
+DROP POLICY IF EXISTS "Block deactivated users from end_users table" ON public.end_users;
 
 -- Users table policies (no recursion because get_auth_user_role is SECURITY DEFINER!)
 CREATE POLICY "Users can view own user record"
@@ -91,6 +129,30 @@ CREATE POLICY "Users can view own user record"
 
 CREATE POLICY "ITSD can view all users"
   ON public.users FOR SELECT USING (public.get_auth_user_role() = 'itsd');
+
+CREATE POLICY "ITSD can manage all users"
+  ON public.users FOR ALL USING (
+    public.get_auth_user_role() = 'itsd' 
+    AND NOT EXISTS (
+      SELECT 1 FROM public.users blocked_user
+      WHERE blocked_user.id = auth.uid()
+      AND blocked_user.is_deactivated = TRUE
+    )
+  );
+
+CREATE POLICY "Users can update own record"
+  ON public.users FOR UPDATE USING (auth.uid() = id);
+
+-- Prevent deactivated users from accessing any data
+CREATE POLICY "Block deactivated users from all access"
+  ON public.users FOR ALL TO authenticated
+  USING (
+    NOT EXISTS (
+      SELECT 1 FROM public.users blocked_user
+      WHERE blocked_user.id = auth.uid()
+      AND blocked_user.is_deactivated = TRUE
+    )
+  );
 
 -- Role-specific table policies
 CREATE POLICY "ITSD users can view own role record"
@@ -110,6 +172,37 @@ CREATE POLICY "ITSD can view all inventory"
 
 CREATE POLICY "ITSD can view all end_users"
   ON public.end_users FOR ALL USING (public.get_auth_user_role() = 'itsd');
+
+-- Block deactivated users from role tables
+CREATE POLICY "Block deactivated users from itsd table"
+  ON public.itsd_users FOR ALL TO authenticated
+  USING (
+    NOT EXISTS (
+      SELECT 1 FROM public.users blocked_user
+      WHERE blocked_user.id = auth.uid()
+      AND blocked_user.is_deactivated = TRUE
+    )
+  );
+
+CREATE POLICY "Block deactivated users from inventory table"
+  ON public.inventory_staff_users FOR ALL TO authenticated
+  USING (
+    NOT EXISTS (
+      SELECT 1 FROM public.users blocked_user
+      WHERE blocked_user.id = auth.uid()
+      AND blocked_user.is_deactivated = TRUE
+    )
+  );
+
+CREATE POLICY "Block deactivated users from end_users table"
+  ON public.end_users FOR ALL TO authenticated
+  USING (
+    NOT EXISTS (
+      SELECT 1 FROM public.users blocked_user
+      WHERE blocked_user.id = auth.uid()
+      AND blocked_user.is_deactivated = TRUE
+    )
+  );
 
 -- 8. Auto-provisioning trigger on auth.users sign-up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -161,8 +254,123 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- Trigger to check user access on auth updates (prevents deactivated user login)
+DROP TRIGGER IF EXISTS check_deactivated_user_login ON auth.users;
+CREATE TRIGGER check_deactivated_user_login
+  BEFORE UPDATE OF last_sign_in_at ON auth.users
+  FOR EACH ROW
+  WHEN (OLD.last_sign_in_at IS DISTINCT FROM NEW.last_sign_in_at)
+  EXECUTE FUNCTION check_user_access_on_login();
+
+-- Trigger to update last login timestamp
+DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
+CREATE TRIGGER on_auth_user_updated
+  AFTER UPDATE OF last_sign_in_at ON auth.users
+  FOR EACH ROW
+  WHEN (OLD.last_sign_in_at IS DISTINCT FROM NEW.last_sign_in_at)
+  EXECUTE FUNCTION update_user_last_login();
+
 -- ==============================================================================
--- 9. SEED DATA FOR EACH ROLE INTO DEDICATED ROLE TABLES
+-- 10. USER ACTIVITY LOG TABLE FOR ADMIN AUDIT TRAIL
+-- ==============================================================================
+
+-- Create user activity log table
+CREATE TABLE IF NOT EXISTS public.user_activity_log (
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    action TEXT NOT NULL, -- 'created', 'activated', 'deactivated', 'role_changed'
+    performed_by UUID NOT NULL REFERENCES public.users(id),
+    details JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS on user activity log
+ALTER TABLE public.user_activity_log ENABLE ROW LEVEL SECURITY;
+
+-- RLS policy for user activity log
+DROP POLICY IF EXISTS "ITSD admins can manage activity log" ON public.user_activity_log;
+CREATE POLICY "ITSD admins can manage activity log" ON public.user_activity_log
+    FOR ALL TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.users u
+            WHERE u.id = auth.uid()
+            AND u.role = 'itsd'
+            AND (u.is_deactivated = FALSE OR u.is_deactivated IS NULL)
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.users u
+            WHERE u.id = auth.uid()
+            AND u.role = 'itsd'
+            AND (u.is_deactivated = FALSE OR u.is_deactivated IS NULL)
+        )
+    );
+
+-- Function to log user management actions
+CREATE OR REPLACE FUNCTION log_user_management_action()
+RETURNS TRIGGER AS $$
+DECLARE
+    action_type TEXT;
+    current_admin UUID;
+BEGIN
+    -- Get current admin user
+    SELECT id INTO current_admin FROM public.users WHERE id = auth.uid() AND role = 'itsd';
+    
+    IF current_admin IS NULL THEN
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+    
+    -- Determine action type
+    IF TG_OP = 'INSERT' THEN
+        action_type := 'created';
+        INSERT INTO public.user_activity_log (user_id, action, performed_by, details)
+        VALUES (NEW.id, action_type, current_admin, 
+                jsonb_build_object(
+                    'email', NEW.email,
+                    'full_name', NEW.full_name,
+                    'role', NEW.role
+                ));
+        RETURN NEW;
+    ELSIF TG_OP = 'UPDATE' THEN
+        -- Check what changed
+        IF OLD.is_deactivated != NEW.is_deactivated THEN
+            action_type := CASE WHEN NEW.is_deactivated THEN 'deactivated' ELSE 'activated' END;
+            INSERT INTO public.user_activity_log (user_id, action, performed_by, details)
+            VALUES (NEW.id, action_type, current_admin,
+                    jsonb_build_object(
+                        'previous_status', CASE WHEN OLD.is_deactivated THEN 'inactive' ELSE 'active' END,
+                        'new_status', CASE WHEN NEW.is_deactivated THEN 'inactive' ELSE 'active' END
+                    ));
+        END IF;
+        
+        IF OLD.role != NEW.role THEN
+            action_type := 'role_changed';
+            INSERT INTO public.user_activity_log (user_id, action, performed_by, details)
+            VALUES (NEW.id, action_type, current_admin,
+                    jsonb_build_object(
+                        'previous_role', OLD.role,
+                        'new_role', NEW.role
+                    ));
+        END IF;
+        
+        RETURN NEW;
+    END IF;
+    
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger for user management logging
+DROP TRIGGER IF EXISTS user_management_log_trigger ON public.users;
+CREATE TRIGGER user_management_log_trigger
+    AFTER INSERT OR UPDATE ON public.users
+    FOR EACH ROW
+    EXECUTE FUNCTION log_user_management_action();
+
+-- ==============================================================================
+-- 11. SEED DATA FOR EACH ROLE INTO DEDICATED ROLE TABLES
 -- Default password for all seed users: Password123!
 -- ==============================================================================
 
@@ -355,7 +563,7 @@ BEGIN
 END $$;
 
 -- ==============================================================================
--- 10. REPAIR & SANITIZATION FOR SUPABASE GOTRUE COMPLIANCE
+-- 12. REPAIR & SANITIZATION FOR SUPABASE GOTRUE COMPLIANCE
 -- Ensures all auth.users satisfy non-null token constraints and have auth.identities
 -- ==============================================================================
 UPDATE auth.users
@@ -406,4 +614,24 @@ SELECT
 FROM auth.users
 WHERE id NOT IN (SELECT user_id FROM auth.identities WHERE provider = 'email')
 ON CONFLICT (provider, provider_id) DO NOTHING;
+
+-- ==============================================================================
+-- 13. GRANT PERMISSIONS AND ADD COMMENTS
+-- ==============================================================================
+
+-- Grant necessary permissions for user management
+GRANT SELECT, INSERT, UPDATE ON public.users TO authenticated;
+GRANT SELECT, INSERT ON public.user_activity_log TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+
+-- Add helpful comments
+COMMENT ON TABLE public.user_activity_log IS 'Tracks all user management actions performed by ITSD administrators';
+COMMENT ON COLUMN public.users.is_deactivated IS 'Flag to temporarily disable user accounts without deleting them - prevents login and all access';
+COMMENT ON COLUMN public.users.last_login_at IS 'Timestamp of users last successful login';
+
+-- Sample data update to ensure existing users have proper status
+UPDATE public.users SET is_deactivated = FALSE WHERE is_deactivated IS NULL;
+
+-- Success message for user management system
+SELECT 'ITAMS Database with User Management ready! ITSD Admin can now activate/deactivate users.' as setup_status;
 

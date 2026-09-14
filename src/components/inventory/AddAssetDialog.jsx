@@ -142,6 +142,44 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
     if (!formData.name.trim()) return "Asset name is required"
     if (!formData.category) return "Category is required"
     if (!formData.location.trim()) return "Location is required"
+    if (!formData.status) return "Status is required"
+    if (!formData.brand.trim()) return "Brand is required"
+    if (!formData.model.trim()) return "Model is required"
+    if (!formData.serial_number.trim()) return "Serial number is required"
+    if (!formData.description.trim()) return "Description is required"
+    if (!formData.purchase_cost || !formData.purchase_cost.toString().trim()) return "Purchase cost is required"
+    if (!formData.purchase_date) return "Purchase date is required"
+    if (!formData.vendor.trim()) return "Vendor is required"
+    if (!formData.invoice_number.trim()) return "Invoice number is required"
+    if (!formData.warranty_start_date) return "Warranty start date is required"
+    if (!formData.warranty_end_date) return "Warranty end date is required"
+    if (!formData.warranty_provider.trim()) return "Warranty provider is required"
+    if (!formData.warranty_type.trim()) return "Warranty type is required"
+
+    if (formData.category === "computer" || formData.category === "laptop") {
+      if (!formData.computer_name.trim()) return "Computer name is required"
+      if (!formData.mac_address.trim()) return "MAC address is required"
+      if (!formData.ip_address.trim()) return "IP address is required"
+      if (!formData.operating_system.trim()) return "Operating system is required"
+      if (!formData.processor.trim()) return "Processor is required"
+      if (!formData.ram_gb || !formData.ram_gb.toString().trim()) return "RAM is required"
+      if (!formData.storage_gb || !formData.storage_gb.toString().trim()) return "Storage is required"
+      if (!formData.network_domain.trim()) return "Network domain is required"
+    }
+
+    if (formData.category === "cctv") {
+      if (!formData.camera_resolution.trim()) return "Camera resolution is required"
+      if (!formData.camera_type.trim()) return "Camera type is required"
+      if (!formData.recording_capacity_tb || !formData.recording_capacity_tb.toString().trim()) return "Recording capacity is required"
+      if (!formData.ip_address.trim()) return "IP address is required"
+    }
+
+    if (formData.category === "networking") {
+      if (!formData.port_count || !formData.port_count.toString().trim()) return "Port count is required"
+      if (!formData.management_ip.trim()) return "Management IP is required"
+      if (!formData.firmware_version.trim()) return "Firmware version is required"
+      if (!formData.mac_address.trim()) return "MAC address is required"
+    }
     
     // Validate MAC address format if provided
     if (formData.mac_address && !/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(formData.mac_address)) {
@@ -271,7 +309,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold mb-3 text-sm">Computer/Laptop Specifications</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="computer_name" className="text-xs font-medium">Computer Name</Label>
+                  <Label htmlFor="computer_name" className="text-xs font-medium">Computer Name <span className="text-red-600">*</span></Label>
                   <Input
                     id="computer_name"
                     placeholder="e.g., FACULTY-PC-001"
@@ -281,7 +319,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="mac_address" className="text-xs font-medium">MAC Address</Label>
+                  <Label htmlFor="mac_address" className="text-xs font-medium">MAC Address <span className="text-red-600">*</span></Label>
                   <Input
                     id="mac_address"
                     placeholder="XX:XX:XX:XX:XX:XX"
@@ -291,7 +329,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="ip_address" className="text-xs font-medium">IP Address</Label>
+                  <Label htmlFor="ip_address" className="text-xs font-medium">IP Address <span className="text-red-600">*</span></Label>
                   <Input
                     id="ip_address"
                     placeholder="192.168.1.100"
@@ -301,7 +339,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="operating_system" className="text-xs font-medium">Operating System</Label>
+                  <Label htmlFor="operating_system" className="text-xs font-medium">Operating System <span className="text-red-600">*</span></Label>
                   <Input
                     id="operating_system"
                     placeholder="e.g., Windows 11 Pro"
@@ -311,7 +349,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="processor" className="text-xs font-medium">Processor</Label>
+                  <Label htmlFor="processor" className="text-xs font-medium">Processor <span className="text-red-600">*</span></Label>
                   <Input
                     id="processor"
                     placeholder="e.g., Intel Core i7-12700"
@@ -321,7 +359,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="ram_gb" className="text-xs font-medium">RAM (GB)</Label>
+                  <Label htmlFor="ram_gb" className="text-xs font-medium">RAM (GB) <span className="text-red-600">*</span></Label>
                   <Input
                     id="ram_gb"
                     type="number"
@@ -332,7 +370,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="storage_gb" className="text-xs font-medium">Storage (GB)</Label>
+                  <Label htmlFor="storage_gb" className="text-xs font-medium">Storage (GB) <span className="text-red-600">*</span></Label>
                   <Input
                     id="storage_gb"
                     type="number"
@@ -343,7 +381,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="network_domain" className="text-xs font-medium">Network Domain</Label>
+                  <Label htmlFor="network_domain" className="text-xs font-medium">Network Domain <span className="text-red-600">*</span></Label>
                   <Input
                     id="network_domain"
                     placeholder="e.g., itams.edu"
@@ -364,7 +402,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold mb-3 text-sm">CCTV Camera Specifications</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="camera_resolution" className="text-xs font-medium">Resolution</Label>
+                  <Label htmlFor="camera_resolution" className="text-xs font-medium">Resolution <span className="text-red-600">*</span></Label>
                   <Input
                     id="camera_resolution"
                     placeholder="e.g., 4K, 1080p"
@@ -374,7 +412,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="camera_type" className="text-xs font-medium">Camera Type</Label>
+                  <Label htmlFor="camera_type" className="text-xs font-medium">Camera Type <span className="text-red-600">*</span></Label>
                   <Input
                     id="camera_type"
                     placeholder="e.g., dome, bullet, PTZ"
@@ -384,7 +422,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="recording_capacity_tb" className="text-xs font-medium">Recording Capacity (TB)</Label>
+                  <Label htmlFor="recording_capacity_tb" className="text-xs font-medium">Recording Capacity (TB) <span className="text-red-600">*</span></Label>
                   <Input
                     id="recording_capacity_tb"
                     type="number"
@@ -396,7 +434,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="ip_address" className="text-xs font-medium">IP Address</Label>
+                  <Label htmlFor="ip_address" className="text-xs font-medium">IP Address <span className="text-red-600">*</span></Label>
                   <Input
                     id="ip_address"
                     placeholder="192.168.100.10"
@@ -417,7 +455,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold mb-3 text-sm">Network Equipment Specifications</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="port_count" className="text-xs font-medium">Port Count</Label>
+                  <Label htmlFor="port_count" className="text-xs font-medium">Port Count <span className="text-red-600">*</span></Label>
                   <Input
                     id="port_count"
                     type="number"
@@ -428,7 +466,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="management_ip" className="text-xs font-medium">Management IP</Label>
+                  <Label htmlFor="management_ip" className="text-xs font-medium">Management IP <span className="text-red-600">*</span></Label>
                   <Input
                     id="management_ip"
                     placeholder="192.168.1.1"
@@ -438,7 +476,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="firmware_version" className="text-xs font-medium">Firmware Version</Label>
+                  <Label htmlFor="firmware_version" className="text-xs font-medium">Firmware Version <span className="text-red-600">*</span></Label>
                   <Input
                     id="firmware_version"
                     placeholder="e.g., 16.12.05"
@@ -448,7 +486,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="mac_address" className="text-xs font-medium">MAC Address</Label>
+                  <Label htmlFor="mac_address" className="text-xs font-medium">MAC Address <span className="text-red-600">*</span></Label>
                   <Input
                     id="mac_address"
                     placeholder="XX:XX:XX:XX:XX:XX"
@@ -510,7 +548,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold mb-3 text-sm">Basic Information</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-3">
-                  <Label htmlFor="name" className="text-xs font-medium">Asset Name *</Label>
+                  <Label htmlFor="name" className="text-xs font-medium">Asset Name <span className="text-red-600">*</span></Label>
                   <Input
                     id="name"
                     required
@@ -521,7 +559,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="category" className="text-xs font-medium">Category *</Label>
+                  <Label htmlFor="category" className="text-xs font-medium">Category <span className="text-red-600">*</span></Label>
                   <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                     <SelectTrigger className="rounded-[5px]">
                       <SelectValue placeholder="Select category" />
@@ -539,7 +577,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="location" className="text-xs font-medium">Location *</Label>
+                  <Label htmlFor="location" className="text-xs font-medium">Location <span className="text-red-600">*</span></Label>
                   <Input
                     id="location"
                     required
@@ -550,7 +588,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="status" className="text-xs font-medium">Status</Label>
+                  <Label htmlFor="status" className="text-xs font-medium">Status <span className="text-red-600">*</span></Label>
                   <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
                     <SelectTrigger className="rounded-[5px]">
                       <SelectValue />
@@ -565,7 +603,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="brand" className="text-xs font-medium">Brand</Label>
+                  <Label htmlFor="brand" className="text-xs font-medium">Brand <span className="text-red-600">*</span></Label>
                   <Input
                     id="brand"
                     placeholder="e.g., Dell, Apple, Cisco"
@@ -575,7 +613,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="model" className="text-xs font-medium">Model</Label>
+                  <Label htmlFor="model" className="text-xs font-medium">Model <span className="text-red-600">*</span></Label>
                   <Input
                     id="model"
                     placeholder="e.g., OptiPlex 7090"
@@ -585,7 +623,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="serial_number" className="text-xs font-medium">Serial Number</Label>
+                  <Label htmlFor="serial_number" className="text-xs font-medium">Serial Number <span className="text-red-600">*</span></Label>
                   <Input
                     id="serial_number"
                     placeholder="e.g., SN-123456789"
@@ -595,7 +633,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div className="md:col-span-3">
-                  <Label htmlFor="description" className="text-xs font-medium">Description</Label>
+                  <Label htmlFor="description" className="text-xs font-medium">Description <span className="text-red-600">*</span></Label>
                   <Textarea
                     id="description"
                     placeholder="Brief description of the asset..."
@@ -615,7 +653,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold mb-3 text-sm">Purchase & Financial Information</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="purchase_date" className="text-xs font-medium">Purchase Date</Label>
+                  <Label htmlFor="purchase_date" className="text-xs font-medium">Purchase Date <span className="text-red-600">*</span></Label>
                   <Input
                     id="purchase_date"
                     type="date"
@@ -625,7 +663,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="purchase_cost" className="text-xs font-medium">Purchase Cost (₱)</Label>
+                  <Label htmlFor="purchase_cost" className="text-xs font-medium">Purchase Cost (₱) <span className="text-red-600">*</span></Label>
                   <Input
                     id="purchase_cost"
                     type="number"
@@ -637,19 +675,23 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="vendor" className="text-xs font-medium">Vendor</Label>
-                  <Input
-                    id="vendor"
-                    placeholder="e.g., Dell Technologies Inc."
-                    value={formData.vendor}
-                    onChange={(e) => handleInputChange("vendor", e.target.value)}
-                    className="rounded-[5px]"
-                  />
+                  <Label htmlFor="vendor" className="text-xs font-medium">Vendor <span className="text-red-600">*</span></Label>
+                  <Select value={formData.vendor} onValueChange={(value) => handleInputChange("vendor", value)}>
+                    <SelectTrigger className="rounded-[5px]">
+                      <SelectValue placeholder="Select vendor..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Dell Technologies Inc.">Dell Technologies Inc.</SelectItem>
+                      <SelectItem value="HP Inc.">HP Inc.</SelectItem>
+                      <SelectItem value="Lenovo Group Limited">Lenovo Group Limited</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <Label htmlFor="invoice_number" className="text-xs font-medium">Invoice Number</Label>
+                  <Label htmlFor="invoice_number" className="text-xs font-medium">Invoice Number <span className="text-red-600">*</span></Label>
                   <Input
                     id="invoice_number"
+                    required
                     placeholder="e.g., INV-2024-001"
                     value={formData.invoice_number}
                     onChange={(e) => handleInputChange("invoice_number", e.target.value)}
@@ -666,29 +708,32 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold mb-3 text-sm">Warranty Information</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="warranty_start_date" className="text-xs font-medium">Warranty Start Date</Label>
+                  <Label htmlFor="warranty_start_date" className="text-xs font-medium">Warranty Start Date <span className="text-red-600">*</span></Label>
                   <Input
                     id="warranty_start_date"
                     type="date"
+                    required
                     value={formData.warranty_start_date}
                     onChange={(e) => handleInputChange("warranty_start_date", e.target.value)}
                     className="rounded-[5px]"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="warranty_end_date" className="text-xs font-medium">Warranty End Date</Label>
+                  <Label htmlFor="warranty_end_date" className="text-xs font-medium">Warranty End Date <span className="text-red-600">*</span></Label>
                   <Input
                     id="warranty_end_date"
                     type="date"
+                    required
                     value={formData.warranty_end_date}
                     onChange={(e) => handleInputChange("warranty_end_date", e.target.value)}
                     className="rounded-[5px]"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="warranty_provider" className="text-xs font-medium">Warranty Provider</Label>
+                  <Label htmlFor="warranty_provider" className="text-xs font-medium">Warranty Provider <span className="text-red-600">*</span></Label>
                   <Input
                     id="warranty_provider"
+                    required
                     placeholder="e.g., Dell ProSupport"
                     value={formData.warranty_provider}
                     onChange={(e) => handleInputChange("warranty_provider", e.target.value)}
@@ -696,9 +741,10 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="warranty_type" className="text-xs font-medium">Warranty Type</Label>
+                  <Label htmlFor="warranty_type" className="text-xs font-medium">Warranty Type <span className="text-red-600">*</span></Label>
                   <Input
                     id="warranty_type"
+                    required
                     placeholder="e.g., manufacturer, extended"
                     value={formData.warranty_type}
                     onChange={(e) => handleInputChange("warranty_type", e.target.value)}
@@ -717,7 +763,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
             <CardContent className="p-4">
               <h4 className="font-semibold mb-3 text-sm">Additional Information</h4>
               <div>
-                <Label htmlFor="notes" className="text-xs font-medium">Notes</Label>
+                <Label htmlFor="notes" className="text-xs font-medium">Notes <span className="text-gray-500">(Optional)</span></Label>
                 <Textarea
                   id="notes"
                   placeholder="Any additional notes or special instructions..."

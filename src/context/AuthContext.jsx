@@ -19,15 +19,23 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // 1. Fetch base user record from public.users
+      // 1. Fetch base user record from public.users including is_deactivated status
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("id, email, full_name, role, created_at")
+        .select("id, email, full_name, role, created_at, is_deactivated")
         .eq("id", userId)
         .maybeSingle()
 
       if (userError && userError.code !== "PGRST116") {
         console.warn("Could not fetch user record:", userError.message)
+      }
+
+      // Check if user is deactivated
+      if (userData?.is_deactivated) {
+        console.warn("User account is deactivated")
+        // Sign out deactivated user immediately
+        await supabase.auth.signOut()
+        throw new Error("Your account has been deactivated. Please contact an administrator.")
       }
 
       // Determine role from users table or fall back to user_metadata
@@ -71,6 +79,13 @@ export const AuthProvider = ({ children }) => {
       return combined
     } catch (err) {
       console.warn("User data fetch error:", err.message)
+      // If it's a deactivated user error, clear the session
+      if (err.message.includes("deactivated")) {
+        setUser(null)
+        setProfile(null)
+        setSession(null)
+        setError(err.message)
+      }
       return null
     }
   }, [])
@@ -134,12 +149,30 @@ export const AuthProvider = ({ children }) => {
     try {
       const cleanIdentifier = identifier.trim().toLowerCase()
       const email = cleanIdentifier.includes("@") ? cleanIdentifier : `${cleanIdentifier}@itams.edu`
+      
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) throw signInError
+
+      // Check if user is deactivated before proceeding
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("is_deactivated")
+        .eq("id", data.user.id)
+        .single()
+
+      if (userError) {
+        console.warn("Could not check user status:", userError.message)
+      }
+
+      if (userData?.is_deactivated) {
+        // Sign out immediately and throw error
+        await supabase.auth.signOut()
+        throw new Error("Your account has been deactivated. Please contact an administrator for assistance.")
+      }
 
       setUser(data.user)
       setSession(data.session)

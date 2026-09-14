@@ -63,6 +63,38 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
     if (!formData.name.trim()) return "Asset name is required"
     if (!formData.category) return "Category is required"
     if (!formData.location.trim()) return "Location is required"
+    if (!formData.status) return "Status is required"
+    if (!formData.brand.trim()) return "Brand is required"
+    if (!formData.model.trim()) return "Model is required"
+    if (!formData.serial_number.trim()) return "Serial number is required"
+    if (!formData.purchase_cost || !formData.purchase_cost.toString().trim()) return "Purchase cost is required"
+    if (!formData.purchase_date) return "Purchase date is required"
+    if (!formData.vendor.trim()) return "Vendor is required"
+    if (!formData.warranty_end_date) return "Warranty end date is required"
+
+    if (formData.category === "computer" || formData.category === "laptop") {
+      if (!formData.computer_name.trim()) return "Computer name is required"
+      if (!formData.mac_address.trim()) return "MAC address is required"
+      if (!formData.ip_address.trim()) return "IP address is required"
+      if (!formData.operating_system.trim()) return "Operating system is required"
+      if (!formData.processor.trim()) return "Processor is required"
+      if (!formData.ram_gb || !formData.ram_gb.toString().trim()) return "RAM is required"
+      if (!formData.storage_gb || !formData.storage_gb.toString().trim()) return "Storage is required"
+    }
+
+    if (formData.category === "cctv") {
+      if (!formData.camera_resolution) return "Camera resolution is required"
+      if (!formData.camera_type) return "Camera type is required"
+      if (!formData.ip_address.trim()) return "IP address is required"
+      if (!formData.mac_address.trim()) return "MAC address is required"
+    }
+
+    if (formData.category === "networking") {
+      if (!formData.port_count || !formData.port_count.toString().trim()) return "Port count is required"
+      if (!formData.management_ip.trim()) return "Management IP is required"
+      if (!formData.firmware_version.trim()) return "Firmware version is required"
+      if (!formData.mac_address.trim()) return "MAC address is required"
+    }
     
     if (formData.mac_address && !/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(formData.mac_address)) {
       return "MAC address must be in format XX:XX:XX:XX:XX:XX"
@@ -228,7 +260,7 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
             <h4 className="font-semibold text-sm">Basic Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1">Asset Name *</label>
+                <label className="block text-xs font-medium mb-1">Asset Name <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required
@@ -239,7 +271,7 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Category *</label>
+                <label className="block text-xs font-medium mb-1">Category <span className="text-red-600">*</span></label>
                 <select
                   required
                   value={formData.category}
@@ -260,7 +292,7 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Location *</label>
+                <label className="block text-xs font-medium mb-1">Location <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required
@@ -271,8 +303,9 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Status</label>
+                <label className="block text-xs font-medium mb-1">Status <span className="text-red-600">*</span></label>
                 <select
+                  required
                   value={formData.status}
                   onChange={(e) => handleInputChange("status", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
@@ -284,9 +317,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Brand</label>
+                <label className="block text-xs font-medium mb-1">Brand <span className="text-red-600">*</span></label>
                 <input
                   type="text"
+                  required
                   placeholder="e.g., Dell, Apple, Cisco"
                   value={formData.brand}
                   onChange={(e) => handleInputChange("brand", e.target.value)}
@@ -294,9 +328,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Model</label>
+                <label className="block text-xs font-medium mb-1">Model <span className="text-red-600">*</span></label>
                 <input
                   type="text"
+                  required
                   placeholder="e.g., OptiPlex 7090"
                   value={formData.model}
                   onChange={(e) => handleInputChange("model", e.target.value)}
@@ -304,9 +339,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Serial Number</label>
+                <label className="block text-xs font-medium mb-1">Serial Number <span className="text-red-600">*</span></label>
                 <input
                   type="text"
+                  required
                   placeholder="e.g., SN-123456789"
                   value={formData.serial_number}
                   onChange={(e) => handleInputChange("serial_number", e.target.value)}
@@ -314,10 +350,11 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Purchase Cost (₱)</label>
+                <label className="block text-xs font-medium mb-1">Purchase Cost (₱) <span className="text-red-600">*</span></label>
                 <input
                   type="number"
                   step="0.01"
+                  required
                   placeholder="1299.00"
                   value={formData.purchase_cost}
                   onChange={(e) => handleInputChange("purchase_cost", e.target.value)}
@@ -325,28 +362,34 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Purchase Date</label>
+                <label className="block text-xs font-medium mb-1">Purchase Date <span className="text-red-600">*</span></label>
                 <input
                   type="date"
+                  required
                   value={formData.purchase_date}
                   onChange={(e) => handleInputChange("purchase_date", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Vendor</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Dell Technologies Inc."
+                <label className="block text-xs font-medium mb-1">Vendor <span className="text-red-600">*</span></label>
+                <select
+                  required
                   value={formData.vendor}
                   onChange={(e) => handleInputChange("vendor", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
-                />
+                >
+                  <option value="">Select vendor</option>
+                  <option value="Dell Technologies Inc.">Dell Technologies Inc.</option>
+                  <option value="HP Inc.">HP Inc.</option>
+                  <option value="Lenovo Group Limited">Lenovo Group Limited</option>
+                </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Warranty End Date</label>
+                <label className="block text-xs font-medium mb-1">Warranty End Date <span className="text-red-600">*</span></label>
                 <input
                   type="date"
+                  required
                   value={formData.warranty_end_date}
                   onChange={(e) => handleInputChange("warranty_end_date", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
@@ -361,9 +404,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold text-sm">Computer Specifications</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium mb-1">Computer Name</label>
+                  <label className="block text-xs font-medium mb-1">Computer Name <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g., FACULTY-PC-001"
                     value={formData.computer_name}
                     onChange={(e) => handleInputChange("computer_name", e.target.value)}
@@ -371,9 +415,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">MAC Address</label>
+                  <label className="block text-xs font-medium mb-1">MAC Address <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="XX:XX:XX:XX:XX:XX"
                     value={formData.mac_address}
                     onChange={(e) => handleInputChange("mac_address", e.target.value)}
@@ -381,9 +426,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">IP Address</label>
+                  <label className="block text-xs font-medium mb-1">IP Address <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="192.168.1.100"
                     value={formData.ip_address}
                     onChange={(e) => handleInputChange("ip_address", e.target.value)}
@@ -391,9 +437,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Operating System</label>
+                  <label className="block text-xs font-medium mb-1">Operating System <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g., Windows 11 Pro"
                     value={formData.operating_system}
                     onChange={(e) => handleInputChange("operating_system", e.target.value)}
@@ -401,9 +448,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Processor</label>
+                  <label className="block text-xs font-medium mb-1">Processor <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g., Intel Core i7-12700"
                     value={formData.processor}
                     onChange={(e) => handleInputChange("processor", e.target.value)}
@@ -411,9 +459,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">RAM (GB)</label>
+                  <label className="block text-xs font-medium mb-1">RAM (GB) <span className="text-red-600">*</span></label>
                   <input
                     type="number"
+                    required
                     placeholder="16"
                     value={formData.ram_gb}
                     onChange={(e) => handleInputChange("ram_gb", e.target.value)}
@@ -421,9 +470,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Storage (GB)</label>
+                  <label className="block text-xs font-medium mb-1">Storage (GB) <span className="text-red-600">*</span></label>
                   <input
                     type="number"
+                    required
                     placeholder="512"
                     value={formData.storage_gb}
                     onChange={(e) => handleInputChange("storage_gb", e.target.value)}
@@ -440,8 +490,9 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold text-sm">CCTV Specifications</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium mb-1">Camera Resolution</label>
+                  <label className="block text-xs font-medium mb-1">Camera Resolution <span className="text-red-600">*</span></label>
                   <select
+                    required
                     value={formData.camera_resolution}
                     onChange={(e) => handleInputChange("camera_resolution", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
@@ -454,8 +505,9 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Camera Type</label>
+                  <label className="block text-xs font-medium mb-1">Camera Type <span className="text-red-600">*</span></label>
                   <select
+                    required
                     value={formData.camera_type}
                     onChange={(e) => handleInputChange("camera_type", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
@@ -468,9 +520,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">IP Address</label>
+                  <label className="block text-xs font-medium mb-1">IP Address <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="192.168.100.10"
                     value={formData.ip_address}
                     onChange={(e) => handleInputChange("ip_address", e.target.value)}
@@ -478,9 +531,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">MAC Address</label>
+                  <label className="block text-xs font-medium mb-1">MAC Address <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="XX:XX:XX:XX:XX:XX"
                     value={formData.mac_address}
                     onChange={(e) => handleInputChange("mac_address", e.target.value)}
@@ -497,9 +551,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               <h4 className="font-semibold text-sm">Network Equipment Specifications</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium mb-1">Port Count</label>
+                  <label className="block text-xs font-medium mb-1">Port Count <span className="text-red-600">*</span></label>
                   <input
                     type="number"
+                    required
                     placeholder="24"
                     value={formData.port_count}
                     onChange={(e) => handleInputChange("port_count", e.target.value)}
@@ -507,9 +562,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Management IP</label>
+                  <label className="block text-xs font-medium mb-1">Management IP <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="192.168.1.2"
                     value={formData.management_ip}
                     onChange={(e) => handleInputChange("management_ip", e.target.value)}
@@ -517,9 +573,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Firmware Version</label>
+                  <label className="block text-xs font-medium mb-1">Firmware Version <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g., 17.12.02"
                     value={formData.firmware_version}
                     onChange={(e) => handleInputChange("firmware_version", e.target.value)}
@@ -527,9 +584,10 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">MAC Address</label>
+                  <label className="block text-xs font-medium mb-1">MAC Address <span className="text-red-600">*</span></label>
                   <input
                     type="text"
+                    required
                     placeholder="XX:XX:XX:XX:XX:XX"
                     value={formData.mac_address}
                     onChange={(e) => handleInputChange("mac_address", e.target.value)}
@@ -542,7 +600,7 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-medium mb-1">Notes</label>
+            <label className="block text-xs font-medium mb-1">Notes <span className="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span></label>
             <textarea
               placeholder="Any additional notes..."
               value={formData.notes}

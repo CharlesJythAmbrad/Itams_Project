@@ -105,7 +105,7 @@ export function InventoryStaffSidebar({
         <p className={`text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 px-2.5 mb-1.5 ${
           !isExpanded ? "hidden" : "block"
         }`}>
-          Warehouse Operations
+          ITSD Department Operations
         </p>
 
         {navItems.map((item) => {

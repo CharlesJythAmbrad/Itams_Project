@@ -234,7 +234,7 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
             </h4>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1">Asset *</label>
+                <label className="block text-xs font-medium mb-1">Asset <span className="text-red-600">*</span></label>
                 <select
                   required
                   value={formData.asset_id}
@@ -268,7 +268,7 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium mb-1">Issue Description *</label>
+                <label className="block text-xs font-medium mb-1">Issue Description <span className="text-red-600">*</span></label>
                 <textarea
                   required
                   value={formData.issue_description}
@@ -312,7 +312,7 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1">Reporter Name *</label>
+                <label className="block text-xs font-medium mb-1">Reporter Name <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required
@@ -322,7 +322,7 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Reporter Email *</label>
+                <label className="block text-xs font-medium mb-1">Reporter Email <span className="text-red-600">*</span></label>
                 <input
                   type="email"
                   required

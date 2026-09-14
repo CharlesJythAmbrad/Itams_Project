@@ -49,15 +49,10 @@ export function AssetsPage() {
   const { profile } = useAuth()
   const [searchParams] = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
-
-  useEffect(() => {
-    const q = searchParams.get("search")
-    if (q !== null) {
-      setSearchTerm(q)
-    }
-  }, [searchParams])
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [selectedStatus, setSelectedStatus] = useState("all")
+  
+  // Initialize filters from URL params
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all")
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get("status") || "all")
   const [assets, setAssets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -80,6 +75,17 @@ export function AssetsPage() {
   const [isNewRepairOpen, setIsNewRepairOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
+
+  // Update filters when URL params change
+  useEffect(() => {
+    const search = searchParams.get("search")
+    const category = searchParams.get("category")
+    const status = searchParams.get("status")
+    
+    if (search !== null) setSearchTerm(search)
+    if (category !== null) setSelectedCategory(category)
+    if (status !== null) setSelectedStatus(status)
+  }, [searchParams])
 
   // Handle scanned QR code result
   const handleScanSuccess = async (scannedTag, rawValue) => {

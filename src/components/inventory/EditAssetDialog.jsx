@@ -233,7 +233,7 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
             <h4 className="font-semibold text-sm">Basic Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1">Asset Name *</label>
+                <label className="block text-xs font-medium mb-1">Asset Name <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required
@@ -243,7 +243,7 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Category *</label>
+                <label className="block text-xs font-medium mb-1">Category <span className="text-red-600">*</span></label>
                 <select
                   required
                   value={formData.category}
@@ -264,7 +264,7 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Location *</label>
+                <label className="block text-xs font-medium mb-1">Location <span className="text-red-600">*</span></label>
                 <input
                   type="text"
                   required

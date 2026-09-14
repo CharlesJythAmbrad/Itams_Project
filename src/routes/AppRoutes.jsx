@@ -6,6 +6,7 @@ import { LoginPage } from "@/pages/LoginPage"
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { ITSDDashboardPage } from "@/pages/itsd/ITSDDashboardPage"
+import { UserManagementPage } from "@/pages/itsd/UserManagementPage"
 import { InventoryStaffDashboardPage } from "@/pages/inventory_staff/InventoryStaffDashboardPage"
 import { AssetsPage } from "@/pages/inventory_staff/AssetsPage"
 import { BorrowedReturnPage } from "@/pages/inventory_staff/BorrowedReturnPage"
@@ -78,6 +79,14 @@ export function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={["itsd"]}>
                   <ITSDDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/itsd/user-management"
+              element={
+                <ProtectedRoute allowedRoles={["itsd"]}>
+                  <UserManagementPage />
                 </ProtectedRoute>
               }
             />

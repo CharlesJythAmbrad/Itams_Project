@@ -33,15 +33,10 @@ export function BorrowedReturnPage() {
   const { profile } = useAuth()
   const [searchParams] = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
-
-  useEffect(() => {
-    const q = searchParams.get("search")
-    if (q !== null) {
-      setSearchTerm(q)
-    }
-  }, [searchParams])
-  const [selectedStatus, setSelectedStatus] = useState("all")
-  const [selectedType, setSelectedType] = useState("all")
+  
+  // Initialize filters from URL params
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get("status") || "all")
+  const [selectedType, setSelectedType] = useState(searchParams.get("type") || "all")
   const [assignments, setAssignments] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -49,6 +44,17 @@ export function BorrowedReturnPage() {
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
+
+  // Update filters when URL params change
+  useEffect(() => {
+    const search = searchParams.get("search")
+    const status = searchParams.get("status")
+    const type = searchParams.get("type")
+    
+    if (search !== null) setSearchTerm(search)
+    if (status !== null) setSelectedStatus(status)
+    if (type !== null) setSelectedType(type)
+  }, [searchParams])
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -287,7 +293,13 @@ export function BorrowedReturnPage() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => {
+              setSelectedType("borrow")
+              setSelectedStatus("active")
+            }}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -299,7 +311,13 @@ export function BorrowedReturnPage() {
             </CardContent>
           </Card>
           
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => {
+              setSelectedType("assign")
+              setSelectedStatus("active")
+            }}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -313,7 +331,13 @@ export function BorrowedReturnPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => {
+              setSelectedType("all")
+              setSelectedStatus("overdue")
+            }}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>

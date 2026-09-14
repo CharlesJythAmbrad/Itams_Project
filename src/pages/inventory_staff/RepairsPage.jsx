@@ -39,16 +39,11 @@ export function RepairsPage() {
   const { profile } = useAuth()
   const [searchParams] = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
-
-  useEffect(() => {
-    const q = searchParams.get("search")
-    if (q !== null) {
-      setSearchTerm(q)
-    }
-  }, [searchParams])
+  
   const navigate = useNavigate()
-  const [selectedStatus, setSelectedStatus] = useState("all")
-  const [selectedPriority, setSelectedPriority] = useState("all")
+  // Initialize filters from URL params  
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get("status") || "all")
+  const [selectedPriority, setSelectedPriority] = useState(searchParams.get("priority") || "all")
   const [repairs, setRepairs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -62,6 +57,17 @@ export function RepairsPage() {
   const [successMessage, setSuccessMessage] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
+
+  // Update filters when URL params change
+  useEffect(() => {
+    const search = searchParams.get("search")
+    const status = searchParams.get("status")
+    const priority = searchParams.get("priority")
+    
+    if (search !== null) setSearchTerm(search)
+    if (status !== null) setSelectedStatus(status)
+    if (priority !== null) setSelectedPriority(priority)
+  }, [searchParams])
 
   // Fetch repairs from database
   const fetchRepairs = async () => {
@@ -297,7 +303,10 @@ export function RepairsPage() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => setSelectedStatus("pending")}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -309,7 +318,10 @@ export function RepairsPage() {
             </CardContent>
           </Card>
           
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => setSelectedStatus("in_progress")}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -321,7 +333,10 @@ export function RepairsPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[5px]">
+          <Card 
+            className="rounded-[5px] cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+            onClick={() => setSelectedStatus("completed")}
+          >
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>

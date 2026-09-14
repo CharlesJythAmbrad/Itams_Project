@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
@@ -25,6 +26,7 @@ import { Button } from "@/components/ui/button"
 
 export function InventoryStaffDashboardPage() {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("dashboard")
   const roleDetails = profile?.roleDetails
   const [dashboardData, setDashboardData] = useState({
@@ -237,6 +239,47 @@ export function InventoryStaffDashboardPage() {
 
   const { statistics } = dashboardData
 
+  // Navigation handlers for clickable cards
+  const handleCardClick = (cardType, filter) => {
+    switch (cardType) {
+      case 'borrowed-return':
+        if (filter === 'active') {
+          navigate('/dashboard/inventory/borrowed-return?status=active')
+        } else if (filter === 'assigned') {
+          navigate('/dashboard/inventory/borrowed-return?type=assign&status=active')
+        } else if (filter === 'borrowed') {
+          navigate('/dashboard/inventory/borrowed-return?type=borrow&status=active')
+        } else {
+          navigate('/dashboard/inventory/borrowed-return')
+        }
+        break
+      case 'warranty':
+        if (filter === 'active') {
+          navigate('/dashboard/inventory/warranty?status=active')
+        } else if (filter === 'expiring') {
+          navigate('/dashboard/inventory/warranty?status=expiring_soon')
+        } else if (filter === 'expired') {
+          navigate('/dashboard/inventory/warranty?status=expired')
+        } else {
+          navigate('/dashboard/inventory/warranty')
+        }
+        break
+      case 'repairs':
+        if (filter === 'pending') {
+          navigate('/dashboard/inventory/repairs?status=pending')
+        } else if (filter === 'in_progress') {
+          navigate('/dashboard/inventory/repairs?status=in_progress')
+        } else if (filter === 'completed') {
+          navigate('/dashboard/inventory/repairs?status=completed')
+        } else {
+          navigate('/dashboard/inventory/repairs')
+        }
+        break
+      default:
+        break
+    }
+  }
+
   // Dashboard metrics based on real data
   const dashboardMetrics = [
     { 
@@ -244,28 +287,32 @@ export function InventoryStaffDashboardPage() {
       value: statistics.totalAssets.toString(), 
       change: `${statistics.inStock} available`, 
       icon: Package,
-      color: "red"
+      color: "red",
+      onClick: () => navigate('/dashboard/inventory/assets')
     },
     { 
       label: "Active Assignments", 
       value: (statistics.assigned + statistics.borrowed).toString(), 
       change: `${statistics.assigned} assigned, ${statistics.borrowed} borrowed`, 
       icon: UserCheck,
-      color: "purple"
+      color: "purple",
+      onClick: () => handleCardClick('borrowed-return', 'active')
     },
     { 
       label: "Warranty Status", 
       value: statistics.activeWarranties.toString(), 
       change: `${statistics.expiringSoon} expiring soon`, 
       icon: ShieldCheck,
-      color: "emerald"
+      color: "emerald",
+      onClick: () => handleCardClick('warranty', 'active')
     },
     { 
       label: "Active Repairs", 
       value: (statistics.pendingRepairs + statistics.inProgressRepairs).toString(), 
       change: `${statistics.completedRepairs} completed`, 
       icon: Wrench,
-      color: "amber"
+      color: "amber",
+      onClick: () => handleCardClick('repairs', 'pending')
     },
   ]
 
@@ -352,7 +399,12 @@ export function InventoryStaffDashboardPage() {
                   amber: "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400"
                 }
                 return (
-                  <Card key={i} variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
+                  <Card 
+                    key={i} 
+                    variant="elevated" 
+                    className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800 cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+                    onClick={metric.onClick}
+                  >
                     <CardContent className="p-3.5 flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
@@ -379,19 +431,31 @@ export function InventoryStaffDashboardPage() {
                   </h3>
                 </div>
                 <div className="p-3 space-y-2.5">
-                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <div 
+                    className="flex justify-between items-center text-xs sm:text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => navigate('/dashboard/inventory/assets?status=in_stock')}
+                  >
                     <span className="text-muted-foreground">In Stock</span>
                     <span className="font-medium text-emerald-600">{statistics.inStock}</span>
                   </div>
-                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <div 
+                    className="flex justify-between items-center text-xs sm:text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => handleCardClick('borrowed-return', 'assigned')}
+                  >
                     <span className="text-muted-foreground">Assigned</span>
                     <span className="font-medium text-red-600">{statistics.assigned}</span>
                   </div>
-                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <div 
+                    className="flex justify-between items-center text-xs sm:text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => handleCardClick('borrowed-return', 'borrowed')}
+                  >
                     <span className="text-muted-foreground">Borrowed</span>
                     <span className="font-medium text-purple-600">{statistics.borrowed}</span>
                   </div>
-                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <div 
+                    className="flex justify-between items-center text-xs sm:text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => navigate('/dashboard/inventory/assets?status=maintenance')}
+                  >
                     <span className="text-muted-foreground">Under Maintenance</span>
                     <span className="font-medium text-amber-600">{statistics.maintenance}</span>
                   </div>
@@ -407,15 +471,24 @@ export function InventoryStaffDashboardPage() {
                   </h3>
                 </div>
                 <div className="p-3 space-y-2.5">
-                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <div 
+                    className="flex justify-between items-center text-xs sm:text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => handleCardClick('warranty', 'active')}
+                  >
                     <span className="text-muted-foreground">Active Warranties</span>
                     <span className="font-medium text-emerald-600">{statistics.activeWarranties}</span>
                   </div>
-                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <div 
+                    className="flex justify-between items-center text-xs sm:text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => handleCardClick('warranty', 'expiring')}
+                  >
                     <span className="text-muted-foreground">Expiring Soon (30 days)</span>
                     <span className="font-medium text-amber-600">{statistics.expiringSoon}</span>
                   </div>
-                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <div 
+                    className="flex justify-between items-center text-xs sm:text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => handleCardClick('warranty', 'expired')}
+                  >
                     <span className="text-muted-foreground">Expired</span>
                     <span className="font-medium text-red-600">{statistics.expired}</span>
                   </div>
@@ -469,15 +542,24 @@ export function InventoryStaffDashboardPage() {
                   </h3>
                 </div>
                 <div className="p-4 space-y-3">
-                  <div className="flex justify-between items-center">
+                  <div 
+                    className="flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => handleCardClick('repairs', 'pending')}
+                  >
                     <span className="text-sm text-muted-foreground">Pending</span>
                     <span className="font-medium text-amber-600">{statistics.pendingRepairs}</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div 
+                    className="flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => handleCardClick('repairs', 'in_progress')}
+                  >
                     <span className="text-sm text-muted-foreground">In Progress</span>
                     <span className="font-medium text-red-600">{statistics.inProgressRepairs}</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div 
+                    className="flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 -m-2 rounded transition-colors"
+                    onClick={() => handleCardClick('repairs', 'completed')}
+                  >
                     <span className="text-sm text-muted-foreground">Completed</span>
                     <span className="font-medium text-emerald-600">{statistics.completedRepairs}</span>
                   </div>

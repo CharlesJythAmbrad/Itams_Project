@@ -38,6 +38,7 @@ export function ITSDSidebar({
 
   const navItems = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
+    { id: "user-management", label: "User Management", icon: Users },
   ]
 
   const handleConfirmSignOut = async () => {
@@ -114,7 +115,11 @@ export function ITSDSidebar({
               type="button"
               onClick={() => {
                 onSelectNav?.(item.id)
-                navigate("/dashboard")
+                if (item.id === "overview") {
+                  navigate("/dashboard")
+                } else if (item.id === "user-management") {
+                  navigate("/dashboard/itsd/user-management")
+                }
                 onCloseMobile()
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer text-left ${
