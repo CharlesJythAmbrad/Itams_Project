@@ -90,7 +90,7 @@ export function ProfileSettingsPage() {
     itsd: {
       name: "ITSD Admin",
       badgeColor: "bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300 border-red-300 dark:border-red-800",
-      accentGrad: "from-red-700 via-rose-600 to-red-800",
+      accentGrad: "from-red-900 via-red-800 to-zinc-900",
       icon: ShieldCheck,
       desc: "IT Systems Desk & Infrastructure Vault Administrator",
       permissions: [
@@ -117,8 +117,8 @@ export function ProfileSettingsPage() {
     },
     end_user: {
       name: "End User",
-      badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800",
-      accentGrad: "from-emerald-700 via-teal-600 to-emerald-800",
+      badgeColor: "bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300 border-red-300 dark:border-red-800",
+      accentGrad: "from-red-900 via-red-800 to-zinc-900",
       icon: Laptop,
       desc: "Enterprise Personnel Asset Custody Workspace",
       permissions: [
@@ -303,7 +303,7 @@ export function ProfileSettingsPage() {
             onClick={() => setTab("overview")}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${
               currentTab === "overview"
-                ? "border-red-700 text-red-700 dark:border-red-500 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20"
+                ? "border-red-700 text-red-700 dark:border-red-400 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
             }`}
           >
@@ -316,7 +316,7 @@ export function ProfileSettingsPage() {
             onClick={() => setTab("credentials")}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${
               currentTab === "credentials"
-                ? "border-red-700 text-red-700 dark:border-red-500 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20"
+                ? "border-red-700 text-red-700 dark:border-red-400 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
             }`}
           >
@@ -329,7 +329,7 @@ export function ProfileSettingsPage() {
             onClick={() => setTab("settings")}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${
               currentTab === "settings"
-                ? "border-red-700 text-red-700 dark:border-red-500 dark:text-red-400 bg-red-50/50 dark:bg-red-950/20"
+                ? "border-red-700 text-red-700 dark:border-red-400 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
             }`}
           >
@@ -439,21 +439,21 @@ export function ProfileSettingsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   {role === "itsd" && (
                     <>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Clearance Level</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">
                           {profile?.roleDetails?.admin_level || "Tier 3 Lead Admin"}
                         </p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Assigned Shift</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">Day Shift (08:00 - 17:00 PHT)</p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Security Clearance</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">Zero Trust Security Vault</p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Node Custody Scope</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">1,482 Workstation Nodes</p>
                       </div>
@@ -462,21 +462,21 @@ export function ProfileSettingsPage() {
 
                   {role === "inventory_staff" && (
                     <>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Staff Badge Number</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">
                           {profile?.roleDetails?.badge_number || "INV-8821"}
                         </p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Department</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">ITSD</p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Custody Scope</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">Stock Intake & Hardware Serial Ledger</p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Verification Status</p>
                         <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Certified Logistics Handler</p>
                       </div>
@@ -485,21 +485,21 @@ export function ProfileSettingsPage() {
 
                   {role === "end_user" && (
                     <>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Department</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">
                           {profile?.roleDetails?.department || "College of Engineering"}
                         </p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Assigned Workstation</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">Engineering Lab 402 • Desk 08</p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Active Custody Devices</p>
                         <p className="text-xs font-bold text-foreground mt-0.5">1 Laptop • 1 Monitor • 1 Dock</p>
                       </div>
-                      <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Maintenance Warranty Status</p>
                         <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Active Full Coverage</p>
                       </div>
@@ -599,7 +599,7 @@ export function ProfileSettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60 space-y-1">
+                  <div className="p-3.5 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800 space-y-1">
                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
                       Primary Login Email
                     </span>
@@ -608,7 +608,7 @@ export function ProfileSettingsPage() {
                     </p>
                   </div>
 
-                  <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60 space-y-1">
+                  <div className="p-3.5 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800 space-y-1">
                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
                       System Username Alias
                     </span>
@@ -617,7 +617,7 @@ export function ProfileSettingsPage() {
                     </p>
                   </div>
 
-                  <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60 space-y-1">
+                  <div className="p-3.5 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800 space-y-1">
                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
                       Password Hash Mechanism
                     </span>
@@ -626,7 +626,7 @@ export function ProfileSettingsPage() {
                     </p>
                   </div>
 
-                  <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60 space-y-1">
+                  <div className="p-3.5 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800 space-y-1">
                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
                       Security Policy Level
                     </span>
@@ -675,7 +675,7 @@ export function ProfileSettingsPage() {
             <div className="space-y-6">
               <div className="p-5 sm:p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[5px] shadow-xs space-y-4">
                 <div className="flex items-center gap-2 text-foreground">
-                  <Lock className="size-4.5 text-red-700 dark:text-red-500" />
+                  <Lock className="size-4.5 text-red-700 dark:text-red-400" />
                   <h3 className="text-sm font-bold">
                     Update Password
                   </h3>
@@ -783,7 +783,7 @@ export function ProfileSettingsPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                <div className="flex items-center justify-between p-3.5 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                   <div className="space-y-0.5">
                     <p className="text-xs font-bold text-foreground">Critical Infrastructure Alerts</p>
                     <p className="text-[11px] text-muted-foreground">Receive real-time badges for offline nodes</p>
@@ -793,7 +793,7 @@ export function ProfileSettingsPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                <div className="flex items-center justify-between p-3.5 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                   <div className="space-y-0.5">
                     <p className="text-xs font-bold text-foreground">Security Audit Logging</p>
                     <p className="text-[11px] text-muted-foreground">Log login timestamps and role changes</p>
@@ -803,7 +803,7 @@ export function ProfileSettingsPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60">
+                <div className="flex items-center justify-between p-3.5 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                   <div className="space-y-0.5">
                     <p className="text-xs font-bold text-foreground">Daily Warehouse Digest</p>
                     <p className="text-[11px] text-muted-foreground">Summary of equipment checkout statuses</p>
@@ -826,7 +826,7 @@ export function ProfileSettingsPage() {
                 </p>
               </div>
 
-              <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-[5px] border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
+              <div className="p-4 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-foreground">Current Active Session</span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">

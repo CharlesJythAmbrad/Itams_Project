@@ -140,7 +140,7 @@ export function UserMenuDropdown() {
                   <p className="text-[11px] text-muted-foreground truncate mb-1">
                     {email}
                   </p>
-                  <div className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-[5px] border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                  <div className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-[5px] border bg-white dark:bg-zinc-900 text-foreground border-zinc-200 dark:border-zinc-800">
                     <RoleIcon className="size-3 shrink-0" />
                     <span className="truncate">{currentRole.title}</span>
                   </div>
