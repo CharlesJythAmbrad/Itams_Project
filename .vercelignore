@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Database
+*.sqlite
+*.db
+
+# Documentation drafts
+README.md
+docs/
+
+# Git
+.git
+.gitignore
+
+# Supabase local development
+supabase/.temp
+supabase/seed.sql
+supabase/sample_assets_data.sql
+
+# Build artifacts (keep dist out, but let Vercel create it)
+dist
+build

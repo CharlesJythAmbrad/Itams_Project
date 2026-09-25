@@ -9,29 +9,24 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-// Ensure single instance with proper configuration
-let supabaseInstance = null
-
-if (!supabaseInstance) {
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storage: window.localStorage,
-      storageKey: 'sb-itams-auth-token',
-      flowType: 'pkce'
-    },
-    global: {
-      headers: {
-        'x-my-custom-header': 'itams-client'
-      }
-    },
-    db: {
-      schema: 'public'
+// Create Supabase client with safe browser-only configurations
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'sb-itams-auth-token',
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'x-my-custom-header': 'itams-client'
     }
-  })
-}
+  },
+  db: {
+    schema: 'public'
+  }
+})
 
-export const supabase = supabaseInstance
 export default supabase
