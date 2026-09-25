@@ -88,8 +88,8 @@ export function UserManagementPage() {
   // Statistics
   const userStats = {
     total: users.length,
-    active: users.filter(u => !u.is_deactivated).length,
-    inactive: users.filter(u => u.is_deactivated).length,
+    active: users.filter(u => u.is_deactivated !== true).length,
+    inactive: users.filter(u => u.is_deactivated === true).length,
     itsd: users.filter(u => u.role === 'itsd').length,
     inventory_staff: users.filter(u => u.role === 'inventory_staff').length,
     end_user: users.filter(u => u.role === 'end_user').length
@@ -101,8 +101,12 @@ export function UserManagementPage() {
       setIsLoading(true)
       setError("")
 
-      // Fetch users with their dedicated role details as defined in seed.sql
-      let { data: publicUsers, error: publicError } = await supabase
+      // Fetch users with their dedicated role details - handle missing is_deactivated column
+      let publicUsers = null
+      let publicError = null
+
+      // Try with is_deactivated column first
+      const { data: usersWithStatus, error: statusError } = await supabase
         .from("users")
         .select(`
           id,
@@ -119,9 +123,39 @@ export function UserManagementPage() {
         `)
         .order("created_at", { ascending: false })
 
-      // If joined tables query encounters an issue, fallback to flat query
-      if (publicError) {
-        console.warn("Falling back to flat query for public.users:", publicError.message)
+      if (statusError && statusError.message?.includes('is_deactivated')) {
+        console.warn("Column is_deactivated doesn't exist, falling back to basic query:", statusError.message)
+        // Fallback query without is_deactivated
+        const { data: basicUsers, error: basicError } = await supabase
+          .from("users")
+          .select(`
+            id,
+            email,
+            full_name,
+            role,
+            last_login_at,
+            created_at,
+            updated_at,
+            itsd_users ( admin_level, specialization, shift ),
+            inventory_staff_users ( warehouse_location, inventory_tier, badge_number ),
+            end_users ( department, employee_id, job_title )
+          `)
+          .order("created_at", { ascending: false })
+        
+        if (basicError) {
+          console.warn("Falling back to flat query for public.users:", basicError.message)
+          const fallback = await supabase
+            .from("users")
+            .select("*")
+            .order("created_at", { ascending: false })
+
+          if (fallback.error) throw fallback.error
+          publicUsers = fallback.data
+        } else {
+          publicUsers = basicUsers
+        }
+      } else if (statusError) {
+        console.warn("Falling back to flat query for public.users:", statusError.message)
         const fallback = await supabase
           .from("users")
           .select("*")
@@ -129,6 +163,8 @@ export function UserManagementPage() {
 
         if (fallback.error) throw fallback.error
         publicUsers = fallback.data
+      } else {
+        publicUsers = usersWithStatus
       }
 
       setUsers(publicUsers || [])
@@ -154,12 +190,12 @@ export function UserManagementPage() {
       )
     }
 
-    // Status filter (based on is_deactivated in seed.sql)
+    // Status filter (handle missing is_deactivated column)
     if (statusFilter !== "all") {
       if (statusFilter === "active") {
-        filtered = filtered.filter(user => !user.is_deactivated)
+        filtered = filtered.filter(user => user.is_deactivated !== true)
       } else if (statusFilter === "inactive") {
-        filtered = filtered.filter(user => user.is_deactivated)
+        filtered = filtered.filter(user => user.is_deactivated === true)
       }
     }
 
@@ -176,7 +212,7 @@ export function UserManagementPage() {
     fetchUsers()
   }, [])
 
-  // Handle user activation/deactivation based on seed.sql (is_deactivated field)
+  // Handle user activation/deactivation - handle missing is_deactivated column gracefully
   const handleToggleUserStatus = async (userId, currentStatus, userName) => {
     if (userId === currentAdminUser?.id) {
       setError("You cannot deactivate your own administrator account.")
@@ -191,7 +227,7 @@ export function UserManagementPage() {
     try {
       const newStatus = !currentStatus
 
-      // Update public.users is_deactivated field (triggers user_management_log_trigger in seed.sql)
+      // Always try to update is_deactivated - this will help us detect if the column exists
       const { error: updateError } = await supabase
         .from("users")
         .update({
@@ -200,12 +236,47 @@ export function UserManagementPage() {
         })
         .eq("id", userId)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error("Database update error:", updateError)
+        
+        // Check for specific column missing error
+        if (updateError.message?.includes('column "is_deactivated" of relation "users" does not exist') || 
+            updateError.message?.includes('is_deactivated')) {
+          setError("User management system is not properly set up. The database is missing required columns. Please contact your system administrator to run the migration script.")
+          return
+        }
+        
+        // Check for permission errors
+        if (updateError.message?.includes('permission') || updateError.message?.includes('RLS')) {
+          setError("You don't have permission to update user status. Please check your administrator privileges.")
+          return
+        }
+        
+        // Other database errors
+        throw new Error(`Database error: ${updateError.message}`)
+      }
+
+      // Verify the update actually worked by refetching the user
+      const { data: verifyUser, error: verifyError } = await supabase
+        .from("users")
+        .select("is_deactivated")
+        .eq("id", userId)
+        .maybeSingle()
+
+      if (verifyError) {
+        console.warn("Could not verify update:", verifyError.message)
+      }
+
+      // Check if the update actually took effect
+      if (verifyUser && verifyUser.is_deactivated !== newStatus) {
+        setError("Update appeared successful but database value didn't change. This may be a permissions issue or database constraint.")
+        return
+      }
 
       // Optimistically update local users list
       setUsers(prev => prev.map(user =>
         user.id === userId
-          ? { ...user, is_deactivated: newStatus }
+          ? { ...user, is_deactivated: newStatus, updated_at: new Date().toISOString() }
           : user
       ))
 
@@ -273,16 +344,33 @@ export function UserManagementPage() {
       const newUserId = authData?.user?.id
       if (newUserId) {
         // 2. Ensure public.users entry exists with correct role and status
-        await supabase
-          .from("users")
-          .upsert({
-            id: newUserId,
-            email: newUserData.email.trim().toLowerCase(),
-            full_name: newUserData.full_name.trim(),
-            role: newUserData.role,
-            is_deactivated: false,
-            updated_at: new Date().toISOString()
-          })
+        const userData = {
+          id: newUserId,
+          email: newUserData.email.trim().toLowerCase(),
+          full_name: newUserData.full_name.trim(),
+          role: newUserData.role,
+          updated_at: new Date().toISOString()
+        }
+        
+        // Only include is_deactivated if the table supports it
+        try {
+          // Try to add is_deactivated - if it fails, the column doesn't exist
+          userData.is_deactivated = false
+          
+          await supabase
+            .from("users")
+            .upsert(userData)
+        } catch (columnError) {
+          // If is_deactivated column doesn't exist, try without it
+          if (columnError?.message?.includes('is_deactivated')) {
+            delete userData.is_deactivated
+            await supabase
+              .from("users")
+              .upsert(userData)
+          } else {
+            throw columnError
+          }
+        }
 
         // 3. Upsert into the dedicated role table based on seed.sql schema
         if (newUserData.role === "itsd") {
@@ -359,6 +447,34 @@ export function UserManagementPage() {
           </div>
           <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 opacity-10 pointer-events-none">
             <ShieldCheck className="size-72" />
+          </div>
+          
+          {/* Debug Button for Troubleshooting */}
+          <div className="absolute top-4 right-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                try {
+                  // Test database schema
+                  const { data, error } = await supabase
+                    .from("users")
+                    .select("id, email, is_deactivated")
+                    .limit(1)
+                  
+                  if (error) {
+                    alert(`Database Issue: ${error.message}`)
+                  } else {
+                    alert("Database schema looks good! ✓")
+                  }
+                } catch (err) {
+                  alert(`Connection Error: ${err.message}`)
+                }
+              }}
+              className="text-xs bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              Test DB Setup
+            </Button>
           </div>
         </div>
 
@@ -578,11 +694,11 @@ export function UserManagementPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 rounded-[5px] text-[10px] font-bold ${
-                            user.is_deactivated
+                            user.is_deactivated === true
                               ? "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
                               : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                           }`}>
-                            {user.is_deactivated ? "Inactive" : "Active"}
+                            {user.is_deactivated === true ? "Inactive" : "Active"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
@@ -603,9 +719,9 @@ export function UserManagementPage() {
                               size="sm"
                               variant="outline"
                               disabled={actionLoadingId === user.id}
-                              onClick={() => handleToggleUserStatus(user.id, user.is_deactivated, user.full_name)}
+                              onClick={() => handleToggleUserStatus(user.id, user.is_deactivated === true, user.full_name)}
                               className={`rounded-[5px] text-xs h-7 px-2.5 ${
-                                user.is_deactivated
+                                user.is_deactivated === true
                                   ? "text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                                   : "text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
                               }`}
@@ -615,7 +731,7 @@ export function UserManagementPage() {
                                   <Loader2 className="size-3 animate-spin mr-1" />
                                   Updating...
                                 </>
-                              ) : user.is_deactivated ? (
+                              ) : user.is_deactivated === true ? (
                                 <>
                                   <CheckCircle className="size-3 mr-1 text-emerald-600" />
                                   Activate

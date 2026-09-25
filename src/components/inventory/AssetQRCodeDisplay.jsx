@@ -189,7 +189,7 @@ export function AssetQRCodeDisplay({ asset, className = "" }) {
               Unique Live Tracking QR Code
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Scan with any mobile camera to view real-time location, assignments, maintenance history, and updates.
+              Scan with any mobile camera to view real-time status, location, assignment details, borrower information, active repairs, and maintenance history.
             </p>
           </div>
 

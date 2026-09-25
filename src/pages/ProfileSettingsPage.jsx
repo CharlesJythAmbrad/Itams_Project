@@ -79,10 +79,10 @@ export function ProfileSettingsPage() {
   const userId = user?.id || "N/A"
   const createdAtFormatted = user?.created_at
     ? new Date(user.created_at).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
     : "September 8, 2026"
 
   // Role visual configuration
@@ -242,8 +242,8 @@ export function ProfileSettingsPage() {
     role === "itsd"
       ? ITSDLayout
       : role === "inventory_staff"
-      ? InventoryStaffLayout
-      : EndUsersLayout
+        ? InventoryStaffLayout
+        : EndUsersLayout
 
   return (
     <LayoutComponent activeTab="profile">
@@ -301,11 +301,10 @@ export function ProfileSettingsPage() {
           <button
             type="button"
             onClick={() => setTab("overview")}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${
-              currentTab === "overview"
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${currentTab === "overview"
                 ? "border-red-700 text-red-700 dark:border-red-400 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            }`}
+              }`}
           >
             <User className="size-4" />
             <span>Profile & Identity</span>
@@ -314,11 +313,10 @@ export function ProfileSettingsPage() {
           <button
             type="button"
             onClick={() => setTab("credentials")}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${
-              currentTab === "credentials"
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${currentTab === "credentials"
                 ? "border-red-700 text-red-700 dark:border-red-400 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            }`}
+              }`}
           >
             <KeyRound className="size-4" />
             <span>Credentials & Access</span>
@@ -327,11 +325,10 @@ export function ProfileSettingsPage() {
           <button
             type="button"
             onClick={() => setTab("settings")}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${
-              currentTab === "settings"
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-[5px] border-b-2 transition-colors cursor-pointer shrink-0 ${currentTab === "settings"
                 ? "border-red-700 text-red-700 dark:border-red-400 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            }`}
+              }`}
           >
             <Settings className="size-4" />
             <span>Account Settings</span>
@@ -361,11 +358,10 @@ export function ProfileSettingsPage() {
 
                 {profileMessage && (
                   <div
-                    className={`p-3 rounded-[5px] text-xs font-medium flex items-center gap-2.5 ${
-                      profileMessage.type === "success"
+                    className={`p-3 rounded-[5px] text-xs font-medium flex items-center gap-2.5 ${profileMessage.type === "success"
                         ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                         : "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
-                    }`}
+                      }`}
                   >
                     {profileMessage.type === "success" ? (
                       <CheckCircle2 className="size-4 shrink-0" />
@@ -447,7 +443,7 @@ export function ProfileSettingsPage() {
                       </div>
                       <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Assigned Shift</p>
-                        <p className="text-xs font-bold text-foreground mt-0.5">Day Shift (08:00 - 17:00 PHT)</p>
+                        <p className="text-xs font-bold text-foreground mt-0.5">Day Shift (08:00 AM - 5:00 PM )</p>
                       </div>
                       <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Security Clearance</p>
@@ -686,11 +682,10 @@ export function ProfileSettingsPage() {
 
                 {passwordMessage && (
                   <div
-                    className={`p-3 rounded-[5px] text-xs font-medium flex items-center gap-2 ${
-                      passwordMessage.type === "success"
+                    className={`p-3 rounded-[5px] text-xs font-medium flex items-center gap-2 ${passwordMessage.type === "success"
                         ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                         : "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
-                    }`}
+                      }`}
                   >
                     {passwordMessage.type === "success" ? (
                       <CheckCircle2 className="size-4 shrink-0" />

@@ -19,19 +19,37 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // 1. Fetch base user record from public.users including is_deactivated status
-      const { data: userData, error: userError } = await supabase
+      // 1. Fetch base user record from public.users - handle missing is_deactivated column gracefully
+      let userData = null
+      let userError = null
+      
+      // Try with is_deactivated first
+      const { data: userDataWithStatus, error: userErrorWithStatus } = await supabase
         .from("users")
         .select("id, email, full_name, role, created_at, is_deactivated")
         .eq("id", userId)
         .maybeSingle()
 
+      if (userErrorWithStatus && userErrorWithStatus.message?.includes('is_deactivated')) {
+        // Column doesn't exist yet, fallback to basic query
+        const { data: userDataBasic, error: userErrorBasic } = await supabase
+          .from("users")
+          .select("id, email, full_name, role, created_at")
+          .eq("id", userId)
+          .maybeSingle()
+        userData = userDataBasic
+        userError = userErrorBasic
+      } else {
+        userData = userDataWithStatus
+        userError = userErrorWithStatus
+      }
+
       if (userError && userError.code !== "PGRST116") {
         console.warn("Could not fetch user record:", userError.message)
       }
 
-      // Check if user is deactivated
-      if (userData?.is_deactivated) {
+      // Check if user is deactivated (only if column exists and is true)
+      if (userData?.is_deactivated === true) {
         console.warn("User account is deactivated")
         // Sign out deactivated user immediately
         await supabase.auth.signOut()
@@ -158,17 +176,26 @@ export const AuthProvider = ({ children }) => {
       if (signInError) throw signInError
 
       // Check if user is deactivated before proceeding
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("is_deactivated")
-        .eq("id", data.user.id)
-        .single()
-
-      if (userError) {
-        console.warn("Could not check user status:", userError.message)
+      let userData = null
+      let userError = null
+      
+      // Try to check user status with graceful error handling
+      try {
+        const { data: userStatusData, error: statusError } = await supabase
+          .from("users")
+          .select("is_deactivated, full_name, email")
+          .eq("id", data.user.id)
+          .maybeSingle()
+        
+        userData = userStatusData
+        userError = statusError
+      } catch (err) {
+        console.warn("Could not check user status:", err.message)
       }
 
-      if (userData?.is_deactivated) {
+      // If user is deactivated, prevent login
+      if (userData?.is_deactivated === true) {
+        console.warn("User account is deactivated during login")
         // Sign out immediately and throw error
         await supabase.auth.signOut()
         throw new Error("Your account has been deactivated. Please contact an administrator for assistance.")

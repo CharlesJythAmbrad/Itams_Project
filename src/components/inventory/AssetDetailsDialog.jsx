@@ -194,6 +194,216 @@ export function AssetDetailsDialog({
         {/* Modal Body - Scrollable */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
           
+          {/* Assignment Information (when deployed) */}
+          {asset.__assignment_info && (
+            <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-300 mb-3 flex items-center gap-1.5">
+                <User className="size-3.5" />
+                Currently Assigned
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-purple-600 dark:text-purple-300">Assignee</p>
+                  <p className="font-semibold text-purple-800 dark:text-purple-100">{asset.__assignment_info.assignee_name}</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-300 mt-0.5">{asset.__assignment_info.assignee_department}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-purple-600 dark:text-purple-300">Contact</p>
+                  <p className="font-medium text-purple-800 dark:text-purple-100">{asset.__assignment_info.assignee_email}</p>
+                  {asset.__assignment_info.assignee_phone && (
+                    <p className="text-xs text-purple-600 dark:text-purple-300 mt-0.5">{asset.__assignment_info.assignee_phone}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-purple-600 dark:text-purple-300">Assignment Location</p>
+                  <p className="font-medium text-purple-800 dark:text-purple-100">{asset.__assignment_info.assignment_location}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-purple-600 dark:text-purple-300">Assigned Date</p>
+                  <p className="font-medium text-purple-800 dark:text-purple-100">
+                    {new Date(asset.__assignment_info.assigned_date).toLocaleDateString()}
+                  </p>
+                </div>
+                {asset.__assignment_info.purpose && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-purple-600 dark:text-purple-300">Purpose</p>
+                    <p className="font-medium text-purple-800 dark:text-purple-100">{asset.__assignment_info.purpose}</p>
+                  </div>
+                )}
+                {asset.__assignment_info.special_instructions && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-purple-600 dark:text-purple-300">Special Instructions</p>
+                    <p className="text-xs text-purple-700 dark:text-purple-200 bg-purple-100 dark:bg-purple-900/30 p-2 rounded">
+                      {asset.__assignment_info.special_instructions}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Borrowing Information (when allocated) */}
+          {asset.__borrowing_info && (
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-3 flex items-center gap-1.5">
+                <Calendar className="size-3.5" />
+                Currently Borrowed
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300">Borrower</p>
+                  <p className="font-semibold text-blue-800 dark:text-blue-100">{asset.__borrowing_info.borrower_name}</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-300 mt-0.5">{asset.__borrowing_info.borrower_department}</p>
+                  {asset.__borrowing_info.borrower_employee_id && (
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-0.5">ID: {asset.__borrowing_info.borrower_employee_id}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300">Contact</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-100">{asset.__borrowing_info.borrower_email}</p>
+                  {asset.__borrowing_info.borrower_phone && (
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-0.5">{asset.__borrowing_info.borrower_phone}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300">Borrow Location</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-100">{asset.__borrowing_info.borrow_location}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300">Due Date</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-100">
+                    {new Date(asset.__borrowing_info.expected_return_date).toLocaleDateString()}
+                  </p>
+                  {new Date(asset.__borrowing_info.expected_return_date) < new Date() && (
+                    <p className="text-xs text-red-600 dark:text-red-400 font-semibold">⚠️ OVERDUE</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300">Borrowed Date</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-100">
+                    {new Date(asset.__borrowing_info.borrowed_date).toLocaleDateString()}
+                  </p>
+                </div>
+                {asset.__borrowing_info.project_name && (
+                  <div>
+                    <p className="text-xs text-blue-600 dark:text-blue-300">Project</p>
+                    <p className="font-medium text-blue-800 dark:text-blue-100">{asset.__borrowing_info.project_name}</p>
+                  </div>
+                )}
+                {asset.__borrowing_info.supervisor_name && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-blue-600 dark:text-blue-300">Supervisor</p>
+                    <p className="font-medium text-blue-800 dark:text-blue-100">
+                      {asset.__borrowing_info.supervisor_name}
+                      {asset.__borrowing_info.supervisor_email && 
+                        ` (${asset.__borrowing_info.supervisor_email})`
+                      }
+                    </p>
+                  </div>
+                )}
+                {asset.__borrowing_info.purpose && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-blue-600 dark:text-blue-300">Purpose</p>
+                    <p className="font-medium text-blue-800 dark:text-blue-100">{asset.__borrowing_info.purpose}</p>
+                  </div>
+                )}
+                {asset.__borrowing_info.special_instructions && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-blue-600 dark:text-blue-300">Special Instructions</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-200 bg-blue-100 dark:bg-blue-900/30 p-2 rounded">
+                      {asset.__borrowing_info.special_instructions}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Active Repair Information */}
+          {asset.__repair_info && (
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300 mb-3 flex items-center gap-1.5">
+                <Wrench className="size-3.5" />
+                Active Repair - {asset.__repair_info.repair_ticket}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-amber-600 dark:text-amber-300">Status</p>
+                  <p className="font-semibold text-amber-800 dark:text-amber-100 capitalize">
+                    {asset.__repair_info.status.replace('_', ' ')}
+                  </p>
+                  {asset.__repair_info.priority && (
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium mt-1 ${
+                      asset.__repair_info.priority === 'urgent' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                      asset.__repair_info.priority === 'high' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+                      'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                    }`}>
+                      {asset.__repair_info.priority} priority
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-amber-600 dark:text-amber-300">Reported Date</p>
+                  <p className="font-medium text-amber-800 dark:text-amber-100">
+                    {new Date(asset.__repair_info.date_reported).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-amber-600 dark:text-amber-300">Issue Description</p>
+                  <p className="font-medium text-amber-800 dark:text-amber-100">{asset.__repair_info.issue_description}</p>
+                </div>
+                {asset.__repair_info.technician_assigned && (
+                  <div>
+                    <p className="text-xs text-amber-600 dark:text-amber-300">Technician</p>
+                    <p className="font-medium text-amber-800 dark:text-amber-100">{asset.__repair_info.technician_assigned}</p>
+                  </div>
+                )}
+                {asset.__repair_info.vendor_name && (
+                  <div>
+                    <p className="text-xs text-amber-600 dark:text-amber-300">Repair Vendor</p>
+                    <p className="font-medium text-amber-800 dark:text-amber-100">{asset.__repair_info.vendor_name}</p>
+                  </div>
+                )}
+                {asset.__repair_info.repair_location && (
+                  <div>
+                    <p className="text-xs text-amber-600 dark:text-amber-300">Repair Location</p>
+                    <p className="font-medium text-amber-800 dark:text-amber-100">{asset.__repair_info.repair_location}</p>
+                  </div>
+                )}
+                {(asset.__repair_info.estimated_cost || asset.__repair_info.actual_cost) && (
+                  <div>
+                    <p className="text-xs text-amber-600 dark:text-amber-300">Cost</p>
+                    {asset.__repair_info.actual_cost ? (
+                      <p className="font-medium text-amber-800 dark:text-amber-100">
+                        ₱{Number(asset.__repair_info.actual_cost).toLocaleString()} (Final)
+                      </p>
+                    ) : asset.__repair_info.estimated_cost ? (
+                      <p className="font-medium text-amber-800 dark:text-amber-100">
+                        ₱{Number(asset.__repair_info.estimated_cost).toLocaleString()} (Est.)
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+                {asset.__repair_info.date_started && (
+                  <div>
+                    <p className="text-xs text-amber-600 dark:text-amber-300">Started Date</p>
+                    <p className="font-medium text-amber-800 dark:text-amber-100">
+                      {new Date(asset.__repair_info.date_started).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                {asset.__repair_info.notes && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-amber-600 dark:text-amber-300">Repair Notes</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/30 p-2 rounded">
+                      {asset.__repair_info.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Unique Live Tracking QR Code */}
           <AssetQRCodeDisplay asset={asset} />
 

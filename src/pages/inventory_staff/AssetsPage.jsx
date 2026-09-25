@@ -4,6 +4,7 @@ import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLa
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
 import { SimpleAddAssetDialog } from "@/components/inventory/SimpleAddAssetDialog"
+import { BulkAddAssetDialog } from "@/components/inventory/BulkAddAssetDialog"
 import { AssetAssignmentDialog } from "@/components/inventory/AssetAssignmentDialog"
 import { EditAssetDialog } from "@/components/inventory/EditAssetDialog"
 import { DeleteAssetDialog } from "@/components/inventory/DeleteAssetDialog"
@@ -56,6 +57,7 @@ export function AssetsPage() {
   const [assets, setAssets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isBulkAddDialogOpen, setIsBulkAddDialogOpen] = useState(false)
   const [error, setError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState(null)
@@ -87,7 +89,7 @@ export function AssetsPage() {
     if (status !== null) setSelectedStatus(status)
   }, [searchParams])
 
-  // Handle scanned QR code result
+  // Handle scanned QR code result with comprehensive asset information
   const handleScanSuccess = async (scannedTag, rawValue) => {
     setIsScanDialogOpen(false)
     if (!scannedTag) return
@@ -95,39 +97,153 @@ export function AssetsPage() {
     // Set search term so the table immediately filters to this asset
     setSearchTerm(scannedTag)
 
-    // Check if the asset is already in current loaded assets
-    const matchedAsset = assets.find(a => 
-      a.asset_tag?.toLowerCase() === scannedTag.toLowerCase() ||
-      a.id === scannedTag ||
-      a.serial_number?.toLowerCase() === scannedTag.toLowerCase()
-    )
+    try {
+      // Fetch comprehensive asset information including assignments, borrowing, and repairs
+      const { data: assetData, error: assetError } = await supabase
+        .from("assets")
+        .select("*")
+        .or(`asset_tag.eq.${scannedTag},id.eq.${scannedTag},serial_number.eq.${scannedTag}`)
+        .maybeSingle()
 
-    if (matchedAsset) {
-      setSelectedAssetForDetails(matchedAsset)
-      setIsDetailsDialogOpen(true)
-      setSuccessMessage(`Asset "${matchedAsset.name}" found and opened!`)
-      setTimeout(() => setSuccessMessage(""), 4000)
-    } else {
-      // Look up directly from Supabase in case it wasn't loaded or matches by qr_code
-      try {
-        const { data, error } = await supabase
-          .from("assets")
-          .select("*")
-          .or(`asset_tag.eq.${scannedTag},id.eq.${scannedTag},serial_number.eq.${scannedTag}`)
-          .maybeSingle()
+      if (assetError) throw assetError
 
-        if (data) {
-          setSelectedAssetForDetails(data)
-          setIsDetailsDialogOpen(true)
-          setSuccessMessage(`Scanned asset "${data.name}" retrieved!`)
-          setTimeout(() => setSuccessMessage(""), 4000)
-        } else {
-          setSuccessMessage(`Scanned tag "${scannedTag}". Filter applied.`)
-          setTimeout(() => setSuccessMessage(""), 4000)
+      if (assetData) {
+        // Fetch additional context based on asset status
+        let assignmentInfo = null
+        let borrowingInfo = null
+        let repairInfo = null
+
+        // If asset is deployed, get assignment details
+        if (assetData.status === 'deployed') {
+          const { data: assignment } = await supabase
+            .from("asset_assignments")
+            .select(`
+              id,
+              assignee_name,
+              assignee_email,
+              assignee_department,
+              assignee_employee_id,
+              assignee_phone,
+              assignment_location,
+              purpose,
+              assigned_date,
+              special_instructions,
+              status
+            `)
+            .eq("asset_id", assetData.id)
+            .eq("status", "active")
+            .maybeSingle()
+          
+          assignmentInfo = assignment
         }
-      } catch (err) {
-        console.warn("Error looking up scanned asset:", err)
+
+        // If asset is allocated (borrowed), get borrowing details
+        if (assetData.status === 'allocated') {
+          const { data: borrowing } = await supabase
+            .from("asset_borrowing")
+            .select(`
+              id,
+              borrower_name,
+              borrower_email,
+              borrower_department,
+              borrower_employee_id,
+              borrower_phone,
+              borrow_location,
+              purpose,
+              borrowed_date,
+              expected_return_date,
+              project_name,
+              supervisor_name,
+              supervisor_email,
+              special_instructions,
+              status
+            `)
+            .eq("asset_id", assetData.id)
+            .eq("status", "active")
+            .maybeSingle()
+          
+          borrowingInfo = borrowing
+        }
+
+        // Check for active repairs regardless of status
+        const { data: activeRepairs } = await supabase
+          .from("repairs")
+          .select(`
+            id,
+            repair_ticket,
+            issue_description,
+            status,
+            priority,
+            estimated_cost,
+            actual_cost,
+            technician_assigned,
+            vendor_name,
+            repair_location,
+            date_reported,
+            date_started,
+            date_completed,
+            notes
+          `)
+          .eq("asset_id", assetData.id)
+          .in("status", ["pending", "in_progress", "quote_pending"])
+          .order("date_reported", { ascending: false })
+        
+        if (activeRepairs && activeRepairs.length > 0) {
+          repairInfo = activeRepairs[0] // Most recent active repair
+        }
+
+        // Create enhanced success message with status details
+        let statusMessage = `Asset "${assetData.name}" (${assetData.asset_tag})`
+        let detailedInfo = []
+
+        if (assignmentInfo) {
+          statusMessage += ` - ASSIGNED`
+          detailedInfo.push(`Assigned to: ${assignmentInfo.assignee_name} (${assignmentInfo.assignee_department})`)
+          detailedInfo.push(`Location: ${assignmentInfo.assignment_location}`)
+          detailedInfo.push(`Date: ${new Date(assignmentInfo.assigned_date).toLocaleDateString()}`)
+        } else if (borrowingInfo) {
+          statusMessage += ` - BORROWED`
+          detailedInfo.push(`Borrowed by: ${borrowingInfo.borrower_name} (${borrowingInfo.borrower_department})`)
+          detailedInfo.push(`Location: ${borrowingInfo.borrow_location}`)
+          detailedInfo.push(`Due: ${new Date(borrowingInfo.expected_return_date).toLocaleDateString()}`)
+        } else {
+          statusMessage += ` - ${assetData.status.toUpperCase().replace('_', ' ')}`
+          detailedInfo.push(`Location: ${assetData.location || 'Not specified'}`)
+        }
+
+        if (repairInfo) {
+          statusMessage += ` - IN REPAIR`
+          detailedInfo.push(`⚠️ Repair: ${repairInfo.repair_ticket} - ${repairInfo.status.replace('_', ' ')}`)
+          detailedInfo.push(`Issue: ${repairInfo.issue_description}`)
+          if (repairInfo.technician_assigned) {
+            detailedInfo.push(`Technician: ${repairInfo.technician_assigned}`)
+          }
+        }
+
+        // Store the enhanced asset data for the details dialog
+        const enhancedAsset = {
+          ...assetData,
+          __assignment_info: assignmentInfo,
+          __borrowing_info: borrowingInfo,
+          __repair_info: repairInfo
+        }
+
+        setSelectedAssetForDetails(enhancedAsset)
+        setIsDetailsDialogOpen(true)
+        
+        // Show comprehensive status message
+        const fullMessage = `${statusMessage}\n${detailedInfo.join(' • ')}`
+        setSuccessMessage(fullMessage)
+        setTimeout(() => setSuccessMessage(""), 8000) // Longer timeout for detailed message
+      } else {
+        // Asset not found - apply filter and show search message
+        setSuccessMessage(`Scanned tag "${scannedTag}". Filter applied - asset may not be in system.`)
+        setTimeout(() => setSuccessMessage(""), 4000)
       }
+    } catch (err) {
+      console.error("Error looking up scanned asset:", err)
+      setError(`Error retrieving asset details: ${err.message}`)
+      setTimeout(() => setError(""), 5000)
     }
   }
 
@@ -207,6 +323,22 @@ export function AssetsPage() {
     // Show success message
     setSuccessMessage(`Asset "${newAsset.name}" added successfully! Asset tag: ${newAsset.asset_tag}`)
     setTimeout(() => setSuccessMessage(""), 5000)
+    
+    // Also refresh the data to make sure we have the latest from database
+    setTimeout(() => {
+      fetchAssets()
+    }, 500)
+  }
+
+  const handleBulkAssetsAdded = async (newAssets) => {
+    // Add the new assets to the beginning of the list
+    setAssets(prev => [...newAssets, ...prev])
+    
+    // Show success message for bulk assets
+    const assetCount = newAssets.length
+    const assetTags = newAssets.map(asset => asset.asset_tag).join(', ')
+    setSuccessMessage(`${assetCount} assets added successfully! Asset tags: ${assetTags}`)
+    setTimeout(() => setSuccessMessage(""), 8000) // Longer timeout for bulk message
     
     // Also refresh the data to make sure we have the latest from database
     setTimeout(() => {
@@ -458,18 +590,33 @@ export function AssetsPage() {
               <Plus className="size-4" />
               Add Asset
             </Button>
+            <Button 
+              size="sm"
+              variant="outline"
+              className="rounded-[5px] gap-2 border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/20"
+              onClick={() => setIsBulkAddDialogOpen(true)}
+            >
+              <Package className="size-4" />
+              Bulk Add (10x)
+            </Button>
           </div>
         </div>
 
         {/* Success Message */}
         {successMessage && (
-          <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-md">
-            <div className="size-4 bg-emerald-600 rounded-full flex items-center justify-center">
+          <div className="flex items-start gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-md">
+            <div className="size-4 bg-emerald-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <svg className="size-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </div>
-            <span className="text-sm text-emerald-600">{successMessage}</span>
+            <div className="text-sm text-emerald-600">
+              {successMessage.split('\n').map((line, index) => (
+                <div key={index} className={index > 0 ? 'text-xs mt-1' : ''}>
+                  {line}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -819,6 +966,13 @@ export function AssetsPage() {
           isOpen={isAddDialogOpen}
           onClose={() => setIsAddDialogOpen(false)}
           onAssetAdded={handleAssetAdded}
+        />
+
+        {/* Bulk Add Asset Dialog */}
+        <BulkAddAssetDialog
+          isOpen={isBulkAddDialogOpen}
+          onClose={() => setIsBulkAddDialogOpen(false)}
+          onAssetsAdded={handleBulkAssetsAdded}
         />
 
         {/* Asset Assignment Dialog */}

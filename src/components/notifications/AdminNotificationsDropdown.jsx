@@ -109,8 +109,12 @@ export function AdminNotificationsDropdown() {
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(now.getDate() - 7)
 
-      // 1. Fetch recent User Management activities
-      const { data: usersData, error: usersErr } = await supabase
+      // 1. Fetch recent User Management activities - handle missing columns gracefully
+      let usersData = null
+      let usersErr = null
+      
+      // Try with is_deactivated column first
+      const { data: usersWithStatus, error: statusErr } = await supabase
         .from("users")
         .select(`
           id,
@@ -125,6 +129,29 @@ export function AdminNotificationsDropdown() {
         .or(`created_at.gte.${sevenDaysAgo.toISOString()},updated_at.gte.${sevenDaysAgo.toISOString()}`)
         .order("updated_at", { ascending: false })
         .limit(20)
+
+      if (statusErr && statusErr.message?.includes('is_deactivated')) {
+        // Column doesn't exist, fallback to basic query
+        const { data: basicUsers, error: basicErr } = await supabase
+          .from("users")
+          .select(`
+            id,
+            email,
+            full_name,
+            role,
+            created_at,
+            updated_at,
+            last_login_at
+          `)
+          .or(`created_at.gte.${sevenDaysAgo.toISOString()},updated_at.gte.${sevenDaysAgo.toISOString()}`)
+          .order("updated_at", { ascending: false })
+          .limit(20)
+        usersData = basicUsers
+        usersErr = basicErr
+      } else {
+        usersData = usersWithStatus
+        usersErr = statusErr
+      }
 
       if (!usersErr && usersData) {
         usersData.forEach(user => {
@@ -146,22 +173,22 @@ export function AdminNotificationsDropdown() {
           }
 
           if (wasRecentlyUpdated) {
-            const status = user.is_deactivated ? "deactivated" : "activated"
+            const status = user.is_deactivated === true ? "deactivated" : "activated"
             items.push({
               id: `user-updated-${user.id}-${user.updated_at}`,
               type: "users",
               title: `User Account ${status.charAt(0).toUpperCase() + status.slice(1)}`,
               message: `${user.full_name || user.email} account has been ${status}.`,
               timestamp: user.updated_at,
-              priority: user.is_deactivated ? "high" : "medium",
+              priority: user.is_deactivated === true ? "high" : "medium",
               link: `/dashboard/itsd/user-management?search=${encodeURIComponent(user.email)}`,
-              icon: user.is_deactivated ? UserMinus : Users,
-              color: user.is_deactivated ? "red" : "blue"
+              icon: user.is_deactivated === true ? UserMinus : Users,
+              color: user.is_deactivated === true ? "red" : "blue"
             })
           }
 
-          // Track users who haven't logged in for 30+ days but are active
-          if (!user.is_deactivated && user.last_login_at) {
+          // Track users who haven't logged in for 30+ days but are active (only if we have the columns)
+          if (user.is_deactivated !== true && user.last_login_at) {
             const lastLogin = new Date(user.last_login_at)
             const daysSinceLogin = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24))
             if (daysSinceLogin >= 30) {
