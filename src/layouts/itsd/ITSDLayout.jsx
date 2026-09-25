@@ -40,7 +40,15 @@ export function ITSDLayout({ children, activeTab = "overview", onTabChange }) {
       >
         <ITSDHeader
           onToggleMobile={openMobile}
-          activeTitle={activeTab === "overview" ? "Dashboard" : activeTab}
+          activeTitle={
+            activeTab === "overview" ? "Dashboard" : 
+            activeTab === "user-management" ? "User Management" :
+            activeTab === "system-monitor" ? "System Monitor" :
+            activeTab === "asset-oversight" ? "Asset Oversight" :
+            activeTab === "security-audit" ? "Security & Audit" :
+            activeTab === "system-reports" ? "System Reports" :
+            activeTab
+          }
         />
 
         <main className="flex-1 p-3 sm:p-4 md:p-5 max-w-7xl w-full mx-auto space-y-4">

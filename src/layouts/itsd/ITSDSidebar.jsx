@@ -39,6 +39,10 @@ export function ITSDSidebar({
   const navItems = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
     { id: "user-management", label: "User Management", icon: Users },
+    { id: "system-monitor", label: "System Monitor", icon: Activity },
+    { id: "asset-oversight", label: "Asset Oversight", icon: Server },
+    { id: "security-audit", label: "Security & Audit", icon: ShieldCheck },
+    { id: "system-reports", label: "System Reports", icon: AlertTriangle },
   ]
 
   const handleConfirmSignOut = async () => {
@@ -119,6 +123,9 @@ export function ITSDSidebar({
                   navigate("/dashboard")
                 } else if (item.id === "user-management") {
                   navigate("/dashboard/itsd/user-management")
+                } else {
+                  // For other admin sections, stay on dashboard but change active tab
+                  navigate("/dashboard")
                 }
                 onCloseMobile()
               }}
