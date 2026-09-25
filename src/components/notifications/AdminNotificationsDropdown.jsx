@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
 import { useAuth } from "@/hooks/useAuth"
+import { getUserSchemaCapabilities, setUserSchemaCapabilities } from "@/utils/userSchemaCapabilities"
 import {
   Bell,
   Check,
@@ -113,25 +114,10 @@ export function AdminNotificationsDropdown() {
       let usersData = null
       let usersErr = null
       
-      // Try with is_deactivated column first
-      const { data: usersWithStatus, error: statusErr } = await supabase
-        .from("users")
-        .select(`
-          id,
-          email,
-          full_name,
-          role,
-          is_deactivated,
-          created_at,
-          updated_at,
-          last_login_at
-        `)
-        .or(`created_at.gte.${sevenDaysAgo.toISOString()},updated_at.gte.${sevenDaysAgo.toISOString()}`)
-        .order("updated_at", { ascending: false })
-        .limit(20)
+      const caps = getUserSchemaCapabilities()
 
-      if (statusErr && statusErr.message?.includes('is_deactivated')) {
-        // Column doesn't exist, fallback to basic query
+      if (caps.hasIsDeactivated === false || caps.hasLastLoginAt === false) {
+        // Run safe query without unsupported columns
         const { data: basicUsers, error: basicErr } = await supabase
           .from("users")
           .select(`
@@ -140,17 +126,59 @@ export function AdminNotificationsDropdown() {
             full_name,
             role,
             created_at,
+            updated_at
+          `)
+          .or(`created_at.gte.${sevenDaysAgo.toISOString()},updated_at.gte.${sevenDaysAgo.toISOString()}`)
+          .order("updated_at", { ascending: false })
+          .limit(20)
+
+        usersData = basicUsers
+        usersErr = basicErr
+      } else {
+        // Try with is_deactivated and last_login_at
+        const { data: usersWithStatus, error: statusErr } = await supabase
+          .from("users")
+          .select(`
+            id,
+            email,
+            full_name,
+            role,
+            is_deactivated,
+            created_at,
             updated_at,
             last_login_at
           `)
           .or(`created_at.gte.${sevenDaysAgo.toISOString()},updated_at.gte.${sevenDaysAgo.toISOString()}`)
           .order("updated_at", { ascending: false })
           .limit(20)
-        usersData = basicUsers
-        usersErr = basicErr
-      } else {
-        usersData = usersWithStatus
-        usersErr = statusErr
+
+        if (statusErr && (statusErr.message?.includes('is_deactivated') || statusErr.message?.includes('last_login_at'))) {
+          setUserSchemaCapabilities({
+            hasIsDeactivated: !statusErr.message?.includes('is_deactivated'),
+            hasLastLoginAt: !statusErr.message?.includes('last_login_at')
+          })
+
+          // Fallback to safe query WITHOUT is_deactivated and last_login_at
+          const { data: basicUsers, error: basicErr } = await supabase
+            .from("users")
+            .select(`
+              id,
+              email,
+              full_name,
+              role,
+              created_at,
+              updated_at
+            `)
+            .or(`created_at.gte.${sevenDaysAgo.toISOString()},updated_at.gte.${sevenDaysAgo.toISOString()}`)
+            .order("updated_at", { ascending: false })
+            .limit(20)
+
+          usersData = basicUsers
+          usersErr = basicErr
+        } else {
+          usersData = usersWithStatus
+          usersErr = statusErr
+        }
       }
 
       if (!usersErr && usersData) {
@@ -173,17 +201,18 @@ export function AdminNotificationsDropdown() {
           }
 
           if (wasRecentlyUpdated) {
-            const status = user.is_deactivated === true ? "deactivated" : "activated"
+            const isDeactivated = user.is_deactivated === true
+            const status = isDeactivated ? "deactivated" : (user.is_deactivated === false ? "activated" : "updated")
             items.push({
               id: `user-updated-${user.id}-${user.updated_at}`,
               type: "users",
-              title: `User Account ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+              title: isDeactivated ? "User Account Deactivated" : (user.is_deactivated === false ? "User Account Activated" : "User Profile Updated"),
               message: `${user.full_name || user.email} account has been ${status}.`,
               timestamp: user.updated_at,
-              priority: user.is_deactivated === true ? "high" : "medium",
+              priority: isDeactivated ? "high" : "medium",
               link: `/dashboard/itsd/user-management?search=${encodeURIComponent(user.email)}`,
-              icon: user.is_deactivated === true ? UserMinus : Users,
-              color: user.is_deactivated === true ? "red" : "blue"
+              icon: isDeactivated ? UserMinus : Users,
+              color: isDeactivated ? "red" : "blue"
             })
           }
 

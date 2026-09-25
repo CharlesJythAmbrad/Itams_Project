@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState, useCallback } from "react"
 import { supabase } from "@/lib/supabaseClient"
+import { getUserSchemaCapabilities, setUserSchemaCapabilities } from "@/utils/userSchemaCapabilities"
 
 export const AuthContext = createContext(null)
 
@@ -23,15 +24,10 @@ export const AuthProvider = ({ children }) => {
       let userData = null
       let userError = null
       
-      // Try with is_deactivated first
-      const { data: userDataWithStatus, error: userErrorWithStatus } = await supabase
-        .from("users")
-        .select("id, email, full_name, role, created_at, is_deactivated")
-        .eq("id", userId)
-        .maybeSingle()
+      const caps = getUserSchemaCapabilities()
 
-      if (userErrorWithStatus && userErrorWithStatus.message?.includes('is_deactivated')) {
-        // Column doesn't exist yet, fallback to basic query
+      if (caps.hasIsDeactivated === false) {
+        // We know is_deactivated does not exist, directly run basic query without error
         const { data: userDataBasic, error: userErrorBasic } = await supabase
           .from("users")
           .select("id, email, full_name, role, created_at")
@@ -40,8 +36,27 @@ export const AuthProvider = ({ children }) => {
         userData = userDataBasic
         userError = userErrorBasic
       } else {
-        userData = userDataWithStatus
-        userError = userErrorWithStatus
+        // Try with is_deactivated
+        const { data: userDataWithStatus, error: userErrorWithStatus } = await supabase
+          .from("users")
+          .select("id, email, full_name, role, created_at, is_deactivated")
+          .eq("id", userId)
+          .maybeSingle()
+
+        if (userErrorWithStatus && userErrorWithStatus.message?.includes('is_deactivated')) {
+          setUserSchemaCapabilities({ hasIsDeactivated: false })
+          // Column doesn't exist yet, fallback to basic query
+          const { data: userDataBasic, error: userErrorBasic } = await supabase
+            .from("users")
+            .select("id, email, full_name, role, created_at")
+            .eq("id", userId)
+            .maybeSingle()
+          userData = userDataBasic
+          userError = userErrorBasic
+        } else {
+          userData = userDataWithStatus
+          userError = userErrorWithStatus
+        }
       }
 
       if (userError && userError.code !== "PGRST116") {
@@ -53,7 +68,7 @@ export const AuthProvider = ({ children }) => {
         console.warn("User account is deactivated")
         // Sign out deactivated user immediately
         await supabase.auth.signOut()
-        throw new Error("Your account has been deactivated. Please contact an administrator.")
+        throw new Error("Account Deactivated: Your account has been deactivated by an administrator. Please contact IT support for assistance.")
       }
 
       // Determine role from users table or fall back to user_metadata
@@ -181,14 +196,21 @@ export const AuthProvider = ({ children }) => {
       
       // Try to check user status with graceful error handling
       try {
-        const { data: userStatusData, error: statusError } = await supabase
-          .from("users")
-          .select("is_deactivated, full_name, email")
-          .eq("id", data.user.id)
-          .maybeSingle()
-        
-        userData = userStatusData
-        userError = statusError
+        const caps = getUserSchemaCapabilities()
+        if (caps.hasIsDeactivated !== false) {
+          const { data: userStatusData, error: statusError } = await supabase
+            .from("users")
+            .select("is_deactivated, full_name, email")
+            .eq("id", data.user.id)
+            .maybeSingle()
+          
+          if (statusError && statusError.message?.includes('is_deactivated')) {
+            setUserSchemaCapabilities({ hasIsDeactivated: false })
+          } else {
+            userData = userStatusData
+            userError = statusError
+          }
+        }
       } catch (err) {
         console.warn("Could not check user status:", err.message)
       }
@@ -198,7 +220,7 @@ export const AuthProvider = ({ children }) => {
         console.warn("User account is deactivated during login")
         // Sign out immediately and throw error
         await supabase.auth.signOut()
-        throw new Error("Your account has been deactivated. Please contact an administrator for assistance.")
+        throw new Error("Account Deactivated: Your account has been deactivated by an administrator. Please contact IT support at admin@itams.edu or call (555) 123-4567 for assistance.")
       }
 
       setUser(data.user)

@@ -88,89 +88,106 @@ export function UserManagementPage() {
   // Statistics
   const userStats = {
     total: users.length,
-    active: users.filter(u => u.is_deactivated !== true).length,
-    inactive: users.filter(u => u.is_deactivated === true).length,
+    active: users.filter(u => u.deactivated !== true).length,
+    inactive: users.filter(u => u.deactivated === true).length,
     itsd: users.filter(u => u.role === 'itsd').length,
     inventory_staff: users.filter(u => u.role === 'inventory_staff').length,
     end_user: users.filter(u => u.role === 'end_user').length
   }
 
-  // Fetch users directly from public.users with joined role tables
+  // Fetch users using admin function to bypass RLS
   const fetchUsers = async () => {
     try {
       setIsLoading(true)
       setError("")
 
-      // Fetch users with their dedicated role details - handle missing is_deactivated column
-      let publicUsers = null
-      let publicError = null
+      console.log('Fetching all users using admin function...')
 
-      // Try with is_deactivated column first
-      const { data: usersWithStatus, error: statusError } = await supabase
-        .from("users")
-        .select(`
-          id,
-          email,
-          full_name,
-          role,
-          is_deactivated,
-          last_login_at,
-          created_at,
-          updated_at,
-          itsd_users ( admin_level, specialization, shift ),
-          inventory_staff_users ( warehouse_location, inventory_tier, badge_number ),
-          end_users ( department, employee_id, job_title )
-        `)
-        .order("created_at", { ascending: false })
+      // Use the admin function that bypasses RLS
+      const { data: allUsers, error: usersError } = await supabase
+        .rpc('admin_get_all_users')
 
-      if (statusError && statusError.message?.includes('is_deactivated')) {
-        console.warn("Column is_deactivated doesn't exist, falling back to basic query:", statusError.message)
-        // Fallback query without is_deactivated
-        const { data: basicUsers, error: basicError } = await supabase
-          .from("users")
-          .select(`
-            id,
-            email,
-            full_name,
-            role,
-            last_login_at,
-            created_at,
-            updated_at,
-            itsd_users ( admin_level, specialization, shift ),
-            inventory_staff_users ( warehouse_location, inventory_tier, badge_number ),
-            end_users ( department, employee_id, job_title )
-          `)
-          .order("created_at", { ascending: false })
-        
-        if (basicError) {
-          console.warn("Falling back to flat query for public.users:", basicError.message)
-          const fallback = await supabase
-            .from("users")
-            .select("*")
-            .order("created_at", { ascending: false })
-
-          if (fallback.error) throw fallback.error
-          publicUsers = fallback.data
-        } else {
-          publicUsers = basicUsers
-        }
-      } else if (statusError) {
-        console.warn("Falling back to flat query for public.users:", statusError.message)
-        const fallback = await supabase
-          .from("users")
-          .select("*")
-          .order("created_at", { ascending: false })
-
-        if (fallback.error) throw fallback.error
-        publicUsers = fallback.data
-      } else {
-        publicUsers = usersWithStatus
+      if (usersError) {
+        console.error('Error fetching users:', usersError)
+        throw usersError
       }
 
-      setUsers(publicUsers || [])
+      console.log(`Found ${allUsers?.length || 0} users:`, allUsers)
+
+      // Step 2: Fetch role-specific details for each user
+      const usersWithRoleDetails = await Promise.all(
+        (allUsers || []).map(async (user) => {
+          let roleDetails = null
+
+          try {
+            if (user.role === 'itsd') {
+              const { data: itsdData } = await supabase
+                .from('itsd_users')
+                .select('admin_level, specialization, shift, can_manage_assets')
+                .eq('user_id', user.id)
+                .single()
+              roleDetails = itsdData
+            } else if (user.role === 'inventory_staff') {
+              const { data: invData } = await supabase
+                .from('inventory_staff_users')
+                .select('warehouse_location, inventory_tier, badge_number')
+                .eq('user_id', user.id)
+                .single()
+              roleDetails = invData
+            } else if (user.role === 'end_user') {
+              const { data: endData } = await supabase
+                .from('end_users')
+                .select('department, employee_id, job_title')
+                .eq('user_id', user.id)
+                .single()
+              roleDetails = endData
+            }
+          } catch (roleError) {
+            console.warn(`Failed to fetch role details for user ${user.id}:`, roleError)
+            roleDetails = null
+          }
+
+          return {
+            ...user,
+            roleDetails: roleDetails || {}
+          }
+        })
+      )
+
+      console.log('Users with role details:', usersWithRoleDetails)
+
+      // Step 3: Set users with proper fallback for missing columns
+      const processedUsers = usersWithRoleDetails.map(user => ({
+        ...user,
+        // Handle different possible column names and missing values
+        deactivated: user.is_deactivated ?? user.deactivated ?? false
+      }))
+
+      setUsers(processedUsers)
+
+      console.log('Final processed users:', processedUsers)
+      console.log('User count by role:', {
+        total: processedUsers.length,
+        itsd: processedUsers.filter(u => u.role === 'itsd').length,
+        inventory_staff: processedUsers.filter(u => u.role === 'inventory_staff').length,
+        end_user: processedUsers.filter(u => u.role === 'end_user').length
+      })
+
     } catch (err) {
       console.error("Error fetching users:", err)
-      setError(`Failed to load users: ${err.message}`)
+      
+      // Provide helpful error messages
+      let errorMessage = err.message || "Failed to load users"
+      
+      if (errorMessage.includes("infinite recursion")) {
+        errorMessage = "Database policy error. Please run the emergency RLS fix script."
+      } else if (errorMessage.includes("permission denied")) {
+        errorMessage = "Access denied. Only ITSD administrators can manage users."
+      }
+      
+      setError(`Failed to load users: ${errorMessage}`)
+      // Show empty array on error rather than leaving users undefined
+      setUsers([])
     } finally {
       setIsLoading(false)
     }
@@ -190,10 +207,10 @@ export function UserManagementPage() {
       )
     }
 
-    // Status filter (handle missing is_deactivated column)
+    // Status filter (handle missing is_deactivated column gracefully)
     if (statusFilter !== "all") {
       if (statusFilter === "active") {
-        filtered = filtered.filter(user => user.is_deactivated !== true)
+        filtered = filtered.filter(user => !user.is_deactivated)
       } else if (statusFilter === "inactive") {
         filtered = filtered.filter(user => user.is_deactivated === true)
       }
@@ -212,7 +229,7 @@ export function UserManagementPage() {
     fetchUsers()
   }, [])
 
-  // Handle user activation/deactivation - handle missing is_deactivated column gracefully
+  // Handle user activation/deactivation with improved error handling
   const handleToggleUserStatus = async (userId, currentStatus, userName) => {
     if (userId === currentAdminUser?.id) {
       setError("You cannot deactivate your own administrator account.")
@@ -226,66 +243,61 @@ export function UserManagementPage() {
 
     try {
       const newStatus = !currentStatus
+      console.log(`Attempting to ${newStatus ? 'deactivate' : 'activate'} user:`, { userId, currentStatus, newStatus })
 
-      // Always try to update is_deactivated - this will help us detect if the column exists
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({
-          is_deactivated: newStatus,
-          updated_at: new Date().toISOString()
+      // Use the admin function to update user status
+      const { data: result, error: updateError } = await supabase
+        .rpc('admin_update_user', {
+          target_user_id: userId,
+          new_is_deactivated: newStatus
         })
-        .eq("id", userId)
 
       if (updateError) {
         console.error("Database update error:", updateError)
         
-        // Check for specific column missing error
-        if (updateError.message?.includes('column "is_deactivated" of relation "users" does not exist') || 
-            updateError.message?.includes('is_deactivated')) {
-          setError("User management system is not properly set up. The database is missing required columns. Please contact your system administrator to run the migration script.")
+        // Check for specific errors
+        if (updateError.message?.includes('Access denied')) {
+          setError("Access denied: Only ITSD administrators can perform this operation.")
           return
         }
         
-        // Check for permission errors
-        if (updateError.message?.includes('permission') || updateError.message?.includes('RLS')) {
-          setError("You don't have permission to update user status. Please check your administrator privileges.")
+        if (updateError.message?.includes('Cannot deactivate')) {
+          setError("Cannot deactivate your own account.")
           return
         }
         
-        // Other database errors
-        throw new Error(`Database error: ${updateError.message}`)
+        if (updateError.message?.includes('infinite recursion')) {
+          setError("Database policy issue: Please run the emergency RLS fix script.")
+          return
+        }
+        
+        throw updateError
       }
 
-      // Verify the update actually worked by refetching the user
-      const { data: verifyUser, error: verifyError } = await supabase
-        .from("users")
-        .select("is_deactivated")
-        .eq("id", userId)
-        .maybeSingle()
-
-      if (verifyError) {
-        console.warn("Could not verify update:", verifyError.message)
-      }
-
-      // Check if the update actually took effect
-      if (verifyUser && verifyUser.is_deactivated !== newStatus) {
-        setError("Update appeared successful but database value didn't change. This may be a permissions issue or database constraint.")
+      if (!result) {
+        setError("User not found or update failed.")
         return
       }
 
-      // Optimistically update local users list
-      setUsers(prev => prev.map(user =>
-        user.id === userId
+      // Update the local state immediately for better UX
+      setUsers(prevUsers => prevUsers.map(user => 
+        user.id === userId 
           ? { ...user, is_deactivated: newStatus, updated_at: new Date().toISOString() }
           : user
       ))
 
-      setSuccessMessage(`User "${userName || 'Account'}" has been ${newStatus ? 'deactivated' : 'activated'} successfully.`)
+      // Show success message
+      const actionText = newStatus ? "deactivated" : "reactivated"
+      setSuccessMessage(`User "${userName}" has been ${actionText} successfully!`)
       setTimeout(() => setSuccessMessage(""), 5000)
+
+      // Refresh data in the background
+      setTimeout(() => fetchUsers(), 1000)
 
     } catch (err) {
       console.error("Error updating user status:", err)
       setError(`Failed to update user status: ${err.message}`)
+      setTimeout(() => setError(""), 8000)
     } finally {
       setActionLoadingId(null)
     }
@@ -309,32 +321,30 @@ export function UserManagementPage() {
     setIsSubmitting(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ""
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ""
-
-      // Use an isolated client with persistSession: false so the current admin session is never disturbed
-      const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false
-        }
-      })
-
-      // 1. Sign up user in Supabase Auth with metadata for seed.sql handle_new_user() trigger
-      const { data: authData, error: authError } = await tempClient.auth.signUp({
+      console.log('Starting user creation process...')
+      
+      // Step 1: Create auth user with comprehensive metadata
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newUserData.email.trim().toLowerCase(),
         password: newUserData.password,
         options: {
           data: {
             full_name: newUserData.full_name.trim(),
             role: newUserData.role,
-            department: newUserData.department || "Medical Faculty & Operations"
+            department: newUserData.department || "Medical Faculty & Operations",
+            admin_level: newUserData.admin_level,
+            specialization: newUserData.specialization,
+            warehouse_location: newUserData.warehouse_location,
+            inventory_tier: newUserData.inventory_tier,
+            job_title: newUserData.job_title
           }
         }
       })
 
-      if (authError) throw authError
+      if (authError) {
+        console.error('Auth signup error:', authError)
+        throw authError
+      }
 
       // Check if email already exists
       if (authData?.user && authData.user.identities && authData.user.identities.length === 0) {
@@ -342,61 +352,115 @@ export function UserManagementPage() {
       }
 
       const newUserId = authData?.user?.id
-      if (newUserId) {
-        // 2. Ensure public.users entry exists with correct role and status
-        const userData = {
-          id: newUserId,
-          email: newUserData.email.trim().toLowerCase(),
-          full_name: newUserData.full_name.trim(),
-          role: newUserData.role,
-          updated_at: new Date().toISOString()
-        }
-        
-        // Only include is_deactivated if the table supports it
-        try {
-          // Try to add is_deactivated - if it fails, the column doesn't exist
-          userData.is_deactivated = false
-          
-          await supabase
-            .from("users")
-            .upsert(userData)
-        } catch (columnError) {
-          // If is_deactivated column doesn't exist, try without it
-          if (columnError?.message?.includes('is_deactivated')) {
-            delete userData.is_deactivated
-            await supabase
-              .from("users")
-              .upsert(userData)
-          } else {
-            throw columnError
-          }
-        }
+      if (!newUserId) {
+        throw new Error("Failed to create user account.")
+      }
 
-        // 3. Upsert into the dedicated role table based on seed.sql schema
+      console.log('Auth user created successfully:', newUserId)
+
+      // Step 2: Wait for the trigger to process, then verify/create records manually
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // Step 3: Verify user exists in public.users, if not create it
+      let { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', newUserId)
+        .single()
+
+      if (checkError || !existingUser) {
+        console.log('Creating user record manually (trigger may have failed)...')
+        
+        // Create user record manually
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: newUserId,
+            email: newUserData.email.trim().toLowerCase(),
+            full_name: newUserData.full_name.trim(),
+            role: newUserData.role,
+            department: newUserData.department || "Medical Faculty & Operations",
+            is_deactivated: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+
+        if (insertError) {
+          console.error('Error creating user record:', insertError)
+          throw new Error(`Failed to create user profile: ${insertError.message}`)
+        }
+      }
+
+      // Step 4: Create role-specific records
+      try {
         if (newUserData.role === "itsd") {
-          await supabase.from("itsd_users").upsert({
-            user_id: newUserId,
-            admin_level: newUserData.admin_level || "Tier 2 Support",
-            specialization: newUserData.specialization || "Enterprise IT & Hardware Infrastructure",
-            shift: "Day Shift",
-            can_manage_assets: true
-          }, { onConflict: "user_id" })
+          // Check if record exists
+          const { data: existingItsd } = await supabase
+            .from('itsd_users')
+            .select('user_id')
+            .eq('user_id', newUserId)
+            .single()
+
+          if (!existingItsd) {
+            const { error: itsdError } = await supabase
+              .from('itsd_users')
+              .insert({
+                user_id: newUserId,
+                admin_level: newUserData.admin_level || "Tier 2 Support",
+                specialization: newUserData.specialization || "Enterprise IT & Hardware Infrastructure",
+                shift: "Day Shift",
+                can_manage_assets: true
+              })
+
+            if (itsdError) throw itsdError
+          }
+          
         } else if (newUserData.role === "inventory_staff") {
-          await supabase.from("inventory_staff_users").upsert({
-            user_id: newUserId,
-            warehouse_location: newUserData.warehouse_location || "Central IT Warehouse - Bay 4",
-            inventory_tier: newUserData.inventory_tier || "Stock Custodian",
-            badge_number: `INV-${Math.floor(1000 + Math.random() * 9000)}`
-          }, { onConflict: "user_id" })
+          // Check if record exists
+          const { data: existingInv } = await supabase
+            .from('inventory_staff_users')
+            .select('user_id')
+            .eq('user_id', newUserId)
+            .single()
+
+          if (!existingInv) {
+            const { error: invError } = await supabase
+              .from('inventory_staff_users')
+              .insert({
+                user_id: newUserId,
+                warehouse_location: newUserData.warehouse_location || "Central IT Warehouse - Bay 4",
+                inventory_tier: newUserData.inventory_tier || "Stock Custodian",
+                badge_number: `INV-${Math.floor(1000 + Math.random() * 9000)}`
+              })
+
+            if (invError) throw invError
+          }
+          
         } else {
           // end_user
-          await supabase.from("end_users").upsert({
-            user_id: newUserId,
-            department: newUserData.department || "Medical Faculty & Operations",
-            employee_id: `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
-            job_title: newUserData.job_title || "Clinical Staff"
-          }, { onConflict: "user_id" })
+          const { data: existingEnd } = await supabase
+            .from('end_users')
+            .select('user_id')
+            .eq('user_id', newUserId)
+            .single()
+
+          if (!existingEnd) {
+            const { error: endError } = await supabase
+              .from('end_users')
+              .insert({
+                user_id: newUserId,
+                department: newUserData.department || "Medical Faculty & Operations",
+                employee_id: `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
+                job_title: newUserData.job_title || "Clinical Staff"
+              })
+
+            if (endError) throw endError
+          }
         }
+      } catch (roleError) {
+        console.error('Error creating role-specific record:', roleError)
+        // Don't fail the entire process for role record errors
+        console.warn('Role-specific record creation failed, but user account was created')
       }
 
       // Reset form and close modal
@@ -414,15 +478,27 @@ export function UserManagementPage() {
       })
       setShowAddUserModal(false)
 
-      setSuccessMessage(`User "${newUserData.full_name}" created successfully!`)
+      setSuccessMessage(`User "${newUserData.full_name}" created successfully! They can now access their dashboard.`)
       setTimeout(() => setSuccessMessage(""), 5000)
 
-      // Refresh list
+      // Refresh users list
       await fetchUsers()
 
     } catch (err) {
       console.error("Error creating user:", err)
-      setModalError(err.message || "Failed to create user. Please try again.")
+      
+      // Provide more helpful error messages
+      let errorMessage = err.message || "Failed to create user"
+      
+      if (errorMessage.includes("duplicate key")) {
+        errorMessage = "A user with this email already exists."
+      } else if (errorMessage.includes("Database error")) {
+        errorMessage = "Database configuration issue. Please contact IT support."
+      } else if (errorMessage.includes("infinite recursion")) {
+        errorMessage = "Database policy conflict. Please run the user creation fix script."
+      }
+      
+      setModalError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -456,16 +532,15 @@ export function UserManagementPage() {
               size="sm"
               onClick={async () => {
                 try {
-                  // Test database schema
                   const { data, error } = await supabase
                     .from("users")
-                    .select("id, email, is_deactivated")
-                    .limit(1)
+                    .select("id, email, role, is_deactivated")
+                    .limit(10)
                   
                   if (error) {
                     alert(`Database Issue: ${error.message}`)
                   } else {
-                    alert("Database schema looks good! ✓")
+                    alert(`✓ Database connection successful. Found ${data.length} users.`)
                   }
                 } catch (err) {
                   alert(`Connection Error: ${err.message}`)
@@ -473,7 +548,7 @@ export function UserManagementPage() {
               }}
               className="text-xs bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
-              Test DB Setup
+              Test Connection
             </Button>
           </div>
         </div>
@@ -545,6 +620,8 @@ export function UserManagementPage() {
             </CardContent>
           </Card>
         </div>
+
+
 
         {/* Controls */}
         <Card className="rounded-[5px]">
@@ -643,17 +720,14 @@ export function UserManagementPage() {
                     const RoleIcon = role.icon
                     const isSelf = user.id === currentAdminUser?.id
 
-                    // Resolve role details based on seed.sql dedicated role tables
+                    // Resolve role details based on the new data structure
                     let roleDetailText = "—"
-                    if (user.role === "itsd") {
-                      const itsd = Array.isArray(user.itsd_users) ? user.itsd_users[0] : user.itsd_users
-                      roleDetailText = itsd?.admin_level || itsd?.specialization || "Tier 2 Support"
-                    } else if (user.role === "inventory_staff") {
-                      const inv = Array.isArray(user.inventory_staff_users) ? user.inventory_staff_users[0] : user.inventory_staff_users
-                      roleDetailText = inv?.warehouse_location || inv?.inventory_tier || "IT Specialist"
-                    } else {
-                      const end = Array.isArray(user.end_users) ? user.end_users[0] : user.end_users
-                      roleDetailText = end?.department || end?.job_title || "General Staff"
+                    if (user.role === "itsd" && user.roleDetails) {
+                      roleDetailText = user.roleDetails.admin_level || user.roleDetails.specialization || "Tier 2 Support"
+                    } else if (user.role === "inventory_staff" && user.roleDetails) {
+                      roleDetailText = user.roleDetails.warehouse_location || user.roleDetails.inventory_tier || "IT Specialist"
+                    } else if (user.role === "end_user" && user.roleDetails) {
+                      roleDetailText = user.roleDetails.department || user.roleDetails.job_title || "General Staff"
                     }
 
                     return (
@@ -694,11 +768,11 @@ export function UserManagementPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 rounded-[5px] text-[10px] font-bold ${
-                            user.is_deactivated === true
+                            user.deactivated === true
                               ? "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
                               : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                           }`}>
-                            {user.is_deactivated === true ? "Inactive" : "Active"}
+                            {user.deactivated === true ? "Inactive" : "Active"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
@@ -721,7 +795,7 @@ export function UserManagementPage() {
                               disabled={actionLoadingId === user.id}
                               onClick={() => handleToggleUserStatus(user.id, user.is_deactivated === true, user.full_name)}
                               className={`rounded-[5px] text-xs h-7 px-2.5 ${
-                                user.is_deactivated === true
+                                user.deactivated === true
                                   ? "text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                                   : "text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
                               }`}
@@ -731,7 +805,7 @@ export function UserManagementPage() {
                                   <Loader2 className="size-3 animate-spin mr-1" />
                                   Updating...
                                 </>
-                              ) : user.is_deactivated === true ? (
+                              ) : user.deactivated === true ? (
                                 <>
                                   <CheckCircle className="size-3 mr-1 text-emerald-600" />
                                   Activate

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { ITSDLayout } from "@/layouts/itsd/ITSDLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { getUserSchemaCapabilities, setUserSchemaCapabilities } from "@/utils/userSchemaCapabilities"
 import {
   Laptop,
   Server,
@@ -63,8 +64,26 @@ export function ITSDDashboardPage() {
       
       // Fetch assets data
       const { data: assets } = await supabase.from("assets").select("id, status, category, created_at, updated_at, name, asset_tag")
-      const { data: users } = await supabase.from("profiles").select("id, is_deactivated, created_at, full_name, email, role")
-      const { data: repairs } = await supabase.from("repairs").select("id, status, created_at, date_completed, asset_id, repair_ticket")
+      
+      // Fetch users data safely
+      const caps = getUserSchemaCapabilities()
+      let users = null
+      if (caps.hasIsDeactivated === false) {
+        const { data: uData } = await supabase.from("users").select("id, created_at, full_name, email, role")
+        users = uData
+      } else {
+        const { data: uData, error: uErr } = await supabase.from("users").select("id, is_deactivated, created_at, full_name, email, role")
+        if (uErr && uErr.message?.includes('is_deactivated')) {
+          setUserSchemaCapabilities({ hasIsDeactivated: false })
+          const { data: fallbackU } = await supabase.from("users").select("id, created_at, full_name, email, role")
+          users = fallbackU
+        } else {
+          users = uData
+        }
+      }
+
+      // Fetch repairs from asset_repairs
+      const { data: repairs } = await supabase.from("asset_repairs").select("id, status, created_at, repair_ticket")
       const { data: assignments } = await supabase.from("asset_assignments").select("id, status, created_at, assigned_date, assignee_name")
       const { data: borrowing } = await supabase.from("asset_borrowing").select("id, status, created_at, borrowed_date, expected_return_date, borrower_name")
 
@@ -74,8 +93,8 @@ export function ITSDDashboardPage() {
       const inMaintenance = assets?.filter(a => a.status === 'maintenance').length || 0
       
       const totalUsers = users?.length || 0
-      const activeUsers = users?.filter(u => !u.is_deactivated).length || 0
-      const deactivatedUsers = users?.filter(u => u.is_deactivated).length || 0
+      const activeUsers = users?.filter(u => u.is_deactivated !== true).length || 0
+      const deactivatedUsers = users?.filter(u => u.is_deactivated === true).length || 0
       
       const totalRepairs = repairs?.length || 0
       const openRepairs = repairs?.filter(r => ['pending', 'in_progress', 'quote_pending'].includes(r.status)).length || 0
