@@ -6,6 +6,18 @@ const Dialog = ({ children, open, onOpenChange }) => {
   React.useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
+      
+      const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+          onOpenChange?.(false)
+        }
+      }
+      
+      document.addEventListener('keydown', handleEscape)
+      
+      return () => {
+        document.removeEventListener('keydown', handleEscape)
+      }
     } else {
       document.body.style.overflow = 'unset'
     }
@@ -13,13 +25,17 @@ const Dialog = ({ children, open, onOpenChange }) => {
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [open])
+  }, [open, onOpenChange])
 
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50">
-      {children}
+      {React.Children.map(children, child => 
+        React.isValidElement(child) && child.type === DialogContent
+          ? React.cloneElement(child, { onOpenChange })
+          : child
+      )}
     </div>
   )
 }
@@ -51,28 +67,32 @@ const DialogOverlay = React.forwardRef(({ className, onClick, ...props }, ref) =
 ))
 DialogOverlay.displayName = "DialogOverlay"
 
-const DialogContent = React.forwardRef(({ className, children, onClose, ...props }, ref) => (
-  <>
-    <DialogOverlay onClick={onClose} />
-    <div
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%] sm:rounded-lg",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <button
-        onClick={onClose}
-        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+const DialogContent = React.forwardRef(({ className, children, onClose, onOpenChange, ...props }, ref) => {
+  const handleClose = onClose || (() => onOpenChange?.(false))
+  
+  return (
+    <>
+      <DialogOverlay onClick={handleClose} />
+      <div
+        ref={ref}
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%] sm:rounded-lg",
+          className
+        )}
+        {...props}
       >
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </button>
-    </div>
-  </>
-))
+        {children}
+        <button
+          onClick={handleClose}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </button>
+      </div>
+    </>
+  )
+})
 DialogContent.displayName = "DialogContent"
 
 const DialogHeader = ({

@@ -73,12 +73,16 @@ export function AppRoutes() {
             {/* Automatic role-dispatching dashboard */}
             <Route path="/dashboard" element={<DashboardPage />} />
 
+            {/* Admin specific routes - ensure default is overview */}
+            <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard/admin" element={<Navigate to="/dashboard" replace />} />
+
             {/* Direct role-specific dashboard routes with RBAC protection */}
             <Route
               path="/dashboard/itsd"
               element={
                 <ProtectedRoute allowedRoles={["itsd"]}>
-                  <ITSDDashboardPage />
+                  <Navigate to="/dashboard" replace />
                 </ProtectedRoute>
               }
             />

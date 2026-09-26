@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { ITSDLayout } from "@/layouts/itsd/ITSDLayout"
 import { useAuth } from "@/hooks/useAuth"
+import { useRouter } from "@/routes/RouterContext"
+import { useLocation } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
 import {
   Laptop,
@@ -32,8 +34,33 @@ import { Button } from "@/components/ui/button"
 
 export function ITSDDashboardPage() {
   const { profile } = useAuth()
-  const [activeTab, setActiveTab] = useState("overview")
+  const { navigate } = useRouter()
+  const location = useLocation()
+  
+  // Get tab from URL hash or default to overview
+  const getTabFromUrl = () => {
+    const hash = location.hash.replace('#', '')
+    return hash || 'overview'
+  }
+  
+  const [activeTab, setActiveTab] = useState(getTabFromUrl())
   const roleDetails = profile?.roleDetails
+
+  // Sync tab state with URL hash
+  useEffect(() => {
+    const tabFromUrl = getTabFromUrl()
+    if (tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [location.hash])
+
+  // Handle tab change and update URL
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab)
+    // Update URL hash to maintain tab state
+    const newUrl = `${location.pathname}#${newTab}`
+    navigate(newUrl, { replace: true })
+  }
 
   // System metrics state
   const [systemMetrics, setSystemMetrics] = useState({
@@ -580,7 +607,7 @@ export function ITSDDashboardPage() {
   }
 
   return (
-    <ITSDLayout activeTab={activeTab} onTabChange={setActiveTab}>
+    <ITSDLayout activeTab={activeTab} onTabChange={handleTabChange}>
       <div className="space-y-4">
         {/* Top ITSD Hero Banner */}
         <div className="rounded-[5px] bg-gradient-to-r from-red-900 via-red-800 to-zinc-900 text-white p-4 sm:p-5 shadow-md relative overflow-hidden">

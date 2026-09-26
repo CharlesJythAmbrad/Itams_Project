@@ -289,7 +289,7 @@ export function AdminNotificationsDropdown() {
           message: "Weekly system health check completed. All services operational with 99.9% uptime.",
           timestamp: new Date().toISOString(),
           priority: "low",
-          link: `/dashboard/itsd/overview`,
+          link: `/dashboard#overview`,
           icon: Activity,
           color: "emerald"
         }

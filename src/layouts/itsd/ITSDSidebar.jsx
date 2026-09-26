@@ -113,7 +113,17 @@ export function ITSDSidebar({
 
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = activeNav === item.id
+          // Determine if this nav item is active
+          let isActive = false
+          
+          if (location.pathname.includes('/user-management')) {
+            // If on user management page, only user-management should be active
+            isActive = item.id === "user-management"
+          } else {
+            // On dashboard pages, check hash or default to overview
+            const urlHash = location.hash.replace('#', '') || 'overview'
+            isActive = activeNav === item.id || urlHash === item.id
+          }
 
           return (
             <button
@@ -123,10 +133,19 @@ export function ITSDSidebar({
                 onSelectNav?.(item.id)
                 if (item.id === "user-management") {
                   navigate("/dashboard/itsd/user-management")
+                } else if (item.id === "overview") {
+                  // Navigate back to main dashboard when clicking "Dashboard"
+                  navigate("/dashboard")
                 } else {
-                  // For all other tabs, stay on current route to preserve tab state
-                  // Don't navigate away, just change the active tab
-                  // The onSelectNav callback will update the tab state
+                  // For all other tabs, check current location
+                  const currentPath = location.pathname
+                  if (currentPath.includes('/user-management')) {
+                    // If coming from user management, go to main dashboard with hash
+                    navigate(`/dashboard#${item.id}`)
+                  } else {
+                    // Otherwise, just update the hash on current dashboard
+                    navigate(`${currentPath}#${item.id}`, { replace: true })
+                  }
                 }
                 onCloseMobile()
               }}
