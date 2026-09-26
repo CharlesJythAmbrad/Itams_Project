@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { useRouter } from "@/routes/RouterContext"
+import { useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { SignOutDialog } from "@/components/common/SignOutDialog"
 
@@ -27,6 +28,7 @@ export function ITSDSidebar({
 }) {
   const { profile, user, signOut } = useAuth()
   const { navigate } = useRouter()
+  const location = useLocation()
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "ITSD Admin"
 
   const [showSignOutModal, setShowSignOutModal] = useState(false)
@@ -119,13 +121,12 @@ export function ITSDSidebar({
               type="button"
               onClick={() => {
                 onSelectNav?.(item.id)
-                if (item.id === "overview") {
-                  navigate("/dashboard")
-                } else if (item.id === "user-management") {
+                if (item.id === "user-management") {
                   navigate("/dashboard/itsd/user-management")
                 } else {
-                  // For other admin sections, stay on dashboard but change active tab
-                  navigate("/dashboard")
+                  // For all other tabs, stay on current route to preserve tab state
+                  // Don't navigate away, just change the active tab
+                  // The onSelectNav callback will update the tab state
                 }
                 onCloseMobile()
               }}

@@ -47,10 +47,9 @@ export function ProfileSettingsPage() {
     setSearchParams({ tab: tabId })
   }
 
-  // Profile Form States
+  // Profile Form States (now read-only)
   const [fullName, setFullName] = useState("")
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
-  const [profileMessage, setProfileMessage] = useState(null)
+  // Removed: isUpdatingProfile, profileMessage, handleUpdateProfile - full name is now read-only
   const [copiedId, setCopiedId] = useState(false)
 
   // Password Form States
@@ -143,43 +142,6 @@ export function ProfileSettingsPage() {
       setTimeout(() => setCopiedId(false), 2000)
     } catch {
       // Fallback
-    }
-  }
-
-  // Update Full Name
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault()
-    if (!fullName.trim()) return
-
-    setIsUpdatingProfile(true)
-    setProfileMessage(null)
-
-    try {
-      // 1. Update Supabase Auth user_metadata
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: fullName.trim() },
-      })
-      if (authError) throw authError
-
-      // 2. Also update public.users table
-      if (user?.id) {
-        await supabase
-          .from("users")
-          .update({ full_name: fullName.trim() })
-          .eq("id", user.id)
-      }
-
-      setProfileMessage({
-        type: "success",
-        text: "Your profile name has been successfully updated.",
-      })
-    } catch (err) {
-      setProfileMessage({
-        type: "error",
-        text: err.message || "Failed to update profile name.",
-      })
-    } finally {
-      setIsUpdatingProfile(false)
     }
   }
 
@@ -352,27 +314,12 @@ export function ProfileSettingsPage() {
                     Personal Identity Details
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    Update your official display name associated with your ITAMS account.
+                    View your official display name and contact information. Contact your administrator to request changes.
                   </p>
                 </div>
 
-                {profileMessage && (
-                  <div
-                    className={`p-3 rounded-[5px] text-xs font-medium flex items-center gap-2.5 ${profileMessage.type === "success"
-                        ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                        : "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
-                      }`}
-                  >
-                    {profileMessage.type === "success" ? (
-                      <CheckCircle2 className="size-4 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="size-4 shrink-0" />
-                    )}
-                    <span>{profileMessage.text}</span>
-                  </div>
-                )}
 
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                <form className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium text-foreground">
@@ -381,11 +328,12 @@ export function ProfileSettingsPage() {
                       <Input
                         type="text"
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Your full legal name"
-                        className="rounded-[5px] text-xs h-9"
-                        required
+                        disabled
+                        className="rounded-[5px] text-xs h-9 bg-zinc-100 dark:bg-zinc-800 cursor-not-allowed text-muted-foreground"
                       />
+                      <p className="text-[11px] text-muted-foreground">
+                        Contact your administrator to change your full name
+                      </p>
                     </div>
 
                     <div className="space-y-1.5">
@@ -399,19 +347,6 @@ export function ProfileSettingsPage() {
                         className="rounded-[5px] text-xs h-9 bg-zinc-100 dark:bg-zinc-800 cursor-not-allowed text-muted-foreground"
                       />
                     </div>
-                  </div>
-
-                  <div className="flex items-center justify-end pt-2">
-                    <Button
-                      type="submit"
-                      variant="brand"
-                      size="sm"
-                      isLoading={isUpdatingProfile}
-                      className="rounded-[5px] text-xs font-semibold gap-1.5 cursor-pointer bg-red-700 hover:bg-red-800 text-white h-9 px-4"
-                    >
-                      <Save className="size-3.5" />
-                      Save Changes
-                    </Button>
                   </div>
                 </form>
               </div>

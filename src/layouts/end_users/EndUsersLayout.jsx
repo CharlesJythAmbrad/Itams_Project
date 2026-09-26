@@ -40,7 +40,11 @@ export function EndUsersLayout({ children, activeTab = "equipment", onTabChange 
       >
         <EndUsersHeader
           onToggleMobile={openMobile}
-          activeTitle={activeTab === "equipment" ? "Dashboard" : activeTab}
+          activeTitle={
+            activeTab === "equipment" ? "Dashboard" : 
+            activeTab === "assets" ? "Assets Directory" :
+            activeTab
+          }
         />
 
         <main className="flex-1 p-3 sm:p-4 md:p-5 max-w-7xl w-full mx-auto space-y-4">

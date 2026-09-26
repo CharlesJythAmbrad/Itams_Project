@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react"
 import { ITSDLayout } from "@/layouts/itsd/ITSDLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
-import { getUserSchemaCapabilities, setUserSchemaCapabilities } from "@/utils/userSchemaCapabilities"
 import {
   Laptop,
   Server,
@@ -65,21 +64,22 @@ export function ITSDDashboardPage() {
       // Fetch assets data
       const { data: assets } = await supabase.from("assets").select("id, status, category, created_at, updated_at, name, asset_tag")
       
-      // Fetch users data safely
-      const caps = getUserSchemaCapabilities()
+      // Fetch users data using admin function (bypasses RLS)
       let users = null
-      if (caps.hasIsDeactivated === false) {
-        const { data: uData } = await supabase.from("users").select("id, created_at, full_name, email, role")
-        users = uData
-      } else {
-        const { data: uData, error: uErr } = await supabase.from("users").select("id, is_deactivated, created_at, full_name, email, role")
-        if (uErr && uErr.message?.includes('is_deactivated')) {
-          setUserSchemaCapabilities({ hasIsDeactivated: false })
-          const { data: fallbackU } = await supabase.from("users").select("id, created_at, full_name, email, role")
+      try {
+        // Use the admin function that can see all users
+        const { data: uData, error: uErr } = await supabase.rpc('admin_get_all_users')
+        if (uErr) {
+          console.error('Error fetching users via admin function:', uErr)
+          // Fallback to direct query (will only show current user due to RLS)
+          const { data: fallbackU } = await supabase.from("users").select("id, created_at, full_name, email, role, is_deactivated")
           users = fallbackU
         } else {
           users = uData
         }
+      } catch (err) {
+        console.error('Failed to fetch users:', err)
+        users = []
       }
 
       // Fetch repairs from asset_repairs
@@ -95,6 +95,14 @@ export function ITSDDashboardPage() {
       const totalUsers = users?.length || 0
       const activeUsers = users?.filter(u => u.is_deactivated !== true).length || 0
       const deactivatedUsers = users?.filter(u => u.is_deactivated === true).length || 0
+      
+      // Debug logging for user counts
+      console.log('Admin Dashboard - User Metrics:', {
+        totalUsers,
+        activeUsers,
+        deactivatedUsers,
+        usersData: users
+      })
       
       const totalRepairs = repairs?.length || 0
       const openRepairs = repairs?.filter(r => ['pending', 'in_progress', 'quote_pending'].includes(r.status)).length || 0
@@ -247,7 +255,6 @@ export function ITSDDashboardPage() {
     { label: "Total Assets", value: systemMetrics.totalAssets.toLocaleString(), change: `${systemMetrics.activeAssets} operational`, icon: Package, color: "blue" },
     { label: "System Users", value: systemMetrics.totalUsers.toLocaleString(), change: `${systemMetrics.activeUsers} active accounts`, icon: Users, color: "green" },
     { label: "Active Repairs", value: systemMetrics.openRepairs.toLocaleString(), change: `${systemMetrics.completedRepairs} completed`, icon: Wrench, color: "orange" },
-    { label: "Fleet Utilization", value: `${Math.round(((systemMetrics.assignedAssets + systemMetrics.borrowedAssets) / systemMetrics.totalAssets) * 100) || 0}%`, change: `${systemMetrics.assignedAssets + systemMetrics.borrowedAssets} deployed`, icon: TrendingUp, color: "purple" },
   ]
 
   const renderTabContent = () => {

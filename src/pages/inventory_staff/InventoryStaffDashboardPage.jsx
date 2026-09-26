@@ -151,32 +151,12 @@ export function InventoryStaffDashboardPage() {
 
       if (repairsError) throw repairsError
 
-      // Get all assets for statistics
+      // Get all assets for statistics with their current status
       const { data: allAssets, error: allAssetsError } = await supabase
         .from("assets")
-        .select("status, warranty_end_date")
+        .select("id, status, warranty_end_date")
 
       if (allAssetsError) throw allAssetsError
-
-      // Get all assignments and borrowing for statistics
-      const { data: allAssignments, error: allAssignmentsError } = await supabase
-        .from("asset_assignments")
-        .select("status")
-        .eq("status", "active")
-
-      const { data: allBorrowing, error: allBorrowingError } = await supabase
-        .from("asset_borrowing")
-        .select("status")
-        .eq("status", "active")
-
-      // Don't throw error if tables don't exist
-      if (allAssignmentsError) {
-        console.warn("All assignments query error:", allAssignmentsError)
-      }
-
-      if (allBorrowingError) {
-        console.warn("All borrowing query error:", allBorrowingError)
-      }
 
       // Get all repairs for statistics
       const { data: allRepairs, error: allRepairsError } = await supabase
@@ -200,13 +180,13 @@ export function InventoryStaffDashboardPage() {
         return acc
       }, { active: 0, expiringSoon: 0, expired: 0 })
 
-      // Calculate statistics
+      // Calculate statistics - Count assets by their status field (source of truth)
       const statistics = {
         totalAssets: allAssets.length,
         inStock: allAssets.filter(a => a.status === "in_stock").length,
-        assigned: (allAssignments || []).length,
-        borrowed: (allBorrowing || []).length,
-        maintenance: allAssets.filter(a => a.status === "maintenance").length,
+        assigned: allAssets.filter(a => a.status === "deployed").length, // Fixed: "assigned" -> "deployed"
+        borrowed: allAssets.filter(a => a.status === "allocated").length, // Fixed: "borrowed" -> "allocated"
+        maintenance: allAssets.filter(a => a.status === "maintenance" || a.status === "under_maintenance").length,
         activeWarranties: warrantyStats.active,
         expiringSoon: warrantyStats.expiringSoon,
         expired: warrantyStats.expired,
@@ -214,6 +194,22 @@ export function InventoryStaffDashboardPage() {
         inProgressRepairs: (allRepairs || []).filter(r => r.status === "in_progress").length,
         completedRepairs: (allRepairs || []).filter(r => r.status === "completed").length
       }
+
+      // Validation: Ensure distribution adds up to total assets
+      const distributionTotal = statistics.inStock + statistics.assigned + statistics.borrowed + statistics.maintenance
+      console.log('Asset Distribution Validation:', {
+        total: statistics.totalAssets,
+        inStock: statistics.inStock,
+        assigned: statistics.assigned, // (deployed status)
+        borrowed: statistics.borrowed, // (allocated status)
+        maintenance: statistics.maintenance,
+        distributionTotal,
+        isValid: distributionTotal === statistics.totalAssets,
+        statusMapping: {
+          'assigned count': 'deployed status',
+          'borrowed count': 'allocated status'
+        }
+      })
 
       setDashboardData({
         assets: assets || [],

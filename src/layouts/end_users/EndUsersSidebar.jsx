@@ -10,6 +10,7 @@ import {
   ChevronRight,
   LogOut,
   User,
+  Users,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { useRouter } from "@/routes/RouterContext"
@@ -37,6 +38,7 @@ export function EndUsersSidebar({
 
   const navItems = [
     { id: "equipment", label: "Dashboard", icon: LayoutDashboard },
+    { id: "assets", label: "View Assets", icon: Laptop },
   ]
 
   const handleConfirmSignOut = async () => {
@@ -113,12 +115,15 @@ export function EndUsersSidebar({
               type="button"
               onClick={() => {
                 onSelectNav?.(item.id)
-                navigate("/dashboard")
+                // Only navigate for equipment (dashboard), other tabs stay on same page
+                if (item.id === "equipment") {
+                  navigate("/dashboard")
+                }
                 onCloseMobile()
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[5px] text-xs font-medium transition-colors cursor-pointer text-left ${
                 isActive
-                  ? "bg-emerald-700 text-white font-semibold shadow-xs"
+                  ? "bg-red-700 text-white font-semibold shadow-xs"
                   : "text-zinc-600 dark:text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
               } ${!isExpanded ? "justify-center px-2" : ""}`}
               title={!isExpanded ? item.label : undefined}
