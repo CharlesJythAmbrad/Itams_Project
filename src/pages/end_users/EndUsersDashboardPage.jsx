@@ -1,62 +1,99 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { EndUsersLayout } from "@/layouts/end_users/EndUsersLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { AssetsDirectoryView } from "@/components/end_users/AssetsDirectoryView"
+import { supabase } from "@/lib/supabaseClient"
 import {
   Laptop,
   Monitor,
   MousePointer,
   CheckCircle2,
   Clock,
-  Plus,
-  Wrench,
   FileText,
   ShieldCheck,
-  RotateCcw,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 export function EndUsersDashboardPage() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const [activeTab, setActiveTab] = useState("equipment")
+  const [myAssignedDevices, setMyAssignedDevices] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const roleDetails = profile?.roleDetails
 
+  // Fetch user's assigned assets
+  const fetchAssignedAssets = async () => {
+    if (!user?.email) return
+
+    try {
+      setIsLoading(true)
+      
+      // Query asset assignments for current user
+      const { data: assignments, error } = await supabase
+        .from('asset_assignments')
+        .select(`
+          id,
+          asset_id,
+          assigned_date,
+          assignment_location,
+          status,
+          assets (
+            asset_tag,
+            name,
+            serial_number,
+            category,
+            condition,
+            status
+          )
+        `)
+        .eq('assignee_email', user.email)
+        .eq('status', 'active')
+        .order('assigned_date', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching assigned assets:', error)
+        return
+      }
+
+      // Format the data for display
+      const formattedDevices = assignments?.map(assignment => ({
+        tag: assignment.assets?.asset_tag || 'N/A',
+        serial: assignment.assets?.serial_number || 'N/A',
+        device: assignment.assets?.name || 'Unknown Device',
+        category: assignment.assets?.category || 'Unknown',
+        dateIssued: assignment.assigned_date ? 
+          new Date(assignment.assigned_date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          }) : 'N/A',
+        condition: assignment.assets?.condition || 'Unknown',
+        status: 'In Custody',
+      })) || []
+
+      setMyAssignedDevices(formattedDevices)
+    } catch (error) {
+      console.error('Error fetching assigned assets:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAssignedAssets()
+  }, [user?.email])
+
   const userMetrics = [
-    { label: "Assigned Devices", value: "3 Units", change: "In active custody", icon: Laptop },
+    { 
+      label: "Assigned Devices", 
+      value: `${myAssignedDevices.length} Units`, 
+      change: "In active custody", 
+      icon: Laptop 
+    },
     { label: "Support Requests", value: "1 Active", change: "ITSD responding", icon: Clock },
     { label: "Device Compliance", value: "100%", change: "Encrypted & Compliant", icon: ShieldCheck },
     { label: "Software Licenses", value: "5 Active", change: "Office 365, Adobe CC", icon: CheckCircle2 },
-  ]
-
-  const myAssignedDevices = [
-    {
-      tag: "ITAMS-AST-0101",
-      serial: "SN-9021884",
-      device: "Apple MacBook Pro 16-inch M3 Pro",
-      category: "Laptop",
-      dateIssued: "Jan 12, 2026",
-      condition: "Excellent",
-      status: "In Custody",
-    },
-    {
-      tag: "ITAMS-AST-0102",
-      serial: "SN-9021885",
-      device: "Dell UltraSharp U2723QE 4K USB-C Hub Monitor",
-      category: "Display",
-      dateIssued: "Jan 12, 2026",
-      condition: "Good",
-      status: "In Custody",
-    },
-    {
-      tag: "ITAMS-AST-0106",
-      serial: "SN-6102941",
-      device: "Logitech MX Master 3S Wireless Mouse",
-      category: "Accessory",
-      dateIssued: "Feb 01, 2026",
-      condition: "Good",
-      status: "In Custody",
-    },
   ]
 
   return (
@@ -141,10 +178,6 @@ export function EndUsersDashboardPage() {
                     <FileText className="size-3.5" />
                     Custody Slip
                   </Button>
-                  <Button variant="brand" size="sm" className="rounded-[5px] text-xs gap-1.5">
-                    <Plus className="size-3.5" />
-                    Request Peripheral
-                  </Button>
                 </div>
               </div>
 
@@ -158,40 +191,37 @@ export function EndUsersDashboardPage() {
                       <th className="px-5 py-3">Date Issued</th>
                       <th className="px-5 py-3">Condition</th>
                       <th className="px-5 py-3">Status</th>
-                      <th className="px-5 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
-                    {myAssignedDevices.map((device) => (
-                      <tr key={device.tag} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                        <td className="px-5 py-3.5 font-mono font-semibold text-foreground">{device.tag}</td>
-                        <td className="px-5 py-3.5 font-medium text-foreground">{device.device}</td>
-                        <td className="px-5 py-3.5 font-mono text-[11px] text-zinc-500">{device.serial}</td>
-                        <td className="px-5 py-3.5 text-muted-foreground">{device.dateIssued}</td>
-                        <td className="px-5 py-3.5 text-foreground">{device.condition}</td>
-                        <td className="px-5 py-3.5">
-                          <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-bold bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300">
-                            {device.status}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-right space-x-1.5">
-                          <button
-                            type="button"
-                            className="p-1 rounded text-zinc-500 hover:text-blue-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                            title="Report Hardware Issue"
-                          >
-                            <Wrench className="size-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            className="p-1 rounded text-zinc-500 hover:text-amber-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                            title="Initiate Return"
-                          >
-                            <RotateCcw className="size-3.5" />
-                          </button>
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan="6" className="px-5 py-8 text-center text-muted-foreground">
+                          Loading assigned devices...
                         </td>
                       </tr>
-                    ))}
+                    ) : myAssignedDevices.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="px-5 py-8 text-center text-muted-foreground">
+                          No devices currently assigned to you.
+                        </td>
+                      </tr>
+                    ) : (
+                      myAssignedDevices.map((device, index) => (
+                        <tr key={device.tag || index} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                          <td className="px-5 py-3.5 font-mono font-semibold text-foreground">{device.tag}</td>
+                          <td className="px-5 py-3.5 font-medium text-foreground">{device.device}</td>
+                          <td className="px-5 py-3.5 font-mono text-[11px] text-zinc-500">{device.serial}</td>
+                          <td className="px-5 py-3.5 text-muted-foreground">{device.dateIssued}</td>
+                          <td className="px-5 py-3.5 text-foreground">{device.condition}</td>
+                          <td className="px-5 py-3.5">
+                            <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-bold bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300">
+                              {device.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

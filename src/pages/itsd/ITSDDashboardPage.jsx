@@ -313,7 +313,7 @@ export function ITSDDashboardPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-800 rounded">
                       <span className="text-sm">API Status</span>
-                      <span className="text-sm font-mono text-red-600">✓ Online</span>
+                      <span className="text-sm font-mono text-emerald-600">✓ Online</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-800 rounded">
                       <span className="text-sm">Cache Hit Rate</span>

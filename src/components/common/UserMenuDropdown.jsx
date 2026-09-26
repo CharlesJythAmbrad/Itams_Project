@@ -106,7 +106,7 @@ export function UserMenuDropdown() {
           className={`size-8 rounded-[5px] bg-gradient-to-tr ${currentRole.avatarGrad} text-white flex items-center justify-center font-bold text-xs shadow-xs relative`}
         >
           {displayName.charAt(0).toUpperCase()}
-          <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-900" />
+          <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
         </div>
         <ChevronDown
           className={`size-3.5 text-muted-foreground transition-transform duration-200 group-hover:text-foreground hidden sm:block ${

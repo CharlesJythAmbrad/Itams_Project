@@ -496,8 +496,8 @@ export function ProfileSettingsPage() {
                       Account Status
                     </label>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="size-2 rounded-full bg-red-500 animate-pulse" />
-                      <span className="text-xs font-semibold text-red-700 dark:text-red-400">
+                      <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                         Active & Verified
                       </span>
                     </div>
@@ -759,7 +759,7 @@ export function ProfileSettingsPage() {
               <div className="p-4 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-foreground">Current Active Session</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                     Online Now
                   </span>
                 </div>
