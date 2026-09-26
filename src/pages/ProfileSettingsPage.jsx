@@ -409,7 +409,7 @@ export function ProfileSettingsPage() {
                       </div>
                       <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Verification Status</p>
-                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Certified Logistics Handler</p>
+                        <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">Certified Logistics Handler</p>
                       </div>
                     </>
                   )}
@@ -432,7 +432,7 @@ export function ProfileSettingsPage() {
                       </div>
                       <div className="p-3 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
                         <p className="text-[11px] text-muted-foreground font-medium">Maintenance Warranty Status</p>
-                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Active Full Coverage</p>
+                        <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">Active Full Coverage</p>
                       </div>
                     </>
                   )}
@@ -465,7 +465,7 @@ export function ProfileSettingsPage() {
                         title="Copy UUID"
                       >
                         {copiedId ? (
-                          <Check className="size-3.5 text-emerald-600" />
+                          <Check className="size-3.5 text-red-600" />
                         ) : (
                           <Copy className="size-3.5 text-muted-foreground" />
                         )}
@@ -496,8 +496,8 @@ export function ProfileSettingsPage() {
                       Account Status
                     </label>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                      <span className="size-2 rounded-full bg-red-500 animate-pulse" />
+                      <span className="text-xs font-semibold text-red-700 dark:text-red-400">
                         Active & Verified
                       </span>
                     </div>
@@ -587,7 +587,7 @@ export function ProfileSettingsPage() {
                     >
                       <span className="font-medium text-foreground">{perm.label}</span>
                       {perm.allowed ? (
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-[5px] border border-emerald-200 dark:border-emerald-800">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded-[5px] border border-red-200 dark:border-red-800">
                           <CheckCircle2 className="size-3.5" />
                           Permitted
                         </span>
@@ -618,7 +618,7 @@ export function ProfileSettingsPage() {
                 {passwordMessage && (
                   <div
                     className={`p-3 rounded-[5px] text-xs font-medium flex items-center gap-2 ${passwordMessage.type === "success"
-                        ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                        ? "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
                         : "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
                       }`}
                   >
@@ -718,7 +718,7 @@ export function ProfileSettingsPage() {
                     <p className="text-xs font-bold text-foreground">Critical Infrastructure Alerts</p>
                     <p className="text-[11px] text-muted-foreground">Receive real-time badges for offline nodes</p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
                     Enabled
                   </span>
                 </div>
@@ -728,7 +728,7 @@ export function ProfileSettingsPage() {
                     <p className="text-xs font-bold text-foreground">Security Audit Logging</p>
                     <p className="text-[11px] text-muted-foreground">Log login timestamps and role changes</p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
                     Enforced
                   </span>
                 </div>
@@ -759,7 +759,7 @@ export function ProfileSettingsPage() {
               <div className="p-4 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-foreground">Current Active Session</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
                     Online Now
                   </span>
                 </div>

@@ -198,7 +198,7 @@ export function BorrowedReturnPage() {
   // Get status color
   const getStatusColor = (assignment) => {
     if (assignment.status === 'returned') {
-      return 'bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300'
+      return 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
     } else if (isOverdue(assignment)) {
       return 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
     } else {
@@ -511,7 +511,7 @@ export function BorrowedReturnPage() {
                               <Eye className="size-4" />
                             </Button>
                             {assignment.status === 'active' && (
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700" title="Process Return">
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" title="Process Return">
                                 <RotateCcw className="size-4" />
                               </Button>
                             )}

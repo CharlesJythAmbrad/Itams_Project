@@ -507,7 +507,7 @@ export function AssetsPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "in_stock":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
       case "allocated":
         return "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
       case "deployed":
@@ -544,7 +544,7 @@ export function AssetsPage() {
   const getConditionBadge = (condition) => {
     switch (condition?.toLowerCase()) {
       case "excellent":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
       case "good":
         return "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
       case "fair":
@@ -604,13 +604,13 @@ export function AssetsPage() {
 
         {/* Success Message */}
         {successMessage && (
-          <div className="flex items-start gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-md">
-            <div className="size-4 bg-emerald-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+          <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
+            <div className="size-4 bg-red-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <svg className="size-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </div>
-            <div className="text-sm text-emerald-600">
+            <div className="text-sm text-red-600">
               {successMessage.split('\n').map((line, index) => (
                 <div key={index} className={index > 0 ? 'text-xs mt-1' : ''}>
                   {line}
@@ -643,8 +643,8 @@ export function AssetsPage() {
           </Card>
           
           <Card 
-            className={`rounded-[5px] cursor-pointer transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/20 ${
-              activeFilter === "in_stock" ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : ''
+            className={`rounded-[5px] cursor-pointer transition-colors hover:bg-red-50 dark:hover:bg-red-950/20 ${
+              activeFilter === "in_stock" ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800' : ''
             }`}
             onClick={() => handleFilterClick("in_stock")}
           >
@@ -654,12 +654,12 @@ export function AssetsPage() {
                   <p className="text-xs font-medium text-muted-foreground">
                     In Stock {activeFilter === "in_stock" ? '(Filtered)' : ''}
                   </p>
-                  <p className="text-xl font-bold text-emerald-600">
+                  <p className="text-xl font-bold text-red-600">
                     {assets.filter(a => a.status === "in_stock").length}
                   </p>
-                  <p className="text-[11px] text-emerald-600 mt-0.5">Click to filter</p>
+                  <p className="text-[11px] text-red-600 mt-0.5">Click to filter</p>
                 </div>
-                <Package className="size-7 text-emerald-600" />
+                <Package className="size-7 text-red-600" />
               </div>
             </CardContent>
           </Card>

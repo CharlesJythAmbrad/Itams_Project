@@ -59,11 +59,11 @@ export function EndUsersHeader({ onToggleMobile, activeTitle = "My Equipment" })
           aria-label="Notifications"
         >
           <Bell className="size-4.5" />
-          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-emerald-600" />
+          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-600" />
         </button>
 
         {/* Role Badge */}
-        <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-[5px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-900">
+        <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-[5px] bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-900">
           <Laptop className="size-3.5" />
           End User
         </span>

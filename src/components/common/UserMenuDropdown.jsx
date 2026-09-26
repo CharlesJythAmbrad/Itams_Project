@@ -44,8 +44,8 @@ export function UserMenuDropdown() {
     },
     end_user: {
       title: "End User",
-      badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800",
-      avatarGrad: "from-emerald-700 to-teal-600",
+      badgeColor: "bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300 border-red-300 dark:border-red-800",
+      avatarGrad: "from-red-700 to-red-600",
       icon: Laptop,
       detail: profile?.roleDetails?.department || "General Staff",
     },
@@ -106,7 +106,7 @@ export function UserMenuDropdown() {
           className={`size-8 rounded-[5px] bg-gradient-to-tr ${currentRole.avatarGrad} text-white flex items-center justify-center font-bold text-xs shadow-xs relative`}
         >
           {displayName.charAt(0).toUpperCase()}
-          <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+          <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-900" />
         </div>
         <ChevronDown
           className={`size-3.5 text-muted-foreground transition-transform duration-200 group-hover:text-foreground hidden sm:block ${

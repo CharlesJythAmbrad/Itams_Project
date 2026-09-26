@@ -149,7 +149,7 @@ export function AssetsDirectoryView() {
     switch (status) {
       case 'in_stock': return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-300 dark:border-blue-800'
       case 'deployed': 
-      case 'allocated': return 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-300 dark:border-green-800'
+      case 'allocated': return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-300 dark:border-red-800'
       case 'maintenance': return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-800'
       case 'retired': return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-300 dark:border-red-800'
       default: return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950/20 dark:text-gray-300 dark:border-gray-800'
@@ -240,7 +240,7 @@ export function AssetsDirectoryView() {
         </Card>
         <Card variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
           <CardContent className="p-3 text-center">
-            <div className="text-xl font-bold text-green-600">
+            <div className="text-xl font-bold text-red-600">
               {filteredAssets.filter(a => a.status === 'in_stock').length}
             </div>
             <div className="text-xs text-muted-foreground">Available</div>

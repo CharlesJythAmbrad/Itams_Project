@@ -106,8 +106,8 @@ export function LoginForm() {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="rounded-[5px] bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 p-3 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300">
-                  <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                <div className="rounded-[5px] bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 p-3 flex items-center gap-2 text-xs text-red-800 dark:text-red-300">
+                  <CheckCircle2 className="size-4 shrink-0 text-red-600" />
                   <div className="font-medium">Signing in...</div>
                 </div>
               </motion.div>

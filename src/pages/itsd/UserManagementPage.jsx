@@ -80,7 +80,7 @@ export function UserManagementPage() {
     end_user: {
       name: "End User",
       icon: Laptop,
-      color: "green",
+      color: "red",
       description: "General staff and asset requester"
     }
   }
@@ -555,8 +555,8 @@ export function UserManagementPage() {
 
         {/* Success Alert Banner */}
         {successMessage && (
-          <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-[5px] text-emerald-700 dark:text-emerald-300 text-xs">
-            <CheckCircle className="size-4 shrink-0 text-emerald-600" />
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-[5px] text-red-700 dark:text-red-300 text-xs">
+            <CheckCircle className="size-4 shrink-0 text-red-600" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -582,7 +582,7 @@ export function UserManagementPage() {
           <Card className="rounded-[5px]">
             <CardContent className="p-3">
               <div className="text-center">
-                <p className="text-lg font-bold text-emerald-600">{userStats.active}</p>
+                <p className="text-lg font-bold text-red-600">{userStats.active}</p>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
             </CardContent>
@@ -614,7 +614,7 @@ export function UserManagementPage() {
           <Card className="rounded-[5px]">
             <CardContent className="p-3">
               <div className="text-center">
-                <p className="text-lg font-bold text-emerald-600">{userStats.end_user}</p>
+                <p className="text-lg font-bold text-red-600">{userStats.end_user}</p>
                 <p className="text-xs text-muted-foreground">End Users</p>
               </div>
             </CardContent>
@@ -756,7 +756,7 @@ export function UserManagementPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
                             <RoleIcon className={`size-3.5 ${
-                              user.role === "itsd" ? "text-red-600" : user.role === "inventory_staff" ? "text-blue-600" : "text-emerald-600"
+                              user.role === "itsd" ? "text-red-600" : user.role === "inventory_staff" ? "text-blue-600" : "text-red-600"
                             }`} />
                             <span className="font-medium">{role.name}</span>
                           </div>
@@ -770,7 +770,7 @@ export function UserManagementPage() {
                           <span className={`px-2 py-0.5 rounded-[5px] text-[10px] font-bold ${
                             user.deactivated === true
                               ? "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
-                              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                              : "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
                           }`}>
                             {user.deactivated === true ? "Inactive" : "Active"}
                           </span>
@@ -796,7 +796,7 @@ export function UserManagementPage() {
                               onClick={() => handleToggleUserStatus(user.id, user.is_deactivated === true, user.full_name)}
                               className={`rounded-[5px] text-xs h-7 px-2.5 ${
                                 user.deactivated === true
-                                  ? "text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                                  ? "text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
                                   : "text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
                               }`}
                             >
@@ -807,7 +807,7 @@ export function UserManagementPage() {
                                 </>
                               ) : user.deactivated === true ? (
                                 <>
-                                  <CheckCircle className="size-3 mr-1 text-emerald-600" />
+                                  <CheckCircle className="size-3 mr-1 text-red-600" />
                                   Activate
                                 </>
                               ) : (
@@ -950,7 +950,7 @@ export function UserManagementPage() {
                       </>
                     ) : (
                       <>
-                        <Laptop className="size-3 text-emerald-600" />
+                        <Laptop className="size-3 text-red-600" />
                         End User Role Details
                       </>
                     )}

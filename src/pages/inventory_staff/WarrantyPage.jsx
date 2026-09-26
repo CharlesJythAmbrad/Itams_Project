@@ -130,7 +130,7 @@ export function WarrantyPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "active":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
       case "expiring_soon":
         return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
       case "expired":
@@ -216,9 +216,9 @@ export function WarrantyPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Active Warranties</p>
-                  <p className="text-xl font-bold text-emerald-600">{activeWarranties}</p>
+                  <p className="text-xl font-bold text-red-600">{activeWarranties}</p>
                 </div>
-                <CheckCircle className="size-7 text-emerald-600" />
+                <CheckCircle className="size-7 text-red-600" />
               </div>
             </CardContent>
           </Card>
@@ -378,7 +378,7 @@ export function WarrantyPage() {
                                 <div className="text-xs text-muted-foreground">
                                   <div>Expires: {formatDate(asset.warranty_end_date)}</div>
                                   {asset.warranty_status === "active" && daysUntilExpiry > 0 && (
-                                    <div className="text-emerald-600">
+                                    <div className="text-red-600">
                                       {daysUntilExpiry} days remaining
                                     </div>
                                   )}

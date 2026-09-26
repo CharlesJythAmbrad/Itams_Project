@@ -181,7 +181,7 @@ export function ITSDDashboardPage() {
           description: `New asset "${a.name}" (${a.asset_tag}) added to inventory`,
           timestamp: a.created_at,
           icon: Package,
-          color: 'text-green-600'
+          color: 'text-red-600'
         })) || []),
         ...(repairs?.filter(r => new Date(r.created_at) > sevenDaysAgo).map(r => ({
           id: r.id,
@@ -262,7 +262,7 @@ export function ITSDDashboardPage() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'healthy': return 'text-green-600 bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
+      case 'healthy': return 'text-red-600 bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
       case 'warning': return 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800'
       case 'critical': return 'text-red-600 bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
       default: return 'text-gray-600 bg-gray-50 border-gray-200 dark:bg-gray-950/20 dark:border-gray-800'
@@ -280,7 +280,7 @@ export function ITSDDashboardPage() {
 
   const fleetMetrics = [
     { label: "Total Assets", value: systemMetrics.totalAssets.toLocaleString(), change: `${systemMetrics.activeAssets} operational`, icon: Package, color: "blue" },
-    { label: "System Users", value: systemMetrics.totalUsers.toLocaleString(), change: `${systemMetrics.activeUsers} active accounts`, icon: Users, color: "green" },
+    { label: "System Users", value: systemMetrics.totalUsers.toLocaleString(), change: `${systemMetrics.activeUsers} active accounts`, icon: Users, color: "red" },
     { label: "Active Repairs", value: systemMetrics.openRepairs.toLocaleString(), change: `${systemMetrics.completedRepairs} completed`, icon: Wrench, color: "orange" },
   ]
 
@@ -300,7 +300,7 @@ export function ITSDDashboardPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-800 rounded">
                       <span className="text-sm">Query Response Time</span>
-                      <span className="text-sm font-mono text-green-600">~45ms</span>
+                      <span className="text-sm font-mono text-red-600">~45ms</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-800 rounded">
                       <span className="text-sm">Active Connections</span>
@@ -313,11 +313,11 @@ export function ITSDDashboardPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-800 rounded">
                       <span className="text-sm">API Status</span>
-                      <span className="text-sm font-mono text-green-600">✓ Online</span>
+                      <span className="text-sm font-mono text-red-600">✓ Online</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-800 rounded">
                       <span className="text-sm">Cache Hit Rate</span>
-                      <span className="text-sm font-mono text-green-600">94.2%</span>
+                      <span className="text-sm font-mono text-red-600">94.2%</span>
                     </div>
                   </div>
                 </div>
@@ -341,8 +341,8 @@ export function ITSDDashboardPage() {
                     <div className="text-2xl font-bold text-foreground">{systemMetrics.totalAssets}</div>
                     <div className="text-sm text-muted-foreground">Total Assets</div>
                   </div>
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                    <CheckCircle2 className="size-8 text-green-600 mx-auto mb-2" />
+                  <div className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                    <CheckCircle2 className="size-8 text-red-600 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-foreground">{systemMetrics.activeAssets}</div>
                     <div className="text-sm text-muted-foreground">Operational</div>
                   </div>
@@ -392,7 +392,7 @@ export function ITSDDashboardPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 border rounded-lg">
                       <span className="text-sm">Active Accounts</span>
-                      <span className="text-sm font-mono text-green-600">{systemMetrics.activeUsers}</span>
+                      <span className="text-sm font-mono text-red-600">{systemMetrics.activeUsers}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 border rounded-lg">
                       <span className="text-sm">Deactivated Accounts</span>
@@ -444,7 +444,7 @@ export function ITSDDashboardPage() {
                     <span className="text-xs text-muted-foreground">Generate detailed usage analytics</span>
                   </Button>
                   <Button variant="outline" className="p-4 h-auto flex-col gap-2">
-                    <Users className="size-5 text-green-600" />
+                    <Users className="size-5 text-red-600" />
                     <span className="font-medium">User Activity Report</span>
                     <span className="text-xs text-muted-foreground">Track user system interactions</span>
                   </Button>
@@ -477,7 +477,7 @@ export function ITSDDashboardPage() {
                       <div className="space-y-1">
                         <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
                         <p className="text-xl font-extrabold text-foreground">{metric.value}</p>
-                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{metric.change}</p>
+                        <p className="text-[11px] text-red-600 dark:text-red-400 font-medium">{metric.change}</p>
                       </div>
                       <div className="size-9 rounded-[5px] bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 flex items-center justify-center">
                         <Icon className="size-4.5" />

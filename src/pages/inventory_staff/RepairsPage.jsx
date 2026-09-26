@@ -207,7 +207,7 @@ export function RepairsPage() {
       case "quote_pending":
         return "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
       case "completed":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
       case "cancelled":
         return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
       default:
@@ -218,7 +218,7 @@ export function RepairsPage() {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "low":
-        return "bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300"
+        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
       case "medium":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/60 dark:text-yellow-300"
       case "high":
@@ -291,13 +291,13 @@ export function RepairsPage() {
 
         {/* Success Message */}
         {successMessage && (
-          <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-md">
-            <div className="size-4 bg-emerald-600 rounded-full flex items-center justify-center">
+          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
+            <div className="size-4 bg-red-600 rounded-full flex items-center justify-center">
               <svg className="size-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </div>
-            <span className="text-sm text-emerald-600">{successMessage}</span>
+            <span className="text-sm text-red-600">{successMessage}</span>
           </div>
         )}
 
