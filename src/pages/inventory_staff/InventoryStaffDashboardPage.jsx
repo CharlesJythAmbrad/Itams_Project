@@ -20,6 +20,8 @@ import {
   Activity,
   Loader2,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -49,6 +51,10 @@ export function InventoryStaffDashboardPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  
+  // Activity navigation state
+  const [activityPage, setActivityPage] = useState(0)
+  const itemsPerPage = 5
 
   // Fetch all dashboard data
   const fetchDashboardData = async () => {
@@ -312,7 +318,7 @@ export function InventoryStaffDashboardPage() {
     },
   ]
 
-  // Recent activity items
+  // Recent activity items with pagination
   const getRecentActivity = () => {
     const activities = []
     
@@ -342,8 +348,25 @@ export function InventoryStaffDashboardPage() {
       })
     })
     
-    // Sort by date and return first 8
-    return activities.sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8)
+    // Sort by date (newest first)
+    return activities.sort((a, b) => new Date(b.time) - new Date(a.time))
+  }
+
+  // Get paginated activities
+  const allActivities = getRecentActivity()
+  const totalPages = Math.ceil(allActivities.length / itemsPerPage)
+  const paginatedActivities = allActivities.slice(
+    activityPage * itemsPerPage, 
+    (activityPage + 1) * itemsPerPage
+  )
+
+  // Navigation handlers
+  const goToPreviousPage = () => {
+    setActivityPage(prev => Math.max(0, prev - 1))
+  }
+
+  const goToNextPage = () => {
+    setActivityPage(prev => Math.min(totalPages - 1, prev + 1))
   }
 
   return (
@@ -496,15 +519,40 @@ export function InventoryStaffDashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Recent Activity */}
               <Card className="rounded-[5px] lg:col-span-2">
-                <div className="p-3 border-b">
+                <div className="p-3 border-b flex items-center justify-between">
                   <h3 className="font-semibold text-sm flex items-center gap-2">
                     <Activity className="size-4" />
                     Recent Activity
                   </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {activityPage + 1} of {Math.max(1, totalPages)} • {allActivities.length} total
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPreviousPage}
+                        disabled={activityPage === 0}
+                        className="h-7 w-7 p-0 rounded-[5px]"
+                      >
+                        <ChevronLeft className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNextPage}
+                        disabled={activityPage >= totalPages - 1}
+                        className="h-7 w-7 p-0 rounded-[5px]"
+                      >
+                        <ChevronRight className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 <div className="p-3">
                   <div className="space-y-3">
-                    {getRecentActivity().map((activity, i) => {
+                    {paginatedActivities.map((activity, i) => {
                       const Icon = activity.icon
                       return (
                         <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md">
@@ -522,7 +570,7 @@ export function InventoryStaffDashboardPage() {
                         </div>
                       )
                     })}
-                    {getRecentActivity().length === 0 && (
+                    {paginatedActivities.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
                     )}
                   </div>

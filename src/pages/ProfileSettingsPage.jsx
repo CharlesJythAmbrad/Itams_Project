@@ -244,17 +244,6 @@ export function ProfileSettingsPage() {
                 </div>
               </div>
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSignOutModal(true)}
-              className="self-start sm:self-center rounded-[5px] text-xs font-semibold text-white border-white/40 bg-white/10 hover:bg-white/20 hover:text-white cursor-pointer h-9 px-3.5"
-            >
-              <LogOut className="size-3.5 mr-1.5" />
-              Sign Out
-            </Button>
           </div>
         </div>
 
@@ -733,15 +722,7 @@ export function ProfileSettingsPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 bg-white dark:bg-zinc-900 rounded-[5px] border border-zinc-200 dark:border-zinc-800">
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-foreground">Daily Warehouse Digest</p>
-                    <p className="text-[11px] text-muted-foreground">Summary of equipment checkout statuses</p>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                    Optional
-                  </span>
-                </div>
+
               </div>
             </div>
 

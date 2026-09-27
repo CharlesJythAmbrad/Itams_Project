@@ -369,7 +369,10 @@ export function WarrantyPage() {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <StatusIcon className="size-4" />
-                                <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(asset.warranty_status)}`}>
+                                <span 
+                                  className={`px-2 py-1 rounded-[5px] text-xs font-medium cursor-pointer hover:shadow-md transition-all duration-200 ${getStatusColor(asset.warranty_status)}`}
+                                  onClick={() => setSelectedStatus(asset.warranty_status)}
+                                >
                                   {getStatusLabel(asset.warranty_status)}
                                 </span>
                               </div>

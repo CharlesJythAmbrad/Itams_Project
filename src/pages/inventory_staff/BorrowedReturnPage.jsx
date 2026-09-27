@@ -264,9 +264,10 @@ export function BorrowedReturnPage() {
     { value: "returned", label: "Returned" }
   ]
 
-  const activeBorrows = filteredAssignments.filter(a => a.assignment_type === "borrow" && a.status === "active" && !isOverdue(a)).length
-  const overdueBorrows = filteredAssignments.filter(a => isOverdue(a)).length
-  const returnsThisMonth = filteredAssignments.filter(a => a.status === "returned").length
+  const activeBorrows = assignments.filter(a => a.assignment_type === "borrow" && a.status === "active" && !isOverdue(a)).length
+  const activeAssigns = assignments.filter(a => a.assignment_type === "assign" && a.status === "active" && !isOverdue(a)).length
+  const overdueBorrows = assignments.filter(a => isOverdue(a)).length
+  const returnsThisMonth = assignments.filter(a => a.status === "returned").length
 
   return (
     <InventoryStaffLayout activeTab="borrowed-return">
@@ -322,9 +323,7 @@ export function BorrowedReturnPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Active Assigned</p>
-                  <p className="text-xl font-bold text-purple-600">
-                    {filteredAssignments.filter(a => a.assignment_type === "assign" && a.status === "active" && !isOverdue(a)).length}
-                  </p>
+                  <p className="text-xl font-bold text-purple-600">{activeAssigns}</p>
                 </div>
                 <ArrowUpRight className="size-7 text-purple-600" />
               </div>

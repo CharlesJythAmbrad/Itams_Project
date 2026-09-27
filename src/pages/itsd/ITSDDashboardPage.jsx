@@ -27,7 +27,9 @@ import {
   Smartphone,
   Printer,
   Network,
-  Camera
+  Camera,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -82,6 +84,8 @@ export function ITSDDashboardPage() {
   const [systemHealth, setSystemHealth] = useState([])
   const [assetsByCategory, setAssetsByCategory] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [activityPage, setActivityPage] = useState(1)
+  const ACTIVITY_PAGE_SIZE = 5
 
   // Fetch comprehensive system data
   const fetchSystemData = async () => {
@@ -262,7 +266,7 @@ export function ITSDDashboardPage() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'healthy': return 'text-red-600 bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
+      case 'healthy': return 'text-green-600 bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
       case 'warning': return 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800'
       case 'critical': return 'text-red-600 bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
       default: return 'text-gray-600 bg-gray-50 border-gray-200 dark:bg-gray-950/20 dark:border-gray-800'
@@ -281,7 +285,7 @@ export function ITSDDashboardPage() {
   const fleetMetrics = [
     { label: "Total Assets", value: systemMetrics.totalAssets.toLocaleString(), change: `${systemMetrics.activeAssets} operational`, icon: Package, color: "blue" },
     { label: "System Users", value: systemMetrics.totalUsers.toLocaleString(), change: `${systemMetrics.activeUsers} active accounts`, icon: Users, color: "red" },
-    { label: "Active Repairs", value: systemMetrics.openRepairs.toLocaleString(), change: `${systemMetrics.completedRepairs} completed`, icon: Wrench, color: "orange" },
+    { label: "Fleet Utilization", value: `${Math.round((systemMetrics.assignedAssets + systemMetrics.borrowedAssets) / Math.max(systemMetrics.totalAssets, 1) * 100)}%`, change: `${systemMetrics.assignedAssets + systemMetrics.borrowedAssets} deployed`, icon: TrendingUp, color: "green" },
   ]
 
   const renderTabContent = () => {
@@ -392,7 +396,7 @@ export function ITSDDashboardPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 border rounded-lg">
                       <span className="text-sm">Active Accounts</span>
-                      <span className="text-sm font-mono text-red-600">{systemMetrics.activeUsers}</span>
+                      <span className="text-sm font-mono text-green-600">{systemMetrics.activeUsers}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 border rounded-lg">
                       <span className="text-sm">Deactivated Accounts</span>
@@ -428,40 +432,78 @@ export function ITSDDashboardPage() {
           </Card>
         )
 
-      case "system-reports":
+
+
+      case "analytics":
         return (
-          <Card variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="size-5 text-red-600" />
-                <h2 className="text-lg font-bold text-foreground">System Reports</h2>
-              </div>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button variant="outline" className="p-4 h-auto flex-col gap-2">
-                    <TrendingUp className="size-5 text-blue-600" />
-                    <span className="font-medium">Asset Utilization Report</span>
-                    <span className="text-xs text-muted-foreground">Generate detailed usage analytics</span>
-                  </Button>
-                  <Button variant="outline" className="p-4 h-auto flex-col gap-2">
-                    <Users className="size-5 text-red-600" />
-                    <span className="font-medium">User Activity Report</span>
-                    <span className="text-xs text-muted-foreground">Track user system interactions</span>
-                  </Button>
-                  <Button variant="outline" className="p-4 h-auto flex-col gap-2">
-                    <Wrench className="size-5 text-orange-600" />
-                    <span className="font-medium">Maintenance Report</span>
-                    <span className="text-xs text-muted-foreground">Review repair and maintenance data</span>
-                  </Button>
-                  <Button variant="outline" className="p-4 h-auto flex-col gap-2">
-                    <ShieldCheck className="size-5 text-red-600" />
-                    <span className="font-medium">Security Audit Log</span>
-                    <span className="text-xs text-muted-foreground">System security events and changes</span>
-                  </Button>
+          <div className="space-y-4">
+            {/* Analytics Header */}
+            <Card variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <TrendingUp className="size-5 text-red-600" />
+                  <h2 className="text-lg font-bold text-foreground">System Analytics</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                    <TrendingUp className="size-8 text-red-600 mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-foreground">
+                      {Math.round(((systemMetrics.assignedAssets + systemMetrics.borrowedAssets) / Math.max(systemMetrics.totalAssets, 1)) * 100)}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Asset Utilization</div>
+                  </div>
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                    <Activity className="size-8 text-blue-600 mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-foreground">{systemMetrics.activeUsers}</div>
+                    <div className="text-sm text-muted-foreground">Active Users</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                    <CheckCircle2 className="size-8 text-green-600 mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-foreground">
+                      {Math.round((systemMetrics.completedRepairs / Math.max(systemMetrics.totalRepairs, 1)) * 100)}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Resolution Rate</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+
+            {/* Usage Trends */}
+            <Card variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
+              <div className="p-6">
+                <h3 className="text-sm font-bold text-foreground mb-4">System Usage Trends</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Package className="size-5 text-red-600" />
+                      <span className="text-sm font-medium">Asset Deployment Rate</span>
+                    </div>
+                    <span className="text-lg font-bold text-red-600">
+                      {Math.round(((systemMetrics.assignedAssets + systemMetrics.borrowedAssets) / Math.max(systemMetrics.totalAssets, 1)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Users className="size-5 text-blue-600" />
+                      <span className="text-sm font-medium">User Account Activity</span>
+                    </div>
+                    <span className="text-lg font-bold text-blue-600">
+                      {Math.round((systemMetrics.activeUsers / Math.max(systemMetrics.totalUsers, 1)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Wrench className="size-5 text-amber-600" />
+                      <span className="text-sm font-medium">Maintenance Efficiency</span>
+                    </div>
+                    <span className="text-lg font-bold text-amber-600">
+                      {systemMetrics.totalRepairs > 0 ? Math.round((systemMetrics.completedRepairs / systemMetrics.totalRepairs) * 100) : 100}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
         )
 
       default: // overview
@@ -477,7 +519,7 @@ export function ITSDDashboardPage() {
                       <div className="space-y-1">
                         <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
                         <p className="text-xl font-extrabold text-foreground">{metric.value}</p>
-                        <p className="text-[11px] text-red-600 dark:text-red-400 font-medium">{metric.change}</p>
+                        <p className="text-[11px] text-green-600 dark:text-green-400 font-medium">{metric.change}</p>
                       </div>
                       <div className="size-9 rounded-[5px] bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 flex items-center justify-center">
                         <Icon className="size-4.5" />
@@ -567,31 +609,72 @@ export function ITSDDashboardPage() {
                   </h3>
                   <p className="text-xs text-muted-foreground">Latest changes across all system components (last 7 days)</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="rounded-[5px] text-xs gap-1.5">
-                    <TrendingUp className="size-3.5" />
-                    View Analytics
-                  </Button>
-                </div>
+
               </div>
 
               <div className="p-4">
                 {recentActivity.length > 0 ? (
                   <div className="space-y-3">
-                    {recentActivity.map((activity, i) => {
-                      const Icon = activity.icon
-                      return (
-                        <div key={i} className="flex items-start gap-3 p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 rounded-lg transition-colors">
-                          <Icon className={`size-4 ${activity.color} mt-0.5 shrink-0`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground">{activity.description}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(activity.timestamp).toLocaleDateString()} at {new Date(activity.timestamp).toLocaleTimeString()}
-                            </p>
+                    {/* Paginated activity items */}
+                    {recentActivity
+                      .slice((activityPage - 1) * ACTIVITY_PAGE_SIZE, activityPage * ACTIVITY_PAGE_SIZE)
+                      .map((activity, i) => {
+                        const Icon = activity.icon
+                        return (
+                          <div key={i} className="flex items-start gap-3 p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 rounded-lg transition-colors">
+                            <Icon className={`size-4 ${activity.color} mt-0.5 shrink-0`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-foreground">{activity.description}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(activity.timestamp).toLocaleDateString()} at {new Date(activity.timestamp).toLocaleTimeString()}
+                              </p>
+                            </div>
                           </div>
+                        )
+                      })
+                    }
+
+                    {/* Pagination controls */}
+                    {recentActivity.length > ACTIVITY_PAGE_SIZE && (
+                      <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Showing {Math.min((activityPage - 1) * ACTIVITY_PAGE_SIZE + 1, recentActivity.length)}–{Math.min(activityPage * ACTIVITY_PAGE_SIZE, recentActivity.length)} of {recentActivity.length}
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-7 p-0 rounded-[5px]"
+                            disabled={activityPage === 1}
+                            onClick={() => setActivityPage(p => p - 1)}
+                          >
+                            <ChevronLeft className="size-3.5" />
+                          </Button>
+                          {Array.from({ length: Math.ceil(recentActivity.length / ACTIVITY_PAGE_SIZE) }, (_, idx) => (
+                            <Button
+                              key={idx}
+                              variant={activityPage === idx + 1 ? "default" : "outline"}
+                              size="sm"
+                              className={`h-7 w-7 p-0 rounded-[5px] text-xs ${
+                                activityPage === idx + 1 ? "bg-red-700 hover:bg-red-800 text-white border-red-700" : ""
+                              }`}
+                              onClick={() => setActivityPage(idx + 1)}
+                            >
+                              {idx + 1}
+                            </Button>
+                          ))}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-7 p-0 rounded-[5px]"
+                            disabled={activityPage === Math.ceil(recentActivity.length / ACTIVITY_PAGE_SIZE)}
+                            onClick={() => setActivityPage(p => p + 1)}
+                          >
+                            <ChevronRight className="size-3.5" />
+                          </Button>
                         </div>
-                      )
-                    })}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8">

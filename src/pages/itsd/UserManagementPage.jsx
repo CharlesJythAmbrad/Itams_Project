@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DataTablePagination } from "@/components/common/DataTablePagination"
 
 export function UserManagementPage() {
   const { user: currentAdminUser } = useAuth()
@@ -47,6 +48,10 @@ export function UserManagementPage() {
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [modalError, setModalError] = useState("")
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const usersPerPage = 5
 
   // Add User Form State (based on seed.sql role definitions)
   const [newUserData, setNewUserData] = useState({
@@ -222,7 +227,13 @@ export function UserManagementPage() {
     }
 
     setFilteredUsers(filtered)
+    setCurrentPage(1) // Reset to first page when filters change
   }, [users, searchQuery, statusFilter, roleFilter])
+
+  // Get paginated users
+  const startIndex = (currentPage - 1) * usersPerPage
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + usersPerPage)
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage)
 
   // Load users on component mount
   useEffect(() => {
@@ -690,7 +701,7 @@ export function UserManagementPage() {
             <div>
               <h3 className="font-semibold text-sm">System Users</h3>
               <p className="text-xs text-muted-foreground">
-                Showing {filteredUsers.length} of {users.length} registered accounts
+                Showing {startIndex + 1}-{Math.min(startIndex + usersPerPage, filteredUsers.length)} of {filteredUsers.length} users ({users.length} total)
               </p>
             </div>
           </div>
@@ -715,7 +726,7 @@ export function UserManagementPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
-                  {filteredUsers.map((user) => {
+                  {paginatedUsers.map((user) => {
                     const role = roleConfig[user.role] || roleConfig.end_user
                     const RoleIcon = role.icon
                     const isSelf = user.id === currentAdminUser?.id
@@ -825,14 +836,24 @@ export function UserManagementPage() {
                 </tbody>
               </table>
 
-              {filteredUsers.length === 0 && !isLoading && (
+              {paginatedUsers.length === 0 && !isLoading && (
                 <div className="text-center p-10 text-muted-foreground">
                   <Users className="size-10 mx-auto mb-2 opacity-40 text-muted-foreground" />
                   <p className="text-sm font-medium">No users found</p>
-                  <p className="text-xs text-muted-foreground mt-1">Try adjusting your search query or filters</p>
+                  <p className="text-xs text-muted-foreground mt-1">Try adjusting your search criteria or filters</p>
                 </div>
               )}
             </div>
+          )}
+
+          {/* Pagination Controls */}
+          {filteredUsers.length > 0 && !isLoading && (
+            <DataTablePagination
+              currentPage={currentPage}
+              totalItems={filteredUsers.length}
+              pageSize={usersPerPage}
+              onPageChange={setCurrentPage}
+            />
           )}
         </Card>
 

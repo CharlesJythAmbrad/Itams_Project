@@ -11,6 +11,7 @@ import {
   ChevronRight,
   LogOut,
   AlertTriangle,
+  TrendingUp,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { useRouter } from "@/routes/RouterContext"
@@ -44,7 +45,7 @@ export function ITSDSidebar({
     { id: "system-monitor", label: "System Monitor", icon: Activity },
     { id: "asset-oversight", label: "Asset Oversight", icon: Server },
     { id: "security-audit", label: "Security & Audit", icon: ShieldCheck },
-    { id: "system-reports", label: "System Reports", icon: AlertTriangle },
+    { id: "analytics", label: "Analytics", icon: TrendingUp },
   ]
 
   const handleConfirmSignOut = async () => {

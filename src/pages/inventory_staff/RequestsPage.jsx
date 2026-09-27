@@ -18,6 +18,8 @@ import {
   Phone,
   FileText,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   X,
   Wrench,
@@ -242,27 +244,72 @@ function RequestDetailModal({ request, onClose, onStatusChange }) {
               </span>
             </div>
 
-            {/* Fields */}
-            {[
-              { icon: User,     label: "Full Name",    value: request.full_name },
-              { icon: Mail,     label: "Email",        value: request.email },
-              { icon: Phone,    label: "Contact",      value: request.contact_number },
-              { icon: MapPin,   label: "Location",     value: request.location },
-              { icon: Calendar, label: "Preferred Date", value: fmt(request.preferred_date) },
-              { icon: FileText, label: "Description",  value: request.description },
-              { icon: Package,  label: "Asset Details",value: request.asset_details },
-              { icon: Calendar, label: "Submitted",    value: fmt(request.created_at) },
-            ].map(({ icon: Icon, label, value }) =>
-              value ? (
-                <div key={label} className="flex items-start gap-3">
-                  <Icon className="size-4 text-zinc-400 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">{label}</p>
-                    <p className="text-sm text-zinc-800 dark:text-zinc-200">{value}</p>
-                  </div>
-                </div>
-              ) : null
-            )}
+            {/* Request Details Table */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Request Information</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border border-zinc-200 dark:border-zinc-700 rounded-[5px] overflow-hidden">
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <tr className="bg-zinc-50/50 dark:bg-zinc-800/30">
+                      <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 w-1/3 border-r border-zinc-100 dark:border-zinc-800">
+                        <User className="size-3.5 inline mr-2" />
+                        Full Name
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{request.full_name || "—"}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 border-r border-zinc-100 dark:border-zinc-800">
+                        <Mail className="size-3.5 inline mr-2" />
+                        Email Address
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{request.email || "—"}</td>
+                    </tr>
+                    <tr className="bg-zinc-50/50 dark:bg-zinc-800/30">
+                      <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 border-r border-zinc-100 dark:border-zinc-800">
+                        <Phone className="size-3.5 inline mr-2" />
+                        Contact Number
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{request.contact_number || "—"}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 border-r border-zinc-100 dark:border-zinc-800">
+                        <MapPin className="size-3.5 inline mr-2" />
+                        Location / Department
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{request.location || "—"}</td>
+                    </tr>
+                    <tr className="bg-zinc-50/50 dark:bg-zinc-800/30">
+                      <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 border-r border-zinc-100 dark:border-zinc-800">
+                        <Calendar className="size-3.5 inline mr-2" />
+                        Preferred Date
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{fmt(request.preferred_date)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 border-r border-zinc-100 dark:border-zinc-800">
+                        <FileText className="size-3.5 inline mr-2" />
+                        Description
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{request.description || "—"}</td>
+                    </tr>
+                    <tr className="bg-zinc-50/50 dark:bg-zinc-800/30">
+                      <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 border-r border-zinc-100 dark:border-zinc-800">
+                        <Package className="size-3.5 inline mr-2" />
+                        Asset Details
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{request.asset_details || "—"}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 border-r border-zinc-100 dark:border-zinc-800">
+                        <Calendar className="size-3.5 inline mr-2" />
+                        Submitted Date
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{fmt(request.created_at)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             {/* Status Actions */}
             <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
@@ -291,6 +338,8 @@ function RequestDetailModal({ request, onClose, onStatusChange }) {
 /* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
+const PAGE_SIZE = 5
+
 export function RequestsPage() {
   const { profile } = useAuth()
   const [requests, setRequests] = useState([])
@@ -301,6 +350,7 @@ export function RequestsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [showQRModal, setShowQRModal] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
   /* ── Fetch requests ──────────────────────────────────── */
   const fetchRequests = async () => {
@@ -337,6 +387,13 @@ export function RequestsPage() {
     return matchSearch && matchType && matchStatus
   })
 
+  // Reset to page 1 whenever filters/search change
+  useEffect(() => { setCurrentPage(1) }, [searchTerm, typeFilter, statusFilter])
+
+  /* ── Pagination ──────────────────────────────────────── */
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paginated  = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
   /* ── Stats ───────────────────────────────────────────── */
   const stats = {
     total:       requests.length,
@@ -344,6 +401,12 @@ export function RequestsPage() {
     approved:    requests.filter(r => r.status === "approved").length,
     in_progress: requests.filter(r => r.status === "in_progress").length,
     completed:   requests.filter(r => r.status === "completed").length,
+  }
+
+  /* ── Stat card click: toggle status filter ───────────── */
+  const handleStatClick = (key) => {
+    const newFilter = key === "total" ? "all" : key
+    setStatusFilter(prev => prev === newFilter ? "all" : newFilter)
   }
 
   const handleStatusChange = (id, newStatus) => {
@@ -386,22 +449,33 @@ export function RequestsPage() {
           </div>
         </div>
 
-        {/* ── Stats Cards ───────────────────────────────── */}
+        {/* ── Stats Cards (clickable filters) ───────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
-            { label: "Total",       value: stats.total,       color: "text-zinc-900 dark:text-zinc-100" },
-            { label: "Pending",     value: stats.pending,     color: "text-yellow-600 dark:text-yellow-400" },
-            { label: "Approved",    value: stats.approved,    color: "text-green-600 dark:text-green-400" },
-            { label: "In Progress", value: stats.in_progress, color: "text-blue-600 dark:text-blue-400" },
-            { label: "Completed",   value: stats.completed,   color: "text-emerald-600 dark:text-emerald-400" },
-          ].map(({ label, value, color }) => (
-            <Card key={label} className="rounded-[5px]">
-              <CardContent className="p-3 text-center">
+            { key: "total",       label: "Total",       value: stats.total,       color: "text-zinc-900 dark:text-zinc-100",          ring: "ring-zinc-400" },
+            { key: "pending",     label: "Pending",     value: stats.pending,     color: "text-yellow-600 dark:text-yellow-400",      ring: "ring-yellow-400" },
+            { key: "approved",    label: "Approved",    value: stats.approved,    color: "text-green-600 dark:text-green-400",        ring: "ring-green-400" },
+            { key: "in_progress", label: "In Progress", value: stats.in_progress, color: "text-blue-600 dark:text-blue-400",          ring: "ring-blue-400" },
+            { key: "completed",   label: "Completed",   value: stats.completed,   color: "text-emerald-600 dark:text-emerald-400",    ring: "ring-emerald-400" },
+          ].map(({ key, label, value, color, ring }) => {
+            const isActive = key === "total" ? statusFilter === "all" : statusFilter === key
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleStatClick(key)}
+                className={`rounded-[5px] border bg-white dark:bg-zinc-900 p-3 text-center w-full transition-all cursor-pointer
+                  hover:shadow-md active:scale-95
+                  ${ isActive
+                    ? `ring-2 ${ring} shadow-sm border-transparent`
+                    : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                  }`}
+              >
                 <p className={`text-xl font-bold ${color}`}>{value}</p>
-                <p className="text-xs text-muted-foreground">{label}</p>
-              </CardContent>
-            </Card>
-          ))}
+                <p className={`text-xs mt-0.5 font-medium ${ isActive ? "text-foreground" : "text-muted-foreground" }`}>{label}</p>
+              </button>
+            )
+          })}
         </div>
 
         {/* ── QR Code Showcase Card ─────────────────────── */}
@@ -507,7 +581,7 @@ export function RequestsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map(r => {
+                  paginated.map(r => {
                     const sc = STATUS_COLORS[r.status] ?? STATUS_COLORS.pending
                     const tc = TYPE_STYLE[r.request_type] ?? {}
                     return (
@@ -549,6 +623,48 @@ export function RequestsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* ── Pagination ──────────────────────────────── */}
+          {!isLoading && filtered.length > PAGE_SIZE && (
+            <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-[5px]"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronLeft className="size-3.5" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, idx) => (
+                  <Button
+                    key={idx}
+                    variant={currentPage === idx + 1 ? "default" : "outline"}
+                    size="sm"
+                    className={`h-7 w-7 p-0 rounded-[5px] text-xs ${
+                      currentPage === idx + 1 ? "bg-red-700 hover:bg-red-800 text-white border-red-700" : ""
+                    }`}
+                    onClick={() => setCurrentPage(idx + 1)}
+                  >
+                    {idx + 1}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-[5px]"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
 
       </div>

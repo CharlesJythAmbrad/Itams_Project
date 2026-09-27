@@ -274,10 +274,6 @@ export function RepairsPage() {
               <RefreshCw className="size-4" />
               Refresh
             </Button>
-            <Button variant="outline" size="sm" className="rounded-[5px] gap-2">
-              <FileText className="size-4" />
-              Export Report
-            </Button>
             <Button 
               size="sm"
               className="rounded-[5px] gap-2 bg-red-700 hover:bg-red-800"
@@ -476,9 +472,13 @@ export function RepairsPage() {
                           <td className="px-3.5 py-2.5">
                             <div className="flex items-center gap-2">
                               <StatusIcon className="size-4" />
-                              <span className={`px-2 py-1 rounded-[5px] text-xs font-medium ${getStatusColor(repair.status)}`}>
+                              <button
+                                onClick={() => setSelectedStatus(repair.status)}
+                                className={`px-2 py-1 rounded-[5px] text-xs font-medium cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-sm ${getStatusColor(repair.status)}`}
+                                title={`Filter by ${getStatusLabel(repair.status)} status`}
+                              >
                                 {getStatusLabel(repair.status)}
-                              </span>
+                              </button>
                             </div>
                           </td>
                           <td className="px-3.5 py-2.5">

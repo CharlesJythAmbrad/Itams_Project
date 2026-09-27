@@ -76,8 +76,11 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
   const validateForm = () => {
     if (!formData.asset_id) return "Please select an asset"
     if (!formData.issue_description.trim()) return "Issue description is required"
+    if (!formData.priority) return "Priority is required"
+    if (!formData.repair_location.trim()) return "Repair location is required"
     if (!formData.reported_by_name.trim()) return "Reporter name is required"
     if (!formData.reported_by_email.trim()) return "Reporter email is required"
+    if (!formData.reported_by_department.trim()) return "Department is required"
     return null
   }
 
@@ -279,8 +282,9 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Priority</label>
+                <label className="block text-xs font-medium mb-1">Priority <span className="text-red-600">*</span></label>
                 <select
+                  required
                   value={formData.priority}
                   onChange={(e) => handleInputChange("priority", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
@@ -292,9 +296,10 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Repair Location</label>
+                <label className="block text-xs font-medium mb-1">Repair Location <span className="text-red-600">*</span></label>
                 <input
                   type="text"
+                  required
                   value={formData.repair_location}
                   onChange={(e) => handleInputChange("repair_location", e.target.value)}
                   placeholder="e.g., IT Workshop, External Service"
@@ -332,9 +337,10 @@ export function AddRepairDialog({ isOpen, onClose, onRepairAdded, preSelectedAss
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Department</label>
+                <label className="block text-xs font-medium mb-1">Department <span className="text-red-600">*</span></label>
                 <input
                   type="text"
+                  required
                   value={formData.reported_by_department}
                   onChange={(e) => handleInputChange("reported_by_department", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"

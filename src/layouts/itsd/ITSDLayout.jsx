@@ -46,7 +46,6 @@ export function ITSDLayout({ children, activeTab = "overview", onTabChange }) {
             activeTab === "system-monitor" ? "System Monitor" :
             activeTab === "asset-oversight" ? "Asset Oversight" :
             activeTab === "security-audit" ? "Security & Audit" :
-            activeTab === "system-reports" ? "System Reports" :
             activeTab
           }
         />

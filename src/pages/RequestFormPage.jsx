@@ -200,12 +200,8 @@ export function RequestFormPage() {
           setForm(prev => ({ ...prev, full_name: first.personName }))
 
         // Auto-fill location from the first asset's location if empty
-        const matchedLocation = LOCATIONS.find(l =>
-          l.toLowerCase().includes((first.location || "").toLowerCase()) ||
-          (first.location || "").toLowerCase().includes(l.toLowerCase())
-        )
-        if (!form.location && matchedLocation)
-          setForm(prev => ({ ...prev, location: matchedLocation }))
+        if (!form.location && first.location)
+          setForm(prev => ({ ...prev, location: first.location || first.department || "" }))
 
         // Auto-fill asset details summary
         const assetSummary = allAssets
@@ -239,7 +235,7 @@ export function RequestFormPage() {
         email:          form.email.trim().toLowerCase(),
         contact_number: form.contact_number.trim(),
         location:       form.location,
-        preferred_date: form.preferred_date || null,
+        preferred_date: form.preferred_date,
         asset_details:  form.asset_details.trim(),
         description:    form.description.trim(),
         status:         "pending",
@@ -360,8 +356,8 @@ export function RequestFormPage() {
                         )}
                       </div>
                     </Field>
-                    <Field id="contact_number" label="Contact Number">
-                      <TextInput id="contact_number" type="tel" value={form.contact_number} onChange={set("contact_number")} placeholder="09xx-xxx-xxxx" />
+                    <Field id="contact_number" label="Contact Number" required>
+                      <TextInput id="contact_number" type="tel" value={form.contact_number} onChange={set("contact_number")} placeholder="09xx-xxx-xxxx" required />
                     </Field>
                   </div>
 
@@ -419,23 +415,21 @@ export function RequestFormPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field id="location" label="Location / Department" required>
-                      <SelectInput id="location" value={form.location} onChange={set("location")} required>
-                        <option value="">— Select location —</option>
-                        {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                      </SelectInput>
+                      <TextInput id="location" value={form.location} onChange={set("location")} placeholder="e.g. CITE Faculty, Medical Department" required />
                     </Field>
-                    <Field id="preferred_date" label="Preferred Date">
+                    <Field id="preferred_date" label="Preferred Date" required>
                       <TextInput
                         id="preferred_date"
                         type="date"
                         value={form.preferred_date}
                         onChange={set("preferred_date")}
                         placeholder=""
+                        required
                       />
                     </Field>
                   </div>
-                  <Field id="asset_details" label="Asset / Item Details">
-                    <TextInput id="asset_details" value={form.asset_details} onChange={set("asset_details")} placeholder="e.g. Dell Laptop SN#12345, HP Printer" />
+                  <Field id="asset_details" label="Asset / Item Details" required>
+                    <TextInput id="asset_details" value={form.asset_details} onChange={set("asset_details")} placeholder="e.g. Dell Laptop SN#12345, HP Printer" required />
                   </Field>
                   <Field id="description" label="Description / Reason" required>
                     <TextArea
@@ -467,7 +461,7 @@ export function RequestFormPage() {
             </form>
 
             <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-600">
-              ITAMS · Integrated Technology and Asset Management System
+              ITAMS · IT and Asset Management System
             </p>
           </CardContent>
         </Card>
