@@ -128,35 +128,21 @@ export function ForgotPasswordPage() {
                           <CheckCircle2 className="size-5 shrink-0 text-green-600 mt-0.5" />
                           <div className="flex-1 leading-relaxed space-y-3">
                             <div>
-                              <p className="font-semibold text-sm">Temporary Password Generated</p>
+                              <p className="font-semibold text-sm">
+                                Check Your Email{status.userName ? `, ${status.userName}` : ""}
+                              </p>
                               <p className="mt-1 text-green-700 dark:text-green-400">
                                 {status.message}
                               </p>
                             </div>
-                            
-                            {status.tempPassword && (
-                              <div className="bg-white dark:bg-zinc-800 rounded border border-green-200 dark:border-green-800 p-3">
-                                <p className="font-bold text-sm text-green-800 dark:text-green-300 mb-1">Your Temporary Password:</p>
-                                <div className="font-mono text-lg font-bold text-green-900 dark:text-green-100 bg-green-100 dark:bg-green-900/30 px-3 py-2 rounded border select-all">
-                                  {status.tempPassword}
-                                </div>
-                                <div className="mt-2 text-[11px] text-green-600 dark:text-green-400 space-y-0.5">
-                                  <p>• Copy this password and use it to log in</p>
-                                  <p>• Change your password after logging in</p>
-                                  {status.userName && <p>• Welcome back, {status.userName}!</p>}
-                                </div>
+                            <div className="bg-white dark:bg-zinc-800 rounded border border-green-200 dark:border-green-800 p-3">
+                              <div className="text-[11px] text-green-700 dark:text-green-400 space-y-1">
+                                <p>① Open the email from ITAMS in your inbox</p>
+                                <p>② Click the <strong>"Reset Password"</strong> link in the email</p>
+                                <p>③ Enter and confirm your new password</p>
+                                <p className="text-green-600 dark:text-green-500 pt-0.5">⚠ The link expires in 1 hour — check your spam folder if you don't see it</p>
                               </div>
-                            )}
-
-                            {status.isAuthReset && (
-                              <div className="bg-blue-50 dark:bg-blue-950/40 rounded border border-blue-200 dark:border-blue-800 p-3">
-                                <div className="text-[11px] text-blue-700 dark:text-blue-400 space-y-0.5">
-                                  <p>• Check your email inbox for the reset link</p>
-                                  <p>• Click the link to set a new password</p>
-                                  <p>• The link expires in 1 hour for security</p>
-                                </div>
-                              </div>
-                            )}
+                            </div>
                           </div>
                         </div>
 

@@ -182,7 +182,11 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const cleanIdentifier = identifier.trim().toLowerCase()
-      const email = cleanIdentifier.includes("@") ? cleanIdentifier : `${cleanIdentifier}@itams.edu`
+      // Always use the full email as entered — Supabase auth is email-based
+      // If the user typed without @, append the domain only as a last resort
+      const email = cleanIdentifier.includes("@") 
+        ? cleanIdentifier 
+        : `${cleanIdentifier}@itams.edu.ph`
       
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
@@ -236,7 +240,15 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, user: data.user, profile: userProfile }
     } catch (err) {
-      const errMsg = err.message || "Invalid login credentials."
+      let errMsg = err.message || "Invalid login credentials."
+      // Map Supabase raw errors to user-friendly messages
+      if (errMsg.toLowerCase().includes("invalid login credentials") || errMsg.toLowerCase().includes("invalid credentials")) {
+        errMsg = "Incorrect email or password. Please double-check your credentials and try again."
+      } else if (errMsg.toLowerCase().includes("email not confirmed")) {
+        errMsg = "Your email has not been confirmed. Please check your inbox for a verification link."
+      } else if (errMsg.toLowerCase().includes("too many requests")) {
+        errMsg = "Too many login attempts. Please wait a few minutes before trying again."
+      }
       console.warn("Supabase signInWithPassword notice:", errMsg)
       setError(errMsg)
       setIsAuthenticating(false)

@@ -132,8 +132,8 @@ export function LoginForm() {
                 <div className="relative flex-1">
                   <input
                     id="username-input"
-                    type="text"
-                    autoComplete="username"
+                    type="email"
+                    autoComplete="email"
                     value={identifier}
                     onFocus={() => setFocusedField("username")}
                     onBlur={() => setFocusedField(null)}
@@ -154,7 +154,7 @@ export function LoginForm() {
                         : "top-2 text-sm text-zinc-400 dark:text-zinc-500"
                     }`}
                   >
-                    Username <span className="text-red-500 font-semibold">*</span>
+                    Email Address <span className="text-red-500 font-semibold">*</span>
                   </label>
                 </div>
               </div>

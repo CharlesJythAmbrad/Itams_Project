@@ -141,90 +141,52 @@ export const listAllUsers = async () => {
 }
 
 /**
- * Simple password reset that generates a temporary password and shows it to user
- * @param {string} email - User's email
+ * Reset user password by sending a Supabase auth reset email.
+ * The only client-safe way to change another user's password is via
+ * supabase.auth.resetPasswordForEmail — which emails the user a magic link
+ * they click to land on /reset-password and set a new password.
+ *
+ * NOTE: Generating a "temp password" and showing it on screen does NOT work
+ * unless you have a server-side admin key to call auth.admin.updateUserById().
+ *
+ * @param {string} email - User's email address
  * @returns {Promise<Object>} Success/error response
  */
 export const resetUserPassword = async (email) => {
   try {
-    console.log('🔍 Starting password reset for:', email)
-    
-    // Debug: List all users first
-    await listAllUsers()
-    
     const cleanEmail = email.trim().toLowerCase()
-    
-    // Check if user exists in our custom tables first
-    console.log('🔍 Searching for user in public.users table...')
+
+    // 1. Verify the email exists in our public.users table first
+    //    so we don't leak whether an email is registered (for unknown emails
+    //    we still return success to prevent user enumeration)
     const userResult = await findUserByEmail(cleanEmail)
-    
-    console.log('🔍 User search result:', userResult)
-    
-    if (userResult.found) {
-      console.log('✅ User found in public.users:', userResult.user)
-      
-      // Generate a temporary password
-      const tempPassword = generateTemporaryPassword(10)
-      console.log('🔐 Generated temporary password:', tempPassword)
-      
-      const result = {
-        success: true,
-        message: `Temporary password generated for ${cleanEmail}.`,
-        tempPassword: tempPassword,
-        userRole: userResult.user.role,
-        userName: userResult.user.full_name
-      }
-      
-      console.log('✅ Password reset result:', result)
-      return result
-    }
-    
-    // If not found in public.users, try to use Supabase auth directly
-    // This will work if the user exists in auth.users but not in public.users
-    console.log('🔍 User not found in public.users, trying Supabase auth reset...')
-    
-    try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-        redirectTo: `${window.location.origin}/reset-password`
-      })
-      
-      if (resetError) {
-        console.error('❌ Supabase auth reset error:', resetError)
-        
-        // If the error is because user doesn't exist in auth either
-        if (resetError.message.includes('Unable to validate email address')) {
-          return {
-            success: false,
-            error: 'No account found with this email address. Please verify your email and try again.'
-          }
-        }
-        
-        return {
-          success: false,
-          error: 'Failed to send password reset. Please try again later.'
-        }
-      }
-      
-      console.log('✅ Supabase auth reset successful')
-      return {
-        success: true,
-        message: `Password reset link sent to ${cleanEmail}. Please check your email and follow the link to reset your password.`,
-        isAuthReset: true // Flag to indicate this used auth reset
-      }
-      
-    } catch (authError) {
-      console.error('❌ Auth reset error:', authError)
+
+    // 2. Send the Supabase password-reset email regardless of whether the
+    //    user was found in public.users (Supabase handles non-existent emails
+    //    silently on its side, preventing enumeration)
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+
+    if (resetError) {
+      console.error("Password reset email error:", resetError)
       return {
         success: false,
-        error: 'Failed to process password reset. Please try again later.'
+        error: "Failed to send reset email. Please try again later.",
       }
     }
-    
+
+    return {
+      success: true,
+      isAuthReset: true,
+      userName: userResult.found ? userResult.user?.full_name : null,
+      message: `A password reset link has been sent to ${cleanEmail}. Please check your inbox (and spam folder) and click the link to set a new password.`,
+    }
   } catch (error) {
-    console.error('❌ Error in password reset:', error)
+    console.error("Error in resetUserPassword:", error)
     return {
       success: false,
-      error: 'An unexpected error occurred. Please try again later.'
+      error: "An unexpected error occurred. Please try again later.",
     }
   }
 }

@@ -13,6 +13,8 @@ import { AssetsPage } from "@/pages/inventory_staff/AssetsPage"
 import { BorrowedReturnPage } from "@/pages/inventory_staff/BorrowedReturnPage"
 import { WarrantyPage } from "@/pages/inventory_staff/WarrantyPage"
 import { RepairsPage } from "@/pages/inventory_staff/RepairsPage"
+import { RequestsPage } from "@/pages/inventory_staff/RequestsPage"
+import { RequestFormPage } from "@/pages/RequestFormPage"
 import { EndUsersDashboardPage } from "@/pages/end_users/EndUsersDashboardPage"
 import { ProfileSettingsPage } from "@/pages/ProfileSettingsPage"
 import { AuthLoadingScreen } from "@/components/common/AuthLoadingScreen"
@@ -65,6 +67,9 @@ export function AppRoutes() {
               </PublicOnlyRoute>
             }
           />
+          {/* Public QR request form — no auth required */}
+          <Route path="/request-form" element={<RequestFormPage />} />
+
           <Route
             path="/reset-password"
             element={<ResetPasswordPage />}
@@ -136,6 +141,14 @@ export function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={["inventory_staff"]}>
                   <RepairsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/inventory/requests"
+              element={
+                <ProtectedRoute allowedRoles={["inventory_staff"]}>
+                  <RequestsPage />
                 </ProtectedRoute>
               }
             />

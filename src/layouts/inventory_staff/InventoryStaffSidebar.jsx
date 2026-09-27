@@ -11,6 +11,7 @@ import {
   ChevronRight,
   LogOut,
   Boxes,
+  ClipboardList,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { useRouter } from "@/routes/RouterContext"
@@ -37,11 +38,12 @@ export function InventoryStaffSidebar({
   const isExpanded = !isCollapsed || isHovered || isMobileOpen
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "assets", label: "Assets", icon: Package },
-    { id: "borrowed-return", label: "Borrowed and Assigned", icon: UserCheck },
-    { id: "warranty", label: "Warranty", icon: Layers },
-    { id: "repairs", label: "Repairs", icon: HardDrive },
+    { id: "dashboard",      label: "Dashboard",           icon: LayoutDashboard },
+    { id: "assets",         label: "Assets",              icon: Package },
+    { id: "borrowed-return",label: "Borrowed and Assigned",icon: UserCheck },
+    { id: "warranty",       label: "Warranty",            icon: Layers },
+    { id: "repairs",        label: "Repairs",             icon: HardDrive },
+    { id: "requests",       label: "Requests",            icon: ClipboardList },
   ]
 
   const handleConfirmSignOut = async () => {
