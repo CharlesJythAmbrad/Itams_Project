@@ -130,7 +130,7 @@ export function WarrantyPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "active":
-        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+        return "bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300"
       case "expiring_soon":
         return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
       case "expired":
@@ -378,7 +378,7 @@ export function WarrantyPage() {
                                 <div className="text-xs text-muted-foreground">
                                   <div>Expires: {formatDate(asset.warranty_end_date)}</div>
                                   {asset.warranty_status === "active" && daysUntilExpiry > 0 && (
-                                    <div className="text-red-600">
+                                    <div className="text-green-600">
                                       {daysUntilExpiry} days remaining
                                     </div>
                                   )}
