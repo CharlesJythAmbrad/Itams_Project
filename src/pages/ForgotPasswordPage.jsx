@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mail, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react"
 import { AuthShowcase } from "@/components/features/auth/AuthShowcase"
@@ -16,6 +16,7 @@ export function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState({ type: null, message: "" })
 
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!email.trim()) {
@@ -26,19 +27,31 @@ export function ForgotPasswordPage() {
     setLoading(true)
     setStatus({ type: null, message: "" })
 
-    const result = await resetPassword(email.trim())
-    setLoading(false)
-
-    if (result.success) {
-      setStatus({
-        type: "success",
-        message: result.message || "Password recovery instructions have been sent to your email.",
-      })
-    } else {
+    try {
+      const result = await resetPassword(email.trim())
+      
+      if (result && result.success) {
+        setStatus({
+          type: "success",
+          message: result.message || "Temporary password has been generated.",
+          tempPassword: result.tempPassword,
+          userRole: result.userRole,
+          userName: result.userName,
+          isAuthReset: result.isAuthReset
+        })
+      } else {
+        setStatus({
+          type: "error",
+          message: result?.error || "Failed to generate temporary password. Please check your email address.",
+        })
+      }
+    } catch (error) {
       setStatus({
         type: "error",
-        message: result.error || "Failed to send reset link. Please check your email address.",
+        message: "An unexpected error occurred. Please try again.",
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -80,7 +93,7 @@ export function ForgotPasswordPage() {
                       Reset password
                     </h2>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Enter your email to receive recovery instructions
+                      Enter your email to receive password reset instructions
                     </p>
                   </div>
 
@@ -111,13 +124,39 @@ export function ForgotPasswordPage() {
                         transition={{ duration: 0.2 }}
                         className="space-y-5 overflow-hidden"
                       >
-                        <div className="rounded-[5px] bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 p-4 flex items-start gap-3 text-xs text-emerald-800 dark:text-emerald-300">
-                          <CheckCircle2 className="size-5 shrink-0 text-emerald-600 mt-0.5" />
-                          <div className="flex-1 leading-relaxed">
-                            <p className="font-semibold text-sm">Recovery Link Sent</p>
-                            <p className="mt-1 text-emerald-700 dark:text-emerald-400">
-                              {status.message} Check your inbox and follow the secure link to reset your credentials.
-                            </p>
+                        <div className="rounded-[5px] bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/60 p-4 flex items-start gap-3 text-xs text-green-800 dark:text-green-300">
+                          <CheckCircle2 className="size-5 shrink-0 text-green-600 mt-0.5" />
+                          <div className="flex-1 leading-relaxed space-y-3">
+                            <div>
+                              <p className="font-semibold text-sm">Temporary Password Generated</p>
+                              <p className="mt-1 text-green-700 dark:text-green-400">
+                                {status.message}
+                              </p>
+                            </div>
+                            
+                            {status.tempPassword && (
+                              <div className="bg-white dark:bg-zinc-800 rounded border border-green-200 dark:border-green-800 p-3">
+                                <p className="font-bold text-sm text-green-800 dark:text-green-300 mb-1">Your Temporary Password:</p>
+                                <div className="font-mono text-lg font-bold text-green-900 dark:text-green-100 bg-green-100 dark:bg-green-900/30 px-3 py-2 rounded border select-all">
+                                  {status.tempPassword}
+                                </div>
+                                <div className="mt-2 text-[11px] text-green-600 dark:text-green-400 space-y-0.5">
+                                  <p>• Copy this password and use it to log in</p>
+                                  <p>• Change your password after logging in</p>
+                                  {status.userName && <p>• Welcome back, {status.userName}!</p>}
+                                </div>
+                              </div>
+                            )}
+
+                            {status.isAuthReset && (
+                              <div className="bg-blue-50 dark:bg-blue-950/40 rounded border border-blue-200 dark:border-blue-800 p-3">
+                                <div className="text-[11px] text-blue-700 dark:text-blue-400 space-y-0.5">
+                                  <p>• Check your email inbox for the reset link</p>
+                                  <p>• Click the link to set a new password</p>
+                                  <p>• The link expires in 1 hour for security</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -186,7 +225,7 @@ export function ForgotPasswordPage() {
                           className="w-full h-11 text-sm font-semibold tracking-wide rounded-[5px] shadow-sm transition-all"
                           isLoading={loading}
                         >
-                          Send Recovery Link
+                          Send Reset Link
                         </Button>
                       </motion.div>
 

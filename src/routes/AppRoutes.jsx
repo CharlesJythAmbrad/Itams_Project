@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { ProtectedRoute } from "./ProtectedRoute"
 import { LoginPage } from "@/pages/LoginPage"
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage"
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { ITSDDashboardPage } from "@/pages/itsd/ITSDDashboardPage"
 import { UserManagementPage } from "@/pages/itsd/UserManagementPage"
@@ -63,6 +64,10 @@ export function AppRoutes() {
                 <ForgotPasswordPage />
               </PublicOnlyRoute>
             }
+          />
+          <Route
+            path="/reset-password"
+            element={<ResetPasswordPage />}
           />
 
           {/* Root redirect */}

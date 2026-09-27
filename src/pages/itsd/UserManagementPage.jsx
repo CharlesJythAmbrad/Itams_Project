@@ -555,8 +555,8 @@ export function UserManagementPage() {
 
         {/* Success Alert Banner */}
         {successMessage && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-[5px] text-red-700 dark:text-red-300 text-xs">
-            <CheckCircle className="size-4 shrink-0 text-red-600" />
+          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-[5px] text-green-700 dark:text-green-300 text-xs">
+            <CheckCircle className="size-4 shrink-0 text-green-600" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -582,7 +582,7 @@ export function UserManagementPage() {
           <Card className="rounded-[5px]">
             <CardContent className="p-3">
               <div className="text-center">
-                <p className="text-lg font-bold text-red-600">{userStats.active}</p>
+                <p className="text-lg font-bold text-green-600">{userStats.active}</p>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
             </CardContent>
@@ -770,7 +770,7 @@ export function UserManagementPage() {
                           <span className={`px-2 py-0.5 rounded-[5px] text-[10px] font-bold ${
                             user.deactivated === true
                               ? "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
-                              : "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+                              : "bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300"
                           }`}>
                             {user.deactivated === true ? "Inactive" : "Active"}
                           </span>
@@ -796,7 +796,7 @@ export function UserManagementPage() {
                               onClick={() => handleToggleUserStatus(user.id, user.is_deactivated === true, user.full_name)}
                               className={`rounded-[5px] text-xs h-7 px-2.5 ${
                                 user.deactivated === true
-                                  ? "text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
+                                  ? "text-green-700 border-green-300 hover:bg-green-50 dark:hover:bg-green-950/40"
                                   : "text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
                               }`}
                             >
@@ -807,7 +807,7 @@ export function UserManagementPage() {
                                 </>
                               ) : user.deactivated === true ? (
                                 <>
-                                  <CheckCircle className="size-3 mr-1 text-red-600" />
+                                  <CheckCircle className="size-3 mr-1 text-green-600" />
                                   Activate
                                 </>
                               ) : (

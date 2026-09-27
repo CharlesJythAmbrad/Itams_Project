@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState, useCallback } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { getUserSchemaCapabilities, setUserSchemaCapabilities } from "@/utils/userSchemaCapabilities"
+import { resetUserPassword } from "@/utils/passwordReset"
 
 export const AuthContext = createContext(null)
 
@@ -245,18 +246,29 @@ export const AuthProvider = ({ children }) => {
     }
   }, [fetchUserData])
 
-  // Password Reset directly calling Supabase
+  // Password Reset using custom temporary password system
   const resetPassword = useCallback(async (email) => {
     setError(null)
+    
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
-      if (resetError) throw resetError
-      return { success: true, message: `Password reset link sent to ${email}` }
+      const result = await resetUserPassword(email.trim())
+      
+      if (!result.success) {
+        setError(result.error)
+        return { success: false, error: result.error }
+      }
+      
+      return { 
+        success: true, 
+        message: result.message,
+        tempPassword: result.tempPassword,
+        userRole: result.userRole,
+        userName: result.userName
+      }
     } catch (err) {
-      setError(err.message)
-      return { success: false, error: err.message }
+      const errorMsg = err.message || "Failed to reset password. Please try again."
+      setError(errorMsg)
+      return { success: false, error: errorMsg }
     }
   }, [])
 
