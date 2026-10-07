@@ -437,7 +437,7 @@ export function RepairsPage() {
                       <th className="px-3.5 py-2.5">Issue & Priority</th>
                       <th className="px-3.5 py-2.5">Status</th>
                       <th className="px-3.5 py-2.5">Technician</th>
-                      <th className="px-3.5 py-2.5">Timeline & Cost</th>
+                      <th className="px-3.5 py-2.5">Timeline</th>
                       <th className="px-3.5 py-2.5">Actions</th>
                     </tr>
                   </thead>
