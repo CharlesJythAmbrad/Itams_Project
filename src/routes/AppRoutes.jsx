@@ -8,12 +8,15 @@ import { ResetPasswordPage } from "@/pages/ResetPasswordPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { ITSDDashboardPage } from "@/pages/itsd/ITSDDashboardPage"
 import { UserManagementPage } from "@/pages/itsd/UserManagementPage"
+import { ActivityLogsPage } from "@/pages/itsd/ActivityLogsPage"
 import { InventoryStaffDashboardPage } from "@/pages/inventory_staff/InventoryStaffDashboardPage"
 import { AssetsPage } from "@/pages/inventory_staff/AssetsPage"
 import { BorrowedReturnPage } from "@/pages/inventory_staff/BorrowedReturnPage"
 import { WarrantyPage } from "@/pages/inventory_staff/WarrantyPage"
 import { RepairsPage } from "@/pages/inventory_staff/RepairsPage"
 import { RequestsPage } from "@/pages/inventory_staff/RequestsPage"
+import { BorrowRequestPage } from "@/pages/BorrowRequestPage"
+import { BorrowRequestFormPage } from "@/pages/BorrowRequestFormPage"
 import { RequestFormPage } from "@/pages/RequestFormPage"
 import { EndUsersDashboardPage } from "@/pages/end_users/EndUsersDashboardPage"
 import { ProfileSettingsPage } from "@/pages/ProfileSettingsPage"
@@ -67,8 +70,9 @@ export function AppRoutes() {
               </PublicOnlyRoute>
             }
           />
-          {/* Public QR request form — no auth required */}
+          {/* Public QR request forms — no auth required */}
           <Route path="/request-form" element={<RequestFormPage />} />
+          <Route path="/borrow-request-form" element={<BorrowRequestFormPage />} />
 
           <Route
             path="/reset-password"
@@ -101,6 +105,14 @@ export function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={["itsd"]}>
                   <UserManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/itsd/activity-logs"
+              element={
+                <ProtectedRoute allowedRoles={["itsd"]}>
+                  <ActivityLogsPage />
                 </ProtectedRoute>
               }
             />
@@ -149,6 +161,14 @@ export function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={["inventory_staff"]}>
                   <RequestsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/inventory/borrow-request"
+              element={
+                <ProtectedRoute allowedRoles={["inventory_staff"]}>
+                  <BorrowRequestPage />
                 </ProtectedRoute>
               }
             />

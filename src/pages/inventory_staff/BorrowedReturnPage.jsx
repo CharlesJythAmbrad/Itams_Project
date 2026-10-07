@@ -43,7 +43,7 @@ export function BorrowedReturnPage() {
   const [selectedRecordForDetails, setSelectedRecordForDetails] = useState(null)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 10
+  const pageSize = 5
 
   // Update filters when URL params change
   useEffect(() => {
@@ -198,11 +198,13 @@ export function BorrowedReturnPage() {
   // Get status color
   const getStatusColor = (assignment) => {
     if (assignment.status === 'returned') {
-      return 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
+      return 'text-gray-600 dark:text-gray-400'
     } else if (isOverdue(assignment)) {
-      return 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
+      return 'text-red-600 dark:text-red-400' // Red for overdue
+    } else if (assignment.status === 'active') {
+      return 'text-green-600 dark:text-green-400' // Green for active
     } else {
-      return 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
+      return 'text-gray-600 dark:text-gray-400'
     }
   }
 
@@ -475,12 +477,14 @@ export function BorrowedReturnPage() {
                           <div className="space-y-1">
                             <div className="text-xs">
                               <span className="text-muted-foreground">Assigned: </span>
-                              <span className="font-medium">{formatDate(assignment.assigned_date)}</span>
+                              <span className={`font-medium ${assignment.status === 'active' && !overdue ? 'text-green-600 dark:text-green-400' : 'text-foreground'}`}>
+                                {formatDate(assignment.assigned_date)}
+                              </span>
                             </div>
                             {assignment.expected_return_date && (
                               <div className="text-xs">
                                 <span className="text-muted-foreground">Expected Return: </span>
-                                <span className={`font-medium ${overdue ? 'text-red-600' : ''}`}>
+                                <span className={`font-medium ${overdue ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-green-600 dark:text-green-400'}`}>
                                   {formatDate(assignment.expected_return_date)}
                                 </span>
                               </div>

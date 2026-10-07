@@ -12,6 +12,7 @@ import {
   LogOut,
   AlertTriangle,
   TrendingUp,
+  FileText,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { useRouter } from "@/routes/RouterContext"
@@ -42,6 +43,7 @@ export function ITSDSidebar({
   const navItems = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
     { id: "user-management", label: "User Management", icon: Users },
+    { id: "activity-logs", label: "Activity Logs", icon: FileText },
     { id: "system-monitor", label: "System Monitor", icon: Activity },
     { id: "asset-oversight", label: "Asset Oversight", icon: Server },
     { id: "security-audit", label: "Security & Audit", icon: ShieldCheck },
@@ -120,6 +122,9 @@ export function ITSDSidebar({
           if (location.pathname.includes('/user-management')) {
             // If on user management page, only user-management should be active
             isActive = item.id === "user-management"
+          } else if (location.pathname.includes('/activity-logs')) {
+            // If on activity logs page, only activity-logs should be active
+            isActive = item.id === "activity-logs"
           } else {
             // On dashboard pages, check hash or default to overview
             const urlHash = location.hash.replace('#', '') || 'overview'
@@ -134,14 +139,16 @@ export function ITSDSidebar({
                 onSelectNav?.(item.id)
                 if (item.id === "user-management") {
                   navigate("/dashboard/itsd/user-management")
+                } else if (item.id === "activity-logs") {
+                  navigate("/dashboard/itsd/activity-logs")
                 } else if (item.id === "overview") {
                   // Navigate back to main dashboard when clicking "Dashboard"
                   navigate("/dashboard")
                 } else {
                   // For all other tabs, check current location
                   const currentPath = location.pathname
-                  if (currentPath.includes('/user-management')) {
-                    // If coming from user management, go to main dashboard with hash
+                  if (currentPath.includes('/user-management') || currentPath.includes('/activity-logs')) {
+                    // If coming from user management or activity logs, go to main dashboard with hash
                     navigate(`/dashboard#${item.id}`)
                   } else {
                     // Otherwise, just update the hash on current dashboard

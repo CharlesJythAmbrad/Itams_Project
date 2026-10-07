@@ -166,6 +166,7 @@ export const resetUserPassword = async (email) => {
     //    silently on its side, preventing enumeration)
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: `${window.location.origin}/reset-password`,
+      expiresIn: 600, // 10 minutes in seconds (10 * 60 = 600)
     })
 
     if (resetError) {

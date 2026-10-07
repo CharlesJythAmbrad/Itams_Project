@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom"
 import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { logAssetActivity } from "@/utils/activityLogger"
 import { SimpleAddAssetDialog } from "@/components/inventory/SimpleAddAssetDialog"
 import { BulkAddAssetDialog } from "@/components/inventory/BulkAddAssetDialog"
 import { AssetAssignmentDialog } from "@/components/inventory/AssetAssignmentDialog"
@@ -54,6 +55,8 @@ export function AssetsPage() {
   // Initialize filters from URL params
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all")
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get("status") || "all")
+  const fromBorrowRequest = searchParams.get("fromBorrowRequest") // Check if coming from borrow request
+  const [borrowRequestData, setBorrowRequestData] = useState(null) // Store borrow request data
   const [assets, setAssets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -76,7 +79,7 @@ export function AssetsPage() {
   const [selectedAssetForRepair, setSelectedAssetForRepair] = useState(null)
   const [isNewRepairOpen, setIsNewRepairOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 10
+  const pageSize = 5
 
   // Update filters when URL params change
   useEffect(() => {
@@ -89,9 +92,34 @@ export function AssetsPage() {
     if (status !== null) setSelectedStatus(status)
   }, [searchParams])
 
+  // Fetch borrow request data when coming from borrow request
+  useEffect(() => {
+    const fetchBorrowRequestData = async () => {
+      if (fromBorrowRequest) {
+        try {
+          const { data, error } = await supabase
+            .from("asset_requests")
+            .select("*")
+            .eq("id", fromBorrowRequest)
+            .eq("request_type", "borrow_request")
+            .single()
+          
+          if (!error && data) {
+            setBorrowRequestData(data)
+          }
+        } catch (err) {
+          console.error("Error fetching borrow request:", err)
+        }
+      } else {
+        setBorrowRequestData(null)
+      }
+    }
+
+    fetchBorrowRequestData()
+  }, [fromBorrowRequest])
+
   // Handle scanned QR code result with comprehensive asset information
   const handleScanSuccess = async (scannedTag, rawValue) => {
-    setIsScanDialogOpen(false)
     if (!scannedTag) return
 
     // Set search term so the table immediately filters to this asset
@@ -101,7 +129,43 @@ export function AssetsPage() {
       // Fetch comprehensive asset information including assignments, borrowing, and repairs
       const { data: assetData, error: assetError } = await supabase
         .from("assets")
-        .select("*")
+        .select(`
+          id,
+          asset_tag,
+          name,
+          description,
+          category,
+          brand,
+          model,
+          serial_number,
+          purchase_date,
+          purchase_cost,
+          vendor,
+          warranty_end_date,
+          location,
+          status,
+          condition,
+          processor,
+          ram_gb,
+          storage_gb,
+          operating_system,
+          computer_name,
+          mac_address,
+          ip_address,
+          camera_resolution,
+          camera_type,
+          port_count,
+          management_ip,
+          firmware_version,
+          power_consumption_watts,
+          weight_kg,
+          dimensions,
+          notes,
+          qr_code,
+          created_at,
+          updated_at,
+          assigned_to
+        `)
         .or(`asset_tag.eq.${scannedTag},id.eq.${scannedTag},serial_number.eq.${scannedTag}`)
         .maybeSingle()
 
@@ -167,56 +231,113 @@ export function AssetsPage() {
 
         // Check for active repairs regardless of status
         const { data: activeRepairs } = await supabase
-          .from("repairs")
+          .from("asset_repairs")
           .select(`
             id,
             repair_ticket,
             issue_description,
             status,
             priority,
-            estimated_cost,
-            actual_cost,
-            technician_assigned,
-            vendor_name,
+            estimated_completion_date,
+            actual_completion_date,
+            assigned_technician,
+            technician_contact,
             repair_location,
-            date_reported,
-            date_started,
-            date_completed,
-            notes
+            created_at,
+            updated_at,
+            completion_date,
+            reported_by_name,
+            reported_by_email,
+            reported_by_department,
+            notes,
+            work_order_number
           `)
           .eq("asset_id", assetData.id)
           .in("status", ["pending", "in_progress", "quote_pending"])
-          .order("date_reported", { ascending: false })
+          .order("created_at", { ascending: false })
         
         if (activeRepairs && activeRepairs.length > 0) {
           repairInfo = activeRepairs[0] // Most recent active repair
         }
 
-        // Create enhanced success message with status details
-        let statusMessage = `Asset "${assetData.name}" (${assetData.asset_tag})`
+        // Create enhanced success message with comprehensive status details
+        let statusMessage = `📦 Asset Found: "${assetData.name}" (${assetData.asset_tag})`
         let detailedInfo = []
 
+        // Add basic asset information
+        if (assetData.brand) {
+          detailedInfo.push(`Brand: ${assetData.brand}`)
+        }
+        if (assetData.model) {
+          detailedInfo.push(`Model: ${assetData.model}`)
+        }
+        if (assetData.serial_number) {
+          detailedInfo.push(`Serial: ${assetData.serial_number}`)
+        }
+        if (assetData.category) {
+          detailedInfo.push(`Category: ${assetData.category.replace('_', ' ').toUpperCase()}`)
+        }
+
+        // Add warranty information
+        if (assetData.warranty_end_date) {
+          const warrantyEnd = new Date(assetData.warranty_end_date)
+          const today = new Date()
+          const isWarrantyActive = warrantyEnd > today
+          detailedInfo.push(`Warranty: ${isWarrantyActive ? '✅ Active' : '⚠️ Expired'} (Ends: ${warrantyEnd.toLocaleDateString()})`)
+        }
+
         if (assignmentInfo) {
-          statusMessage += ` - ASSIGNED`
-          detailedInfo.push(`Assigned to: ${assignmentInfo.assignee_name} (${assignmentInfo.assignee_department})`)
-          detailedInfo.push(`Location: ${assignmentInfo.assignment_location}`)
-          detailedInfo.push(`Date: ${new Date(assignmentInfo.assigned_date).toLocaleDateString()}`)
+          statusMessage += ` - 🎯 ASSIGNED`
+          detailedInfo.push(`👤 Assigned to: ${assignmentInfo.assignee_name}`)
+          detailedInfo.push(`🏢 Department: ${assignmentInfo.assignee_department}`)
+          detailedInfo.push(`📧 Email: ${assignmentInfo.assignee_email}`)
+          if (assignmentInfo.assignee_phone) {
+            detailedInfo.push(`📞 Phone: ${assignmentInfo.assignee_phone}`)
+          }
+          detailedInfo.push(`📍 Location: ${assignmentInfo.assignment_location}`)
+          detailedInfo.push(`📅 Assigned: ${new Date(assignmentInfo.assigned_date).toLocaleDateString()}`)
+          if (assignmentInfo.purpose) {
+            detailedInfo.push(`🎯 Purpose: ${assignmentInfo.purpose}`)
+          }
         } else if (borrowingInfo) {
-          statusMessage += ` - BORROWED`
-          detailedInfo.push(`Borrowed by: ${borrowingInfo.borrower_name} (${borrowingInfo.borrower_department})`)
-          detailedInfo.push(`Location: ${borrowingInfo.borrow_location}`)
-          detailedInfo.push(`Due: ${new Date(borrowingInfo.expected_return_date).toLocaleDateString()}`)
+          statusMessage += ` - 📤 BORROWED`
+          detailedInfo.push(`👤 Borrowed by: ${borrowingInfo.borrower_name}`)
+          detailedInfo.push(`🏢 Department: ${borrowingInfo.borrower_department}`)
+          detailedInfo.push(`📧 Email: ${borrowingInfo.borrower_email}`)
+          if (borrowingInfo.borrower_phone) {
+            detailedInfo.push(`📞 Phone: ${borrowingInfo.borrower_phone}`)
+          }
+          detailedInfo.push(`📍 Location: ${borrowingInfo.borrow_location}`)
+          detailedInfo.push(`📅 Borrowed: ${new Date(borrowingInfo.borrowed_date).toLocaleDateString()}`)
+          detailedInfo.push(`⏰ Due: ${new Date(borrowingInfo.expected_return_date).toLocaleDateString()}`)
+          if (borrowingInfo.project_name) {
+            detailedInfo.push(`📋 Project: ${borrowingInfo.project_name}`)
+          }
         } else {
-          statusMessage += ` - ${assetData.status.toUpperCase().replace('_', ' ')}`
-          detailedInfo.push(`Location: ${assetData.location || 'Not specified'}`)
+          statusMessage += ` - 📊 ${assetData.status.toUpperCase().replace('_', ' ')}`
+          detailedInfo.push(`📍 Current Location: ${assetData.location || 'Not specified'}`)
+          if (assetData.purchase_date) {
+            detailedInfo.push(`🛒 Purchased: ${new Date(assetData.purchase_date).toLocaleDateString()}`)
+          }
+          if (assetData.purchase_cost) {
+            detailedInfo.push(`💰 Cost: ₱${assetData.purchase_cost.toLocaleString()}`)
+          }
         }
 
         if (repairInfo) {
           statusMessage += ` - IN REPAIR`
-          detailedInfo.push(`⚠️ Repair: ${repairInfo.repair_ticket} - ${repairInfo.status.replace('_', ' ')}`)
+          detailedInfo.push(`🔧 Repair: ${repairInfo.repair_ticket} (${repairInfo.work_order_number || 'No WO'})`)
+          detailedInfo.push(`Status: ${repairInfo.status.replace('_', ' ').toUpperCase()}`)
           detailedInfo.push(`Issue: ${repairInfo.issue_description}`)
-          if (repairInfo.technician_assigned) {
-            detailedInfo.push(`Technician: ${repairInfo.technician_assigned}`)
+          detailedInfo.push(`Priority: ${repairInfo.priority.toUpperCase()}`)
+          if (repairInfo.assigned_technician) {
+            detailedInfo.push(`Technician: ${repairInfo.assigned_technician}`)
+          }
+          if (repairInfo.repair_location) {
+            detailedInfo.push(`Repair Location: ${repairInfo.repair_location}`)
+          }
+          if (repairInfo.estimated_completion_date) {
+            detailedInfo.push(`Est. Completion: ${new Date(repairInfo.estimated_completion_date).toLocaleDateString()}`)
           }
         }
 
@@ -228,20 +349,31 @@ export function AssetsPage() {
           __repair_info: repairInfo
         }
 
-        setSelectedAssetForDetails(enhancedAsset)
-        setIsDetailsDialogOpen(true)
+        // Close scan dialog first, then open details modal after a brief delay
+        setIsScanDialogOpen(false)
+        
+        console.log('Opening asset details modal for asset:', enhancedAsset.asset_tag)
+        
+        // Open the details modal with enhanced asset data
+        setTimeout(() => {
+          setSelectedAssetForDetails(enhancedAsset)
+          setIsDetailsDialogOpen(true)
+          console.log('Modal state set - isDetailsDialogOpen should be true')
+        }, 100) // Small delay to ensure scan dialog closes first
         
         // Show comprehensive status message
         const fullMessage = `${statusMessage}\n${detailedInfo.join(' • ')}`
         setSuccessMessage(fullMessage)
-        setTimeout(() => setSuccessMessage(""), 8000) // Longer timeout for detailed message
+        setTimeout(() => setSuccessMessage(""), 12000) // Longer timeout for detailed message with all asset info
       } else {
-        // Asset not found - apply filter and show search message
+        // Asset not found - close scan dialog and show search message
+        setIsScanDialogOpen(false)
         setSuccessMessage(`Scanned tag "${scannedTag}". Filter applied - asset may not be in system.`)
         setTimeout(() => setSuccessMessage(""), 4000)
       }
     } catch (err) {
       console.error("Error looking up scanned asset:", err)
+      setIsScanDialogOpen(false) // Close scan dialog on error
       setError(`Error retrieving asset details: ${err.message}`)
       setTimeout(() => setError(""), 5000)
     }
@@ -400,12 +532,20 @@ export function AssetsPage() {
 
   const handleDeleteAsset = async (assetId) => {
     try {
+      // Get asset details before deletion for logging
+      const assetToDelete = assets.find(asset => asset.id === assetId)
+      
       const { error } = await supabase
         .from("assets")
         .delete()
         .eq("id", assetId)
 
       if (error) throw error
+
+      // Log the activity
+      if (assetToDelete) {
+        await logAssetActivity.deleted(assetToDelete)
+      }
 
       setAssets(prev => prev.filter(asset => asset.id !== assetId))
       setSuccessMessage("Asset deleted successfully!")
@@ -602,15 +742,35 @@ export function AssetsPage() {
           </div>
         </div>
 
+        {/* Borrow Request Banner */}
+        {fromBorrowRequest && (
+          <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-800 rounded-[5px]">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-600 rounded-[5px]">
+                <Package className="size-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                  📋 Selecting Assets for Borrow Request
+                </h3>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                  Choose available assets from the filtered category below to assign for borrowing. 
+                  {selectedCategory !== "all" && ` Showing ${selectedCategory.replace('_', ' ').toUpperCase()} assets only.`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Success Message */}
         {successMessage && (
-          <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
-            <div className="size-4 bg-red-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+          <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md">
+            <div className="size-4 bg-green-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <svg className="size-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </div>
-            <div className="text-sm text-red-600">
+            <div className="text-sm text-green-600 dark:text-green-400">
               {successMessage.split('\n').map((line, index) => (
                 <div key={index} className={index > 0 ? 'text-xs mt-1' : ''}>
                   {line}
@@ -982,6 +1142,7 @@ export function AssetsPage() {
           asset={selectedAssetForAssignment}
           assignmentType={assignmentType}
           onAssignmentComplete={handleAssignmentComplete}
+          borrowRequestData={borrowRequestData}
         />
 
         {/* Edit Asset Dialog */}

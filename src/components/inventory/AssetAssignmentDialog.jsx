@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { logAssetActivity } from "@/utils/activityLogger"
 import {
   X,
   Loader2,
@@ -18,31 +19,70 @@ export function AssetAssignmentDialog({
   onClose, 
   asset, 
   onAssignmentComplete,
-  assignmentType = "assign" // "assign" or "borrow"
+  assignmentType = "assign", // "assign" or "borrow"
+  borrowRequestData = null // Pre-fill data from borrow request
 }) {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   
-  const [formData, setFormData] = useState({
-    // Borrower/Assignee Information
-    borrower_name: "",
-    borrower_email: "",
-    borrower_department: "",
-    borrower_employee_id: "",
-    borrower_phone: "",
-    
-    // Assignment Details
-    assignment_location: "",
-    purpose: "",
-    expected_return_date: "",
-    special_instructions: "",
-    
-    // For borrowing specifically
-    project_name: "",
-    supervisor_name: "",
-    supervisor_email: ""
-  })
+  // Initialize form data with borrow request data if provided
+  const getInitialFormData = () => {
+    if (borrowRequestData && assignmentType === "borrow") {
+      return {
+        // Pre-filled from borrow request
+        borrower_name: borrowRequestData.full_name || "",
+        borrower_email: borrowRequestData.email || "",
+        borrower_department: borrowRequestData.department || "",
+        borrower_employee_id: "",
+        borrower_phone: borrowRequestData.contact_number || "",
+        
+        // Assignment/Borrowing Details - use borrow request fields
+        assignment_location: borrowRequestData.usage_location || "",
+        usage_location: borrowRequestData.usage_location || "",
+        purpose: borrowRequestData.purpose || "",
+        borrowing_date: borrowRequestData.borrowing_date || "",
+        expected_return_date: borrowRequestData.return_date || "",
+        return_date: borrowRequestData.return_date || "",
+        special_instructions: borrowRequestData.additional_instructions || "",
+        additional_instructions: borrowRequestData.additional_instructions || "",
+        
+        // For borrowing specifically
+        project_name: "",
+        supervisor_name: "",
+        supervisor_email: ""
+      }
+    } else {
+      // Default empty form
+      return {
+        borrower_name: "",
+        borrower_email: "",
+        borrower_department: "",
+        borrower_employee_id: "",
+        borrower_phone: "",
+        assignment_location: "",
+        usage_location: "",
+        purpose: "",
+        borrowing_date: "",
+        expected_return_date: "",
+        return_date: "",
+        special_instructions: "",
+        additional_instructions: "",
+        project_name: "",
+        supervisor_name: "",
+        supervisor_email: ""
+      }
+    }
+  }
+
+  const [formData, setFormData] = useState(getInitialFormData())
+
+  // Update form when borrowRequestData changes
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData(getInitialFormData())
+    }
+  }, [isOpen, borrowRequestData])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -56,8 +96,11 @@ export function AssetAssignmentDialog({
     if (!formData.borrower_name.trim()) return "Borrower name is required"
     if (!formData.borrower_email.trim()) return "Borrower email is required"
     if (!formData.borrower_department.trim()) return "Department is required"
-    if (!formData.assignment_location.trim()) return "Assignment location is required"
     if (!formData.purpose.trim()) return "Purpose/reason is required"
+    
+    // Location validation - check both fields
+    const location = formData.usage_location?.trim() || formData.assignment_location?.trim()
+    if (!location) return "Usage location is required"
     
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -66,8 +109,21 @@ export function AssetAssignmentDialog({
     }
     
     // For borrowing, require return date
-    if (assignmentType === "borrow" && !formData.expected_return_date) {
-      return "Expected return date is required for borrowing"
+    if (assignmentType === "borrow") {
+      const returnDate = formData.return_date || formData.expected_return_date
+      if (!returnDate) {
+        return "Expected return date is required for borrowing"
+      }
+      
+      // Validate borrowing date if provided
+      if (formData.borrowing_date) {
+        const borrowDate = new Date(formData.borrowing_date)
+        const retDate = new Date(returnDate)
+        
+        if (retDate <= borrowDate) {
+          return "Return date must be after borrowing date"
+        }
+      }
     }
     
     return null
@@ -110,7 +166,7 @@ export function AssetAssignmentDialog({
           status: 'active'
         };
       } else {
-        // For borrowing - use asset_borrowing table  
+        // For borrowing - use asset_borrowing table with borrow request support
         tableName = "asset_borrowing";
         recordData = {
           asset_id: asset.id,
@@ -119,15 +175,31 @@ export function AssetAssignmentDialog({
           borrower_department: formData.borrower_department.trim(),
           borrower_employee_id: formData.borrower_employee_id.trim() || null,
           borrower_phone: formData.borrower_phone.trim() || null,
-          borrow_location: formData.assignment_location.trim(),
+          
+          // Use both location fields for compatibility
+          borrow_location: formData.assignment_location.trim() || formData.usage_location.trim(),
+          usage_location: formData.usage_location.trim() || formData.assignment_location.trim(),
+          
           purpose: formData.purpose.trim(),
           project_name: formData.project_name.trim() || null,
-          expected_return_date: formData.expected_return_date,
+          
+          // Use both date fields for compatibility
+          expected_return_date: formData.expected_return_date || formData.return_date,
+          return_date: formData.return_date || formData.expected_return_date,
+          borrowing_date: formData.borrowing_date || new Date().toISOString().split('T')[0],
+          
           supervisor_name: formData.supervisor_name.trim() || null,
           supervisor_email: formData.supervisor_email.trim() || null,
-          special_instructions: formData.special_instructions.trim() || null,
+          
+          // Use both instruction fields for compatibility
+          special_instructions: formData.special_instructions.trim() || formData.additional_instructions.trim() || null,
+          additional_instructions: formData.additional_instructions.trim() || formData.special_instructions.trim() || null,
+          
           borrowed_by: user?.id,
-          status: 'active'
+          status: 'active',
+          
+          // Link to borrow request if provided
+          borrow_request_id: borrowRequestData?.id || null
         };
       }
 
@@ -175,6 +247,27 @@ export function AssetAssignmentDialog({
       }
 
       console.log("Asset status updated successfully")
+
+      // Log the activity
+      try {
+        if (assignmentType === "assign") {
+          await logAssetActivity.assigned(asset, {
+            id: result.id,
+            assignee_name: formData.borrower_name.trim(),
+            assignee_department: formData.borrower_department.trim(),
+            purpose: formData.purpose.trim()
+          })
+        } else {
+          await logAssetActivity.assigned(asset, {
+            id: result.id,
+            assignee_name: formData.borrower_name.trim(),
+            assignee_department: formData.borrower_department.trim(),
+            purpose: formData.purpose.trim()
+          })
+        }
+      } catch (logError) {
+        console.warn("Failed to log assignment activity:", logError)
+      }
 
       // Reset form and close dialog
       setFormData({
@@ -263,6 +356,20 @@ export function AssetAssignmentDialog({
             </div>
           </div>
 
+          {/* Borrow Request Pre-fill Indicator */}
+          {borrowRequestData && assignmentType === "borrow" && (
+            <div className="p-4 bg-green-50 dark:bg-green-950/30 border-l-4 border-green-400 rounded-md">
+              <h4 className="font-semibold text-sm mb-1 flex items-center gap-2 text-green-800 dark:text-green-300">
+                <Calendar className="size-4" />
+                📋 Pre-filled from Borrow Request
+              </h4>
+              <p className="text-sm text-green-600 dark:text-green-400">
+                Form data has been automatically filled from the approved borrow request. 
+                You can modify any details if needed before creating the borrowing record.
+              </p>
+            </div>
+          )}
+
           {/* Borrower Information */}
           <div className="space-y-4">
             <h4 className="font-semibold text-sm flex items-center gap-2">
@@ -326,41 +433,66 @@ export function AssetAssignmentDialog({
             </div>
           </div>
 
-          {/* Assignment Details */}
+          {/* Assignment/Borrowing Details */}
           <div className="space-y-4">
             <h4 className="font-semibold text-sm flex items-center gap-2">
               <MapPin className="size-4" />
-              Assignment Details
+              {assignmentType === "borrow" ? "Borrowing Details" : "Assignment Details"}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1">Assignment Location <span className="text-red-600">*</span></label>
+                <label className="block text-xs font-medium mb-1">
+                  {assignmentType === "borrow" ? "Usage Location" : "Assignment Location"} <span className="text-red-600">*</span>
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g., CITE Building Room 201, Home Office"
-                  value={formData.assignment_location}
-                  onChange={(e) => handleInputChange("assignment_location", e.target.value)}
+                  placeholder="e.g., CL2, Medical Faculty, Conference Room"
+                  value={formData.usage_location || formData.assignment_location}
+                  onChange={(e) => {
+                    if (assignmentType === "borrow") {
+                      handleInputChange("usage_location", e.target.value)
+                    } else {
+                      handleInputChange("assignment_location", e.target.value)
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
                 />
               </div>
+              
+              {assignmentType === "borrow" && (
+                <div>
+                  <label className="block text-xs font-medium mb-1">Borrowing Date</label>
+                  <input
+                    type="date"
+                    value={formData.borrowing_date}
+                    onChange={(e) => handleInputChange("borrowing_date", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
+                  />
+                </div>
+              )}
+              
               {assignmentType === "borrow" && (
                 <div>
                   <label className="block text-xs font-medium mb-1">Expected Return Date <span className="text-red-600">*</span></label>
                   <input
                     type="date"
                     required
-                    value={formData.expected_return_date}
-                    onChange={(e) => handleInputChange("expected_return_date", e.target.value)}
+                    value={formData.return_date || formData.expected_return_date}
+                    onChange={(e) => {
+                      handleInputChange("return_date", e.target.value)
+                      handleInputChange("expected_return_date", e.target.value)
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
                   />
                 </div>
               )}
-              <div className={assignmentType === "assign" ? "md:col-span-1" : ""}>
+              
+              <div className={assignmentType === "assign" ? "md:col-span-2" : "md:col-span-2"}>
                 <label className="block text-xs font-medium mb-1">Purpose/Reason <span className="text-red-600">*</span></label>
                 <textarea
                   required
-                  placeholder="e.g., Remote work setup, Training program, Project development"
+                  placeholder="e.g., Training workshop, Conference presentation, Project development"
                   value={formData.purpose}
                   onChange={(e) => handleInputChange("purpose", e.target.value)}
                   rows={3}
@@ -412,13 +544,24 @@ export function AssetAssignmentDialog({
             </div>
           )}
 
-          {/* Special Instructions */}
+          {/* Special Instructions / Additional Instructions */}
           <div>
-            <label className="block text-xs font-medium mb-1">Special Instructions</label>
+            <label className="block text-xs font-medium mb-1">
+              {assignmentType === "borrow" ? "Additional Instructions" : "Special Instructions"}
+            </label>
             <textarea
-              placeholder="Any special handling instructions, setup requirements, or notes..."
-              value={formData.special_instructions}
-              onChange={(e) => handleInputChange("special_instructions", e.target.value)}
+              placeholder={assignmentType === "borrow" ? 
+                "Any special requirements, setup instructions, or notes..." : 
+                "Any special handling instructions, setup requirements, or notes..."
+              }
+              value={formData.additional_instructions || formData.special_instructions}
+              onChange={(e) => {
+                if (assignmentType === "borrow") {
+                  handleInputChange("additional_instructions", e.target.value)
+                } else {
+                  handleInputChange("special_instructions", e.target.value)
+                }
+              }}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
             />

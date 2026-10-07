@@ -140,7 +140,7 @@ export function ForgotPasswordPage() {
                                 <p>① Open the email from ITAMS in your inbox</p>
                                 <p>② Click the <strong>"Reset Password"</strong> link in the email</p>
                                 <p>③ Enter and confirm your new password</p>
-                                <p className="text-green-600 dark:text-green-500 pt-0.5">⚠ The link expires in 1 hour — check your spam folder if you don't see it</p>
+                                <p className="text-green-600 dark:text-green-500 pt-0.5">⚠ The link expires in 10 minutes — check your spam folder if you don't see it</p>
                               </div>
                             </div>
                           </div>

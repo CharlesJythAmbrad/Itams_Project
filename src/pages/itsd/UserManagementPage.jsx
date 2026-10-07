@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { ITSDLayout } from "@/layouts/itsd/ITSDLayout"
 import { supabase } from "@/lib/supabaseClient"
+import { logUserActivity } from "@/utils/activityLogger"
 import { createClient } from "@supabase/supabase-js"
 import { useAuth } from "@/hooks/useAuth"
 import {
@@ -302,6 +303,20 @@ export function UserManagementPage() {
       setSuccessMessage(`User "${userName}" has been ${actionText} successfully!`)
       setTimeout(() => setSuccessMessage(""), 5000)
 
+      // Log the activity
+      try {
+        const user = users.find(u => u.id === userId)
+        if (user) {
+          if (newStatus) {
+            await logUserActivity.deactivated(user)
+          } else {
+            await logUserActivity.activated(user)
+          }
+        }
+      } catch (logError) {
+        console.warn("Failed to log user status change activity:", logError)
+      }
+
       // Refresh data in the background
       setTimeout(() => fetchUsers(), 1000)
 
@@ -491,6 +506,19 @@ export function UserManagementPage() {
 
       setSuccessMessage(`User "${newUserData.full_name}" created successfully! They can now access their dashboard.`)
       setTimeout(() => setSuccessMessage(""), 5000)
+
+      // Log the activity
+      try {
+        await logUserActivity.created({
+          id: newUserId,
+          full_name: newUserData.full_name,
+          email: newUserData.email,
+          role: newUserData.role,
+          department: newUserData.department
+        })
+      } catch (logError) {
+        console.warn("Failed to log user creation activity:", logError)
+      }
 
       // Refresh users list
       await fetchUsers()

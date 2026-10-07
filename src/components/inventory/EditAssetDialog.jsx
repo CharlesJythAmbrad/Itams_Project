@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { logAssetActivity } from "@/utils/activityLogger"
 import {
   X,
   Loader2,
@@ -168,6 +169,21 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
       if (error) throw error
 
       console.log("Asset updated successfully:", data)
+      
+      // Log the activity
+      try {
+        // Calculate what changed
+        const changes = {}
+        Object.keys(updateData).forEach(key => {
+          if (updateData[key] !== asset[key]) {
+            changes[key] = { from: asset[key], to: updateData[key] }
+          }
+        })
+        
+        await logAssetActivity.updated(data, changes)
+      } catch (logError) {
+        console.warn("Failed to log asset update activity:", logError)
+      }
       
       // Notify parent component and close dialog
       onAssetUpdated?.(data)

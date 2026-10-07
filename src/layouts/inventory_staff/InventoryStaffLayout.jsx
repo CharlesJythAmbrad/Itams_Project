@@ -45,7 +45,8 @@ export function InventoryStaffLayout({ children, activeTab = "dashboard", onTabC
                       activeTab === "borrowed-return" ? "Borrowed and Assigned" :
                       activeTab === "warranty" ? "Warranty" :
                       activeTab === "repairs" ? "Repairs" :
-                      activeTab === "requests" ? "Requests" : activeTab}
+                      activeTab === "requests" ? "Requests" :
+                      activeTab === "borrow-request" ? "Borrow Request" : activeTab}
         />
 
         <main className="flex-1 p-3 sm:p-4 md:p-5 max-w-7xl w-full mx-auto space-y-4">

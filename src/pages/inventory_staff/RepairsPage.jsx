@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom"
 import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { logRepairActivity } from "@/utils/activityLogger"
 import { AddRepairDialog } from "@/components/inventory/AddRepairDialog"
 import { RepairDetailsDialog } from "@/components/inventory/RepairDetailsDialog"
 import { EditRepairDialog } from "@/components/inventory/EditRepairDialog"
@@ -56,7 +57,7 @@ export function RepairsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 10
+  const pageSize = 5
 
   // Update filters when URL params change
   useEffect(() => {
@@ -108,17 +109,33 @@ export function RepairsPage() {
     fetchRepairs()
   }, [])
 
-  const handleRepairAdded = (newRepair) => {
+  const handleRepairAdded = async (newRepair) => {
     setRepairs(prev => [newRepair, ...prev])
     setSuccessMessage(`Repair request ${newRepair.repair_ticket} created successfully!`)
     setTimeout(() => setSuccessMessage(""), 5000)
+    
+    // Log the activity
+    try {
+      await logRepairActivity.created(newRepair, newRepair.assets)
+    } catch (logError) {
+      console.warn("Failed to log repair creation activity:", logError)
+    }
+    
     fetchRepairs()
   }
 
-  const handleRepairUpdated = (updatedRepair) => {
+  const handleRepairUpdated = async (updatedRepair) => {
     setRepairs(prev => prev.map(r => r.id === updatedRepair.id ? updatedRepair : r))
     setSuccessMessage(`Repair request ${updatedRepair.repair_ticket} updated successfully!`)
     setTimeout(() => setSuccessMessage(""), 5000)
+    
+    // Log the activity
+    try {
+      await logRepairActivity.updated(updatedRepair, updatedRepair.assets, { action: 'repair_updated' })
+    } catch (logError) {
+      console.warn("Failed to log repair update activity:", logError)
+    }
+    
     fetchRepairs()
   }
 
@@ -203,11 +220,11 @@ export function RepairsPage() {
       case "pending":
         return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
       case "in_progress":
-        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+        return "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
       case "quote_pending":
         return "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
       case "completed":
-        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+        return "bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300"
       case "cancelled":
         return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
       default:
@@ -218,7 +235,7 @@ export function RepairsPage() {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "low":
-        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+        return "bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300"
       case "medium":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/60 dark:text-yellow-300"
       case "high":
@@ -287,13 +304,13 @@ export function RepairsPage() {
 
         {/* Success Message */}
         {successMessage && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
-            <div className="size-4 bg-red-600 rounded-full flex items-center justify-center">
+          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-md">
+            <div className="size-4 bg-green-600 rounded-full flex items-center justify-center">
               <svg className="size-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </div>
-            <span className="text-sm text-red-600">{successMessage}</span>
+            <span className="text-sm text-green-600 dark:text-green-400">{successMessage}</span>
           </div>
         )}
 

@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { logAssetActivity } from "@/utils/activityLogger"
 import {
   Laptop,
   Monitor,
@@ -287,6 +288,9 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
         port_count: "", management_ip: "", firmware_version: "",
         power_consumption_watts: "", dimensions: "", weight_kg: "", notes: ""
       })
+
+      // Log the activity
+      await logAssetActivity.created(data)
 
       onAssetAdded?.(data)
       onClose()

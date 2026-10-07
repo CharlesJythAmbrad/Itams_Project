@@ -318,7 +318,6 @@ export function RequestFormPage() {
               {/* Request Type */}
               <Field id="request_type" label="Request Type" required>
                 <SelectInput id="request_type" value={form.request_type} onChange={set("request_type")} required>
-                  <option value="">— Select request type —</option>
                   {REQUEST_TYPES.map(t => (
                     <option key={t.value} value={t.value}>{t.label} — {t.desc}</option>
                   ))}
@@ -415,7 +414,7 @@ export function RequestFormPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field id="location" label="Location / Department" required>
-                      <TextInput id="location" value={form.location} onChange={set("location")} placeholder="e.g. CITE Faculty, Medical Department" required />
+                      <TextInput id="location" value={form.location} onChange={set("location")} placeholder="e.g. CITE Faculty" required />
                     </Field>
                     <Field id="preferred_date" label="Preferred Date" required>
                       <TextInput
@@ -429,16 +428,15 @@ export function RequestFormPage() {
                     </Field>
                   </div>
                   <Field id="asset_details" label="Asset / Item Details" required>
-                    <TextInput id="asset_details" value={form.asset_details} onChange={set("asset_details")} placeholder="e.g. Dell Laptop SN#12345, HP Printer" required />
+                    <TextInput id="asset_details" value={form.asset_details} onChange={set("asset_details")} placeholder="e.g.Laptop" required />
                   </Field>
-                  <Field id="description" label="Description / Reason" required>
+                  <Field id="description" label="Description / Reason (Optional)">
                     <TextArea
                       id="description"
                       value={form.description}
                       onChange={set("description")}
                       placeholder="Please describe the issue or reason for this request in detail…"
                       rows={4}
-                      required
                     />
                   </Field>
                 </div>

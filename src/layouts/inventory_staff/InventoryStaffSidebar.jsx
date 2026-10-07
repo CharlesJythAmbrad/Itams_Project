@@ -43,7 +43,8 @@ export function InventoryStaffSidebar({
     { id: "borrowed-return",label: "Borrowed and Assigned",icon: UserCheck },
     { id: "warranty",       label: "Warranty",            icon: Layers },
     { id: "repairs",        label: "Repairs",             icon: HardDrive },
-    { id: "requests",       label: "Requests",            icon: ClipboardList },
+    { id: "requests",       label: "Service Requests",   icon: ClipboardList },
+    { id: "borrow-request", label: "Borrow Request",      icon: Boxes },
   ]
 
   const handleConfirmSignOut = async () => {

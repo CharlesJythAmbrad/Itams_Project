@@ -2,6 +2,7 @@ import { createContext, useEffect, useState, useCallback } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { getUserSchemaCapabilities, setUserSchemaCapabilities } from "@/utils/userSchemaCapabilities"
 import { resetUserPassword } from "@/utils/passwordReset"
+import { logAuthActivity } from "@/utils/activityLogger"
 
 export const AuthContext = createContext(null)
 
@@ -232,6 +233,13 @@ export const AuthProvider = ({ children }) => {
       setSession(data.session)
       const userProfile = await fetchUserData(data.user.id)
 
+      // Log successful login
+      try {
+        await logAuthActivity.login()
+      } catch (logError) {
+        console.warn("Failed to log login activity:", logError)
+      }
+
       // Keep isAuthenticating true for a brief moment to ensure the loading screen covers
       // the route transition and dashboard initial render seamlessly with no blank flicker
       setTimeout(() => {
@@ -288,6 +296,13 @@ export const AuthProvider = ({ children }) => {
   const signOut = useCallback(async () => {
     setLoading(true)
     try {
+      // Log logout before signing out
+      try {
+        await logAuthActivity.logout()
+      } catch (logError) {
+        console.warn("Failed to log logout activity:", logError)
+      }
+
       await supabase.auth.signOut()
       setUser(null)
       setProfile(null)
