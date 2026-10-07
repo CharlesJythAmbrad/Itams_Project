@@ -22,7 +22,9 @@ import {
   FileText,
   MapPin,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  CalendarPlus,
+  X
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -42,6 +44,10 @@ export function BorrowedReturnPage() {
   const [error, setError] = useState("")
   const [selectedRecordForDetails, setSelectedRecordForDetails] = useState(null)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  const [showExtendModal, setShowExtendModal] = useState(false)
+  const [selectedAssignmentForExtend, setSelectedAssignmentForExtend] = useState(null)
+  const [extendToDate, setExtendToDate] = useState("")
+  const [isExtending, setIsExtending] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 5
 
@@ -187,6 +193,44 @@ export function BorrowedReturnPage() {
   const formatDate = (dateString) => {
     if (!dateString) return "Not specified"
     return new Date(dateString).toLocaleDateString()
+  }
+
+  // Handle extend request
+  const handleExtendRequest = async () => {
+    if (!selectedAssignmentForExtend || !extendToDate) return
+
+    setIsExtending(true)
+    try {
+      // Update the assignment with new expected return date
+      const { error } = await supabase
+        .from("asset_assignments")
+        .update({
+          expected_return_date: extendToDate,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", selectedAssignmentForExtend.id)
+
+      if (error) throw error
+
+      // Update the local state
+      setAssignments(prev => prev.map(assignment => 
+        assignment.id === selectedAssignmentForExtend.id 
+          ? { ...assignment, expected_return_date: extendToDate }
+          : assignment
+      ))
+
+      // Close modal and reset
+      setShowExtendModal(false)
+      setSelectedAssignmentForExtend(null)
+      setExtendToDate("")
+
+      // You could add success message here if needed
+    } catch (error) {
+      console.error("Error extending assignment:", error)
+      // You could add error handling here
+    } finally {
+      setIsExtending(false)
+    }
   }
 
   // Calculate if assignment is overdue
@@ -424,6 +468,7 @@ export function BorrowedReturnPage() {
                     <th className="px-3.5 py-2.5">Asset & Borrower</th>
                     <th className="px-3.5 py-2.5">Assignment Details</th>
                     <th className="px-3.5 py-2.5">Dates & Status</th>
+                    <th className="px-3.5 py-2.5">Request Extend</th>
                     <th className="px-3.5 py-2.5">Actions</th>
                   </tr>
                 </thead>
@@ -498,6 +543,27 @@ export function BorrowedReturnPage() {
                           </div>
                         </td>
 
+                        {/* Request Extend */}
+                        <td className="px-3.5 py-2.5">
+                          {(assignment.status === 'active' && assignment.assignment_type === 'borrow') ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-3 text-xs rounded-[5px] gap-1.5"
+                              onClick={() => {
+                                setSelectedAssignmentForExtend(assignment)
+                                setExtendToDate("")
+                                setShowExtendModal(true)
+                              }}
+                            >
+                              <CalendarPlus className="size-3" />
+                              Extend
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+
                         {/* Actions */}
                         <td className="px-3.5 py-2.5">
                           <div className="flex items-center gap-1">
@@ -556,6 +622,87 @@ export function BorrowedReturnPage() {
           onClose={() => setIsDetailsDialogOpen(false)}
           record={selectedRecordForDetails}
         />
+
+        {/* Extend Request Modal */}
+        {showExtendModal && selectedAssignmentForExtend && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-[5px] shadow-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-md">
+              <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <CalendarPlus className="size-5 text-blue-600" />
+                  <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-50">Extend Return Date</h3>
+                </div>
+                <button 
+                  onClick={() => setShowExtendModal(false)} 
+                  className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
+                  disabled={isExtending}
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                {/* Asset Information */}
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="size-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                      {selectedAssignmentForExtend.assets?.name}
+                    </span>
+                  </div>
+                  <div className="text-xs text-blue-700 dark:text-blue-400">
+                    <p>Asset Tag: <span className="font-mono">{selectedAssignmentForExtend.assets?.asset_tag}</span></p>
+                    <p>Borrower: <span className="font-medium">{selectedAssignmentForExtend.borrower_name}</span></p>
+                    <p>Current Return Date: <span className="font-medium">{formatDate(selectedAssignmentForExtend.expected_return_date)}</span></p>
+                  </div>
+                </div>
+
+                {/* New Return Date */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    New Return Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={extendToDate}
+                    onChange={(e) => setExtendToDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]} // Today or later
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-md text-sm bg-transparent"
+                    disabled={isExtending}
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => setShowExtendModal(false)}
+                    disabled={isExtending}
+                    className="px-4 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleExtendRequest}
+                    disabled={isExtending || !extendToDate}
+                    className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isExtending ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        Extending...
+                      </>
+                    ) : (
+                      <>
+                        <CalendarPlus className="size-4" />
+                        Extend Date
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </InventoryStaffLayout>
   )

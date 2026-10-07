@@ -172,6 +172,8 @@ function QRModal({ isOpen, onClose }) {
 ═══════════════════════════════════════════════════════════ */
 function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
   const [updating, setUpdating] = useState(false)
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState("")
   const { navigate } = useRouter()
 
   if (!request) return null
@@ -179,11 +181,36 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
   const sc = STATUS_COLORS[request.status] ?? STATUS_COLORS.pending
 
   const handleStatus = async (newStatus) => {
+    // Check if trying to go back to pending from approved/rejected
+    if (newStatus === 'pending' && (request.status === 'approved' || request.status === 'rejected')) {
+      return // Prevent going back to pending
+    }
+    
+    // If rejecting, show the rejection reason modal
+    if (newStatus === 'rejected') {
+      setShowRejectModal(true)
+      return
+    }
+    
+    await updateRequestStatus(newStatus)
+  }
+  
+  const updateRequestStatus = async (newStatus, reason = null) => {
     setUpdating(true)
     try {
+      const updateData = {
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      }
+      
+      // Add rejection reason if provided
+      if (newStatus === 'rejected' && reason) {
+        updateData.rejection_reason = reason
+      }
+      
       const { error } = await supabase
         .from("asset_requests")
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq("id", request.id)
       
       if (!error) {
@@ -194,13 +221,14 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
             resourceType: 'borrow_request',
             resourceId: request.id,
             resourceName: `Borrow Request - ${request.full_name}`,
-            description: `Updated borrow request status from ${request.status} to ${newStatus}`,
+            description: `Updated borrow request status from ${request.status} to ${newStatus}${reason ? ` (Reason: ${reason})` : ''}`,
             metadata: {
               previous_status: request.status,
               new_status: newStatus,
               asset_type: request.asset_type,
               quantity: request.quantity,
-              requester: request.full_name
+              requester: request.full_name,
+              rejection_reason: reason
             }
           })
         } catch (logError) {
@@ -219,6 +247,25 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
     } finally {
       setUpdating(false)
     }
+  }
+  
+  const handleRejectConfirm = async () => {
+    if (!rejectionReason.trim()) {
+      return // Require a reason
+    }
+    
+    await updateRequestStatus('rejected', rejectionReason.trim())
+    setShowRejectModal(false)
+    setRejectionReason("")
+  }
+  
+  // Check if status transitions are allowed
+  const isStatusAllowed = (status) => {
+    // Once approved or rejected, cannot go back to pending
+    if (status === 'pending' && (request.status === 'approved' || request.status === 'rejected')) {
+      return false
+    }
+    return true
   }
 
   return (
@@ -265,12 +312,15 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
                 {["pending","approved","rejected"].map(s => (
                   <button
                     key={s}
-                    disabled={updating || request.status === s}
+                    disabled={updating || request.status === s || !isStatusAllowed(s)}
                     onClick={() => handleStatus(s)}
                     className={`px-2.5 py-1 rounded-[5px] text-[10px] font-bold uppercase tracking-wide border transition-opacity disabled:opacity-40 cursor-pointer
                       ${STATUS_COLORS[s]?.bg} ${STATUS_COLORS[s]?.text} ${STATUS_COLORS[s]?.border}`}
                   >
                     {s.replace("_", " ")}
+                    {!isStatusAllowed(s) && s === 'pending' && (
+                      <span className="ml-1 text-[8px]">🚫</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -456,6 +506,16 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
                       </td>
                       <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200">{fmt(request.created_at)}</td>
                     </tr>
+                    {/* Show rejection reason if rejected */}
+                    {request.status === 'rejected' && request.rejection_reason && (
+                      <tr>
+                        <td className="px-3 py-2.5 font-medium text-zinc-600 dark:text-zinc-400 border-r border-zinc-100 dark:border-zinc-800">
+                          <AlertCircle className="size-3.5 inline mr-2" />
+                          Rejection Reason
+                        </td>
+                        <td className="px-3 py-2.5 text-red-600 dark:text-red-400">{request.rejection_reason}</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -463,6 +523,76 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
           </div>
         </motion.div>
       </motion.div>
+      
+      {/* Rejection Reason Modal */}
+      {showRejectModal && (
+        <motion.div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="bg-white dark:bg-zinc-900 rounded-[5px] shadow-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-md"
+            initial={{ scale: 0.95, y: 10 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.95, y: 10 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="size-5 text-red-600" />
+                <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-50">Reject Request</h3>
+              </div>
+              <button 
+                onClick={() => setShowRejectModal(false)} 
+                className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Please provide a reason for rejecting this borrow request:
+              </p>
+              
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Enter rejection reason..."
+                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-md text-sm bg-transparent resize-none"
+                rows={3}
+                required
+              />
+              
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowRejectModal(false)}
+                  disabled={updating}
+                  className="px-4 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRejectConfirm}
+                  disabled={updating || !rejectionReason.trim()}
+                  className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md disabled:opacity-50 flex items-center gap-2"
+                >
+                  {updating ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Rejecting...
+                    </>
+                  ) : (
+                    'Reject Request'
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   )
 }
@@ -477,17 +607,21 @@ export function BorrowRequestPage() {
   const [requests, setRequests] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [assetTypeFilter, setAssetTypeFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
   const [showQRModal, setShowQRModal] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState(null)
+  const [showRejectReasonModal, setShowRejectReasonModal] = useState(false)
+  const [selectedRejectReason, setSelectedRejectReason] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
 
   /* ── Fetch borrow requests ──────────────────────────────────── */
   const fetchRequests = async () => {
     setIsLoading(true)
     setError("")
+    setSuccessMessage("") // Clear success message on refresh
     try {
       // Try with availability columns first, fall back to basic query if they don't exist
       let data, err
@@ -541,6 +675,7 @@ export function BorrowRequestPage() {
       }
     } catch (e) {
       setError(e.message)
+      setSuccessMessage("") // Clear success message on error
     } finally {
       setIsLoading(false)
     }
@@ -625,6 +760,29 @@ export function BorrowRequestPage() {
   const handleStatusChange = (id, newStatus) => {
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r))
     if (selectedRequest?.id === id) setSelectedRequest(prev => ({ ...prev, status: newStatus }))
+    
+    // Show success message based on status change
+    const request = requests.find(r => r.id === id)
+    if (request) {
+      let message = ""
+      switch (newStatus) {
+        case 'approved':
+          message = `✅ Borrow request for ${request.full_name} has been approved successfully!`
+          break
+        case 'rejected':
+          message = `❌ Borrow request for ${request.full_name} has been rejected successfully!`
+          break
+        case 'pending':
+          message = `📝 Borrow request for ${request.full_name} has been set to pending!`
+          break
+        default:
+          message = `📋 Borrow request status updated successfully!`
+      }
+      
+      setError("") // Clear error message
+      setSuccessMessage(message)
+      setTimeout(() => setSuccessMessage(""), 5000)
+    }
   }
 
   return (
@@ -734,6 +892,14 @@ export function BorrowRequestPage() {
           </div>
         )}
 
+        {/* ── Success Message ───────────────────────────── */}
+        {successMessage && (
+          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-[5px] text-xs text-green-700 dark:text-green-300">
+            <CheckCircle2 className="size-4 shrink-0" />
+            {successMessage}
+          </div>
+        )}
+
         {/* ── Filters ───────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
@@ -774,24 +940,34 @@ export function BorrowRequestPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
-                  {["Submitted","Requester","Asset Type","Quantity","Availability","Borrow Period","Status",""].map(h => (
-                    <th key={h} className="px-4 py-3 text-left font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
+                  {(() => {
+                    // Base headers
+                    const headers = ["Requester","Asset Type","Quantity","Availability","Borrow Period","Status"]
+                    // Add rejection reason header only if there are rejected requests
+                    const hasRejected = filtered.some(r => r.status === 'rejected')
+                    if (hasRejected) {
+                      headers.push("Rejection Reason")
+                    }
+                    headers.push("") // Actions column
+                    return headers.map(h => (
+                      <th key={h} className="px-4 py-3 text-left font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))
+                  })()}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center">
+                    <td colSpan={filtered.some(r => r.status === 'rejected') ? 8 : 7} className="px-4 py-12 text-center">
                       <Loader2 className="size-6 animate-spin mx-auto text-zinc-400" />
                       <p className="text-zinc-400 mt-2">Loading borrow requests…</p>
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center">
+                    <td colSpan={filtered.some(r => r.status === 'rejected') ? 8 : 7} className="px-4 py-12 text-center">
                       <Boxes className="size-10 mx-auto text-zinc-300 dark:text-zinc-700 mb-2" />
                       <p className="text-zinc-400 text-sm">No borrow requests found</p>
                       <p className="text-zinc-300 dark:text-zinc-600 text-xs mt-1">
@@ -807,7 +983,6 @@ export function BorrowRequestPage() {
                       : "—"
                     return (
                       <tr key={r.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{fmt(r.created_at)}</td>
                         <td className="px-4 py-3">
                           <div>
                             <p className="font-medium text-zinc-800 dark:text-zinc-200">{r.full_name || "—"}</p>
@@ -876,6 +1051,26 @@ export function BorrowRequestPage() {
                             {r.status?.replace("_"," ")}
                           </span>
                         </td>
+                        {/* Show rejection reason column only if there are rejected requests */}
+                        {filtered.some(req => req.status === 'rejected') && (
+                          <td className="px-4 py-3">
+                            {r.status === 'rejected' && r.rejection_reason ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="rounded-[5px] text-xs h-7 px-2.5"
+                                onClick={() => {
+                                  setSelectedRejectReason(r.rejection_reason)
+                                  setShowRejectReasonModal(true)
+                                }}
+                              >
+                                View Reason
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </td>
+                        )}
                         <td className="px-4 py-3 text-right">
                           <Button
                             size="sm"
@@ -942,6 +1137,43 @@ export function BorrowRequestPage() {
           onClose={() => setSelectedRequest(null)}
           onStatusChange={handleStatusChange}
         />
+
+        {/* Rejection Reason Modal */}
+        {showRejectReasonModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-[5px] shadow-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-md">
+              <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="size-5 text-red-600" />
+                  <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-50">Rejection Reason</h3>
+                </div>
+                <button 
+                  onClick={() => setShowRejectReasonModal(false)} 
+                  className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              
+              <div className="p-4">
+                <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    {selectedRejectReason}
+                  </p>
+                </div>
+                
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={() => setShowRejectReasonModal(false)}
+                    className="px-4 py-2 text-sm bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </InventoryStaffLayout>
   )
