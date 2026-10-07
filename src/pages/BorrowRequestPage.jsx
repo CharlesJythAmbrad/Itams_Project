@@ -40,21 +40,22 @@ import QRCode from "qrcode"
 
 /* ─── Constants ─────────────────────────────────────────── */
 const ASSET_TYPES = [
-  { value: "laptop", label: "Laptop" },
-  { value: "computer", label: "Desktop Computer" },
-  { value: "monitor", label: "Monitor" },
-  { value: "printer", label: "Printer" },
-  { value: "scanner", label: "Scanner" },
-  { value: "projector", label: "Projector" },
-  { value: "cctv", label: "Camera/CCTV" },
+  { value: "computer", label: "Desktop Computers" },
+  { value: "laptop", label: "Laptops" },
+  { value: "server", label: "Servers" },
+  { value: "monitor", label: "Monitors" },
+  { value: "printer", label: "Printers" },
+  { value: "scanner", label: "Scanners" },
   { value: "networking", label: "Network Equipment" },
-  { value: "phone", label: "Phone" },
-  { value: "tablet", label: "Tablet" },
-  { value: "server", label: "Server" },
-  { value: "ups", label: "UPS/Power Equipment" },
-  { value: "storage", label: "Storage Device" },
-  { value: "accessory", label: "Accessory" },
-  { value: "other", label: "Other" },
+  { value: "cctv", label: "CCTV Cameras" },
+  { value: "phone", label: "Phones" },
+  { value: "tablet", label: "Tablets" },
+  { value: "projector", label: "Projectors" },
+  { value: "ups", label: "UPS/Power" },
+  { value: "storage", label: "Storage Devices" },
+  { value: "accessory", label: "Accessories" },
+  { value: "software", label: "Software" },
+  { value: "other", label: "Other" }
 ]
 
 const STATUS_COLORS = {
@@ -68,6 +69,108 @@ const STATUS_COLORS = {
 /* ─── Helpers ────────────────────────────────────────────── */
 const fmt = (d) => d ? new Date(d).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }) : "—"
 const getAssetTypeLabel = (type) => ASSET_TYPES.find(t => t.value === type)?.label || type
+
+/* ─── Availability Cell Component ─────────────────────── */
+function AvailabilityCell({ assetType, quantity }) {
+  const [availability, setAvailability] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!assetType) {
+        setAvailability({
+          status: 'no-type',
+          color: "text-gray-600 dark:text-gray-400",
+          icon: <AlertCircle className="size-3" />,
+          text: "No type specified"
+        })
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        const { data, error } = await supabase.rpc('simple_check_asset_availability', {
+          p_asset_type: assetType
+        })
+
+        if (error) {
+          console.warn('RPC Error:', error)
+          throw error
+        }
+
+        const inStockCount = data?.in_stock_count || 0
+        const requested = parseInt(quantity) || 1
+
+        let status, color, icon, text
+        
+        if (data?.error) {
+          // Function returned an error
+          status = 'error'
+          color = "text-gray-600 dark:text-gray-400"
+          icon = <AlertCircle className="size-3" />
+          text = "Unable to check"
+        } else if (inStockCount >= requested) {
+          status = 'available'
+          color = "text-green-600 dark:text-green-400"
+          icon = <CheckCircle2 className="size-3" />
+          text = `${inStockCount} Available`
+        } else if (inStockCount > 0) {
+          status = 'partial'
+          color = "text-yellow-600 dark:text-yellow-400"
+          icon = <AlertCircle className="size-3" />
+          text = `Only ${inStockCount} Available`
+        } else {
+          status = 'unavailable'
+          color = "text-red-600 dark:text-red-400"
+          icon = <X className="size-3" />
+          text = "None Available"
+        }
+
+        setAvailability({ status, color, icon, text })
+      } catch (err) {
+        console.warn('Error checking availability for', assetType, ':', err)
+        setAvailability({
+          status: 'error',
+          color: "text-gray-600 dark:text-gray-400",
+          icon: <AlertCircle className="size-3" />,
+          text: "Check failed"
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Add a small delay to avoid too many simultaneous requests
+    const timeoutId = setTimeout(checkAvailability, Math.random() * 1000)
+    return () => clearTimeout(timeoutId)
+  }, [assetType, quantity])
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <Loader2 className="size-3 animate-spin text-blue-400" />
+        <span className="text-xs text-blue-500">Checking...</span>
+      </div>
+    )
+  }
+
+  if (!availability) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <div className="size-3 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+        <span className="text-xs text-gray-500">No data</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`flex items-center gap-1.5 ${availability.color}`}>
+      {availability.icon}
+      <span className="text-xs font-medium">{availability.text}</span>
+    </div>
+  )
+}
 /* ═══════════════════════════════════════════════════════════
    QR MODAL – shows the scannable QR code for borrow requests  
 ═══════════════════════════════════════════════════════════ */
@@ -623,56 +726,14 @@ export function BorrowRequestPage() {
     setError("")
     setSuccessMessage("") // Clear success message on refresh
     try {
-      // Try with availability columns first, fall back to basic query if they don't exist
-      let data, err
-      
-      try {
-        // Try to select with availability columns
-        const result = await supabase
-          .from("asset_requests")
-          .select(`
-            *,
-            availability_status,
-            availability_details,
-            available_count,
-            last_availability_check
-          `)
-          .eq("request_type", "borrow_request")
-          .order("created_at", { ascending: false })
-        
-        data = result.data
-        err = result.error
-      } catch (availabilityError) {
-        console.warn('Availability columns not found, falling back to basic query')
-        // Fall back to basic query without availability columns
-        const result = await supabase
-          .from("asset_requests")
-          .select("*")
-          .eq("request_type", "borrow_request")
-          .order("created_at", { ascending: false })
-        
-        data = result.data
-        err = result.error
-      }
+      const { data, error } = await supabase
+        .from("asset_requests")
+        .select("*")
+        .eq("request_type", "borrow_request")
+        .order("created_at", { ascending: false })
 
-      if (err) throw err
+      if (error) throw error
       setRequests(data ?? [])
-      
-      // Check for requests that need availability updates (only if columns exist)
-      const hasAvailabilityColumns = data && data.length > 0 && data[0].hasOwnProperty('availability_status')
-      if (hasAvailabilityColumns) {
-        const needsCheck = data?.filter(r => 
-          !r.availability_status || 
-          r.availability_status === 'pending_check' ||
-          !r.last_availability_check ||
-          new Date(r.last_availability_check) < new Date(Date.now() - 60 * 60 * 1000) // 1 hour old
-        ) ?? []
-        
-        if (needsCheck.length > 0) {
-          // Update availability for requests that need it
-          setTimeout(() => updateAvailability(), 1000)
-        }
-      }
     } catch (e) {
       setError(e.message)
       setSuccessMessage("") // Clear success message on error
@@ -682,46 +743,6 @@ export function BorrowRequestPage() {
   }
 
   useEffect(() => { fetchRequests() }, [])
-
-  /* ── Availability Check ──────────────────────────────── */
-  const updateAvailability = async () => {
-    try {
-      // Use a simpler approach - check each request individually
-      const requestsToCheck = requests.filter(r => 
-        r.request_type === 'borrow_request' && 
-        (!r.availability_status || r.availability_status === 'pending_check')
-      )
-      
-      if (requestsToCheck.length === 0) {
-        console.log('No requests need availability checking')
-        return
-      }
-      
-      console.log('Checking availability for', requestsToCheck.length, 'requests')
-      
-      // Check availability for each request
-      for (const request of requestsToCheck) {
-        try {
-          const { data, error } = await supabase.rpc('simple_check_asset_availability', {
-            request_id: request.id
-          })
-          
-          if (error) {
-            console.warn('Failed to check availability for request', request.id, ':', error)
-          } else {
-            console.log('Updated availability for request', request.id, ':', data)
-          }
-        } catch (err) {
-          console.warn('Error checking availability for request', request.id, ':', err)
-        }
-      }
-      
-      // Refresh the data after checking
-      setTimeout(() => fetchRequests(), 2000)
-    } catch (err) {
-      console.warn('Availability update error:', err)
-    }
-  }
 
   /* ── Filter ──────────────────────────────────────────── */
   const filtered = requests.filter(r => {
@@ -808,15 +829,6 @@ export function BorrowRequestPage() {
             >
               <RefreshCw className={`size-3.5 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
-            </Button>
-            <Button
-              variant="outline"
-              className="rounded-[5px] text-xs h-9 gap-1.5"
-              onClick={updateAvailability}
-              disabled={isLoading}
-            >
-              <Package className="size-3.5" />
-              Check Availability
             </Button>
             <Button
               variant="brand"
@@ -996,54 +1008,7 @@ export function BorrowRequestPage() {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{r.quantity || "—"}</td>
                         <td className="px-4 py-3">
-                          {(() => {
-                            // Check if availability columns exist
-                            const hasAvailabilityData = r.hasOwnProperty('availability_status')
-                            
-                            if (!hasAvailabilityData) {
-                              return (
-                                <div className="flex items-center gap-1.5">
-                                  <div className="size-3 rounded-full bg-gray-300 dark:bg-gray-600"></div>
-                                  <span className="text-xs text-gray-500">Not checked</span>
-                                </div>
-                              )
-                            }
-                            
-                            const status = r.availability_status
-                            const count = r.available_count || 0
-                            const requested = r.quantity || 0
-                            
-                            if (!status || status === 'pending_check') {
-                              return (
-                                <div className="flex items-center gap-1.5">
-                                  <Loader2 className="size-3 animate-spin text-gray-400" />
-                                  <span className="text-xs text-gray-500">Checking...</span>
-                                </div>
-                              )
-                            }
-                            
-                            let color, icon, text
-                            if (status === 'available') {
-                              color = "text-green-600 dark:text-green-400"
-                              icon = <CheckCircle2 className="size-3" />
-                              text = `✅ Available (${count})`
-                            } else if (status === 'partially_available') {
-                              color = "text-yellow-600 dark:text-yellow-400"  
-                              icon = <AlertCircle className="size-3" />
-                              text = `⚠️ Partial (${count}/${requested})`
-                            } else {
-                              color = "text-red-600 dark:text-red-400"
-                              icon = <X className="size-3" />
-                              text = "❌ Not Available"
-                            }
-                            
-                            return (
-                              <div className={`flex items-center gap-1.5 ${color}`}>
-                                {icon}
-                                <span className="text-xs font-medium">{text}</span>
-                              </div>
-                            )
-                          })()}
+                          <AvailabilityCell assetType={r.asset_type} quantity={r.quantity} />
                         </td>
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs">{borrowPeriod}</td>
                         <td className="px-4 py-3">

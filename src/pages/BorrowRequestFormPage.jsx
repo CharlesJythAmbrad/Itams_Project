@@ -21,21 +21,22 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
 const ASSET_TYPES = [
-  { value: "laptop", label: "Laptop" },
-  { value: "computer", label: "Desktop Computer" },
-  { value: "monitor", label: "Monitor" },
-  { value: "printer", label: "Printer" },
-  { value: "scanner", label: "Scanner" },
-  { value: "projector", label: "Projector" },
-  { value: "cctv", label: "Camera/CCTV" },
+  { value: "computer", label: "Desktop Computers" },
+  { value: "laptop", label: "Laptops" },
+  { value: "server", label: "Servers" },
+  { value: "monitor", label: "Monitors" },
+  { value: "printer", label: "Printers" },
+  { value: "scanner", label: "Scanners" },
   { value: "networking", label: "Network Equipment" },
-  { value: "phone", label: "Phone" },
-  { value: "tablet", label: "Tablet" },
-  { value: "server", label: "Server" },
-  { value: "ups", label: "UPS/Power Equipment" },
-  { value: "storage", label: "Storage Device" },
-  { value: "accessory", label: "Accessory" },
-  { value: "other", label: "Other" },
+  { value: "cctv", label: "CCTV Cameras" },
+  { value: "phone", label: "Phones" },
+  { value: "tablet", label: "Tablets" },
+  { value: "projector", label: "Projectors" },
+  { value: "ups", label: "UPS/Power" },
+  { value: "storage", label: "Storage Devices" },
+  { value: "accessory", label: "Accessories" },
+  { value: "software", label: "Software" },
+  { value: "other", label: "Other" }
 ]
 
 const DEPARTMENTS = [
@@ -135,7 +136,8 @@ export function BorrowRequestFormPage() {
   const [status, setStatus] = useState({ type: null, message: "" })
 
   const set = (field) => (e) => {
-    setForm(prev => ({ ...prev, [field]: e.target.value }))
+    const value = e.target.value
+    setForm(prev => ({ ...prev, [field]: value }))
     if (status.type) setStatus({ type: null, message: "" })
   }
 

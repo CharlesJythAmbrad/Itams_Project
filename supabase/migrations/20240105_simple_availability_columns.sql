@@ -69,7 +69,42 @@ COMMENT ON COLUMN public.asset_requests.availability_details IS 'Detailed availa
 COMMENT ON COLUMN public.asset_requests.available_count IS 'Number of available assets matching the request';
 COMMENT ON COLUMN public.asset_requests.last_availability_check IS 'Timestamp of last availability check';
 
--- Simple function to check asset availability
+-- Simple function to check asset availability by asset type
+CREATE OR REPLACE FUNCTION public.simple_check_asset_availability(p_asset_type TEXT)
+RETURNS JSONB AS $$
+DECLARE
+    in_stock_count INTEGER := 0;
+    allocated_count INTEGER := 0;
+    deployed_count INTEGER := 0;
+    maintenance_count INTEGER := 0;
+    retired_disposed_count INTEGER := 0;
+    total_assets INTEGER := 0;
+BEGIN
+    -- Get counts by status with proper type casting
+    SELECT 
+        COALESCE(SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END), 0) as in_stock,
+        COALESCE(SUM(CASE WHEN status = 'allocated' THEN 1 ELSE 0 END), 0) as allocated,
+        COALESCE(SUM(CASE WHEN status = 'deployed' THEN 1 ELSE 0 END), 0) as deployed,
+        COALESCE(SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END), 0) as maintenance,
+        COALESCE(SUM(CASE WHEN status IN ('retired', 'disposed') THEN 1 ELSE 0 END), 0) as retired_disposed,
+        COUNT(*) as total
+    INTO in_stock_count, allocated_count, deployed_count, maintenance_count, retired_disposed_count, total_assets
+    FROM public.assets
+    WHERE category::TEXT = p_asset_type;
+    
+    RETURN jsonb_build_object(
+        'total_assets', total_assets,
+        'in_stock_count', in_stock_count,
+        'allocated_count', allocated_count,
+        'deployed_count', deployed_count,
+        'maintenance_count', maintenance_count,
+        'retired_disposed_count', retired_disposed_count,
+        'available_for_borrowing', in_stock_count > 0
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Simple function to check asset availability by request ID
 CREATE OR REPLACE FUNCTION public.simple_check_asset_availability(request_id UUID)
 RETURNS JSONB AS $$
 DECLARE
@@ -94,10 +129,10 @@ BEGIN
         RETURN jsonb_build_object('error', 'Invalid quantity');
     END IF;
     
-    -- Count available assets of the requested type
+    -- Count available assets of the requested type with proper type casting
     SELECT COUNT(*) INTO available_assets
     FROM public.assets
-    WHERE category = request_record.asset_type
+    WHERE category::TEXT = request_record.asset_type
     AND status = 'in_stock'
     AND condition IN ('excellent', 'good');
     
@@ -127,4 +162,5 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant permissions
-GRANT EXECUTE ON FUNCTION public.simple_check_asset_availability TO authenticated;
+GRANT EXECUTE ON FUNCTION public.simple_check_asset_availability(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.simple_check_asset_availability(UUID) TO authenticated;
