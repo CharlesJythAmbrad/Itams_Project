@@ -662,6 +662,8 @@ export function AssetsPage() {
       matchesActiveFilter = asset.status === "deployed"
     } else if (activeFilter === "allocated") {
       matchesActiveFilter = asset.status === "allocated"
+    } else if (activeFilter === "for_disposal") {
+      matchesActiveFilter = asset.status === "for_disposal" || asset.status === "broken" || asset.status === "retired"
     }
     // "all" shows everything (default)
     
@@ -903,16 +905,24 @@ export function AssetsPage() {
           </Card>
 
           {/* Disposal Summary Cards */}
-          <Card className="rounded-[5px] cursor-pointer transition-colors hover:bg-red-50 dark:hover:bg-red-950/20">
+          <Card 
+            className={`rounded-[5px] cursor-pointer transition-colors hover:bg-red-50 dark:hover:bg-red-950/20 ${
+              activeFilter === "for_disposal" ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800' : ''
+            }`}
+            onClick={() => handleFilterClick("for_disposal")}
+          >
             <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-medium text-muted-foreground">
-                    For Disposal
+                    For Disposal {activeFilter === "for_disposal" ? '(Filtered)' : ''}
                   </p>
                   <p className="text-lg font-bold text-red-600">
                     {assets.filter(a => a.status === "for_disposal" || a.status === "broken" || a.status === "retired").length}
                   </p>
+                  {activeFilter !== "for_disposal" && (
+                    <p className="text-[9px] text-red-600 mt-0.5">Click to filter</p>
+                  )}
                 </div>
                 <AlertTriangle className="size-5 text-red-600" />
               </div>
@@ -1060,11 +1070,6 @@ export function AssetsPage() {
                             <MapPin className="size-3.5 text-muted-foreground shrink-0" />
                             <span className="truncate">{asset.location || 'Not specified'}</span>
                           </div>
-                          {asset.condition && (
-                            <span className={`inline-block px-2 py-0.5 rounded-[5px] text-[11px] font-medium mt-1 ${getConditionBadge(asset.condition)}`}>
-                              {asset.condition.charAt(0).toUpperCase() + asset.condition.slice(1)}
-                            </span>
-                          )}
                         </td>
 
                         {/* Actions */}
