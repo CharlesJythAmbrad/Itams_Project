@@ -1,5 +1,6 @@
 export { default as InventoryStaffDashboardPage } from "./InventoryStaffDashboardPage"
 export { default as AssetsPage } from "./AssetsPage"
+export { default as DisposeAssetsPage } from "./DisposeAssetsPage"
 export { default as BorrowedReturnPage } from "./BorrowedReturnPage"
 export { default as WarrantyPage } from "./WarrantyPage"
 export { default as RepairsPage } from "./RepairsPage"

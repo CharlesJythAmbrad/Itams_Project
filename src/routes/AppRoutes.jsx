@@ -11,6 +11,7 @@ import { UserManagementPage } from "@/pages/itsd/UserManagementPage"
 import { ActivityLogsPage } from "@/pages/itsd/ActivityLogsPage"
 import { InventoryStaffDashboardPage } from "@/pages/inventory_staff/InventoryStaffDashboardPage"
 import { AssetsPage } from "@/pages/inventory_staff/AssetsPage"
+import { DisposeAssetsPage } from "@/pages/inventory_staff/DisposeAssetsPage"
 import { BorrowedReturnPage } from "@/pages/inventory_staff/BorrowedReturnPage"
 import { WarrantyPage } from "@/pages/inventory_staff/WarrantyPage"
 import { RepairsPage } from "@/pages/inventory_staff/RepairsPage"
@@ -129,6 +130,14 @@ export function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={["inventory_staff"]}>
                   <AssetsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/inventory/disposed"
+              element={
+                <ProtectedRoute allowedRoles={["inventory_staff"]}>
+                  <DisposeAssetsPage />
                 </ProtectedRoute>
               }
             />

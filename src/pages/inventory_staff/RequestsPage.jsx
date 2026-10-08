@@ -544,6 +544,7 @@ export function RequestsPage() {
     approved:    requests.filter(r => r.status === "approved").length,
     in_progress: requests.filter(r => r.status === "in_progress").length,
     completed:   requests.filter(r => r.status === "completed").length,
+    rejected:    requests.filter(r => r.status === "rejected").length,
   }
 
   /* ── Stat card click: toggle status filter ───────────── */
@@ -593,13 +594,14 @@ export function RequestsPage() {
         </div>
 
         {/* ── Stats Cards (clickable filters) ───────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
             { key: "total",       label: "Total",       value: stats.total,       color: "text-zinc-900 dark:text-zinc-100",          ring: "ring-zinc-400" },
             { key: "pending",     label: "Pending",     value: stats.pending,     color: "text-yellow-600 dark:text-yellow-400",      ring: "ring-yellow-400" },
             { key: "approved",    label: "Approved",    value: stats.approved,    color: "text-green-600 dark:text-green-400",        ring: "ring-green-400" },
             { key: "in_progress", label: "In Progress", value: stats.in_progress, color: "text-blue-600 dark:text-blue-400",          ring: "ring-blue-400" },
             { key: "completed",   label: "Completed",   value: stats.completed,   color: "text-emerald-600 dark:text-emerald-400",    ring: "ring-emerald-400" },
+            { key: "rejected",    label: "Rejected",    value: stats.rejected,    color: "text-red-600 dark:text-red-400",            ring: "ring-red-400" },
           ].map(({ key, label, value, color, ring }) => {
             const isActive = key === "total" ? statusFilter === "all" : statusFilter === key
             return (

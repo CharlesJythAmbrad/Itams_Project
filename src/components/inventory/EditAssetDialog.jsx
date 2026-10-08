@@ -301,6 +301,7 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
                   <option value="deployed">Deployed</option>
                   <option value="maintenance">Maintenance</option>
                   <option value="retired">Retired</option>
+                  <option value="broken">Broken</option>
                 </select>
               </div>
               <div>

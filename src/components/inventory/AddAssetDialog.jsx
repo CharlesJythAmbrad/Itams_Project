@@ -58,6 +58,7 @@ const statusOptions = [
   { value: "deployed", label: "Deployed" },
   { value: "maintenance", label: "Maintenance" },
   { value: "retired", label: "Retired" },
+  { value: "broken", label: "Broken" },
   { value: "disposed", label: "Disposed" },
   { value: "lost", label: "Lost" },
   { value: "stolen", label: "Stolen" }

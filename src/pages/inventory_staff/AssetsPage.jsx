@@ -13,6 +13,7 @@ import { AssetDetailsDialog } from "@/components/inventory/AssetDetailsDialog"
 import { ScanAssetDialog } from "@/components/inventory/ScanAssetDialog"
 import { AssetRepairTrackingDialog } from "@/components/inventory/AssetRepairTrackingDialog"
 import { AddRepairDialog } from "@/components/inventory/AddRepairDialog"
+import { MarkForDisposalDialog } from "@/components/inventory/MarkForDisposalDialog"
 import { DataTablePagination } from "@/components/common/DataTablePagination"
 import {
   Package,
@@ -41,6 +42,8 @@ import {
   RefreshCw,
   User,
   Wrench,
+  Archive,
+  AlertTriangle,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -66,7 +69,7 @@ export function AssetsPage() {
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState(null)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [showInStockOnly, setShowInStockOnly] = useState(false)
-  const [activeFilter, setActiveFilter] = useState("all") // "all", "in_stock", "deployed", "allocated"
+  const [activeFilter, setActiveFilter] = useState("in_stock") // "all", "in_stock", "deployed", "allocated"
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
   const [selectedAssetForAssignment, setSelectedAssetForAssignment] = useState(null)
   const [assignmentType, setAssignmentType] = useState("assign")
@@ -78,6 +81,8 @@ export function AssetsPage() {
   const [isRepairTrackingOpen, setIsRepairTrackingOpen] = useState(false)
   const [selectedAssetForRepair, setSelectedAssetForRepair] = useState(null)
   const [isNewRepairOpen, setIsNewRepairOpen] = useState(false)
+  const [isDisposalDialogOpen, setIsDisposalDialogOpen] = useState(false)
+  const [selectedAssetForDisposal, setSelectedAssetForDisposal] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 5
 
@@ -562,6 +567,27 @@ export function AssetsPage() {
     setIsDeleteDialogOpen(true)
   }
 
+  const handleDisposalClick = (asset) => {
+    setSelectedAssetForDisposal(asset)
+    setIsDisposalDialogOpen(true)
+  }
+
+  const handleDisposalStatusUpdated = (updatedAsset) => {
+    // Update the asset in the list
+    setAssets(prev => prev.map(asset => 
+      asset.id === updatedAsset.id ? updatedAsset : asset
+    ))
+    
+    // Show success message
+    setSuccessMessage(`Asset "${updatedAsset.name}" marked for disposal successfully!`)
+    setTimeout(() => setSuccessMessage(""), 5000)
+    
+    // Refresh data
+    setTimeout(() => {
+      fetchAssets()
+    }, 500)
+  }
+
   const getCategoryIcon = (category) => {
     const iconMap = {
       computer: Monitor,
@@ -611,6 +637,9 @@ export function AssetsPage() {
     { value: "deployed", label: "Deployed" },
     { value: "maintenance", label: "Maintenance" },
     { value: "retired", label: "Retired" },
+    { value: "broken", label: "Broken" },
+    { value: "to_be_disposed", label: "To Be Disposed" },
+    { value: "for_disposal", label: "For Disposal" },
     { value: "disposed", label: "Disposed" },
     { value: "lost", label: "Lost" },
     { value: "stolen", label: "Stolen" }
@@ -647,7 +676,7 @@ export function AssetsPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "in_stock":
-        return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+        return "bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300"
       case "allocated":
         return "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
       case "deployed":
@@ -656,6 +685,12 @@ export function AssetsPage() {
         return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
       case "retired":
         return "bg-gray-100 text-gray-800 dark:bg-gray-950/60 dark:text-gray-300"
+      case "broken":
+        return "bg-red-200 text-red-900 dark:bg-red-950/80 dark:text-red-200"
+      case "to_be_disposed":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300"
+      case "for_disposal":
+        return "bg-red-200 text-red-900 dark:bg-red-950/80 dark:text-red-200"
       case "disposed":
         return "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
       case "lost":
@@ -674,6 +709,9 @@ export function AssetsPage() {
       case "deployed": return "Deployed"
       case "maintenance": return "Maintenance"
       case "retired": return "Retired"
+      case "broken": return "Broken"
+      case "to_be_disposed": return "To Be Disposed"
+      case "for_disposal": return "For Disposal"
       case "disposed": return "Disposed"
       case "lost": return "Lost"
       case "stolen": return "Stolen"
@@ -781,45 +819,43 @@ export function AssetsPage() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <Card 
             className={`rounded-[5px] cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/20 ${
               activeFilter === "all" ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' : ''
             }`}
             onClick={() => handleFilterClick("all")}
           >
-            <CardContent className="p-3">
+            <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Total Assets {activeFilter === "all" ? '(All)' : ''}
+                  <p className="text-[10px] font-medium text-muted-foreground">
+                    Total Assets
                   </p>
-                  <p className="text-xl font-bold text-blue-600">{assets.length}</p>
-                  <p className="text-[11px] text-blue-600 mt-0.5">Click to show all</p>
+                  <p className="text-lg font-bold text-blue-600">{assets.length}</p>
                 </div>
-                <Package className="size-7 text-blue-600" />
+                <Package className="size-5 text-blue-600" />
               </div>
             </CardContent>
           </Card>
           
           <Card 
-            className={`rounded-[5px] cursor-pointer transition-colors hover:bg-red-50 dark:hover:bg-red-950/20 ${
-              activeFilter === "in_stock" ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800' : ''
+            className={`rounded-[5px] cursor-pointer transition-colors hover:bg-green-50 dark:hover:bg-green-950/20 ${
+              activeFilter === "in_stock" ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' : ''
             }`}
             onClick={() => handleFilterClick("in_stock")}
           >
-            <CardContent className="p-3">
+            <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    In Stock {activeFilter === "in_stock" ? '(Filtered)' : ''}
+                  <p className="text-[10px] font-medium text-muted-foreground">
+                    In Stock
                   </p>
-                  <p className="text-xl font-bold text-red-600">
+                  <p className="text-lg font-bold text-green-600">
                     {assets.filter(a => a.status === "in_stock").length}
                   </p>
-                  <p className="text-[11px] text-red-600 mt-0.5">Click to filter</p>
                 </div>
-                <Package className="size-7 text-red-600" />
+                <Package className="size-5 text-green-600" />
               </div>
             </CardContent>
           </Card>
@@ -830,18 +866,17 @@ export function AssetsPage() {
             }`}
             onClick={() => handleFilterClick("deployed")}
           >
-            <CardContent className="p-3">
+            <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Deployed {activeFilter === "deployed" ? '(Filtered)' : ''}
+                  <p className="text-[10px] font-medium text-muted-foreground">
+                    Deployed
                   </p>
-                  <p className="text-xl font-bold text-purple-600">
+                  <p className="text-lg font-bold text-purple-600">
                     {assets.filter(a => a.status === "deployed").length}
                   </p>
-                  <p className="text-[11px] text-purple-600 mt-0.5">Click to filter</p>
                 </div>
-                <Tag className="size-7 text-purple-600" />
+                <Tag className="size-5 text-purple-600" />
               </div>
             </CardContent>
           </Card>
@@ -852,18 +887,34 @@ export function AssetsPage() {
             }`}
             onClick={() => handleFilterClick("allocated")}
           >
-            <CardContent className="p-3">
+            <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Allocated/Borrowed {activeFilter === "allocated" ? '(Filtered)' : ''}
+                  <p className="text-[10px] font-medium text-muted-foreground">
+                    Allocated
                   </p>
-                  <p className="text-xl font-bold text-amber-600">
+                  <p className="text-lg font-bold text-amber-600">
                     {assets.filter(a => a.status === "allocated").length}
                   </p>
-                  <p className="text-[11px] text-amber-600 mt-0.5">Click to filter</p>
                 </div>
-                <HardDrive className="size-7 text-amber-600" />
+                <HardDrive className="size-5 text-amber-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Disposal Summary Cards */}
+          <Card className="rounded-[5px] cursor-pointer transition-colors hover:bg-red-50 dark:hover:bg-red-950/20">
+            <CardContent className="p-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground">
+                    For Disposal
+                  </p>
+                  <p className="text-lg font-bold text-red-600">
+                    {assets.filter(a => a.status === "for_disposal" || a.status === "broken" || a.status === "retired").length}
+                  </p>
+                </div>
+                <AlertTriangle className="size-5 text-red-600" />
               </div>
             </CardContent>
           </Card>
@@ -1057,6 +1108,21 @@ export function AssetsPage() {
                                 </Button>
                               </>
                             )}
+                            
+                            {/* Show disposal button for maintenance, retired, broken, or poor condition assets */}
+                            {(asset.status === 'maintenance' || asset.status === 'retired' || asset.status === 'broken' ||
+                              asset.condition === 'poor' || asset.condition === 'damaged') && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 px-2 text-xs text-orange-600 hover:text-orange-700" 
+                                onClick={() => handleDisposalClick(asset)}
+                                title="Complete Asset Disposal"
+                              >
+                                <Trash2 className="size-4 mr-1" />
+                                Dispose Asset
+                              </Button>
+                            )}
                               
                             <Button 
                               variant="ghost" 
@@ -1207,6 +1273,17 @@ export function AssetsPage() {
             // Refresh repair tracking if opened
             setIsRepairTrackingOpen(true)
           }}
+        />
+
+        {/* Mark for Disposal Dialog */}
+        <MarkForDisposalDialog
+          isOpen={isDisposalDialogOpen}
+          onClose={() => {
+            setIsDisposalDialogOpen(false)
+            setSelectedAssetForDisposal(null)
+          }}
+          asset={selectedAssetForDisposal}
+          onStatusUpdated={handleDisposalStatusUpdated}
         />
       </div>
     </InventoryStaffLayout>
