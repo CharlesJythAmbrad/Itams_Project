@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { EndUsersLayout } from "@/layouts/end_users/EndUsersLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { AssetsDirectoryView } from "@/components/end_users/AssetsDirectoryView"
@@ -11,15 +12,17 @@ import {
   Clock,
   FileText,
   ShieldCheck,
+  X,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
-export function EndUsersDashboardPage() {
+export function EndUsersDashboardPage({ successMessage, showSuccess }) {
   const { profile, user } = useAuth()
   const [activeTab, setActiveTab] = useState("equipment")
   const [myAssignedDevices, setMyAssignedDevices] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(showSuccess || false)
   const roleDetails = profile?.roleDetails
 
   // Fetch user's assigned assets
@@ -82,7 +85,15 @@ export function EndUsersDashboardPage() {
 
   useEffect(() => {
     fetchAssignedAssets()
-  }, [user?.email])
+    
+    // Auto-hide success message after 8 seconds
+    if (showSuccessMessage) {
+      const timer = setTimeout(() => {
+        setShowSuccessMessage(false)
+      }, 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [user?.email, showSuccessMessage])
 
   const userMetrics = [
     { 
@@ -99,6 +110,33 @@ export function EndUsersDashboardPage() {
   return (
     <EndUsersLayout activeTab={activeTab} onTabChange={setActiveTab}>
       <div className="space-y-4">
+        {/* Success Message Banner */}
+        <AnimatePresence>
+          {showSuccessMessage && successMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, y: -20, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="rounded-[5px] bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 p-4 flex items-start gap-3 shadow-sm">
+                <CheckCircle2 className="size-5 shrink-0 text-green-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-sm text-green-800 dark:text-green-300">Request Submitted Successfully!</p>
+                  <p className="text-xs text-green-700 dark:text-green-400 mt-0.5">{successMessage}</p>
+                </div>
+                <button
+                  onClick={() => setShowSuccessMessage(false)}
+                  className="shrink-0 p-1 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-[3px] transition-colors"
+                  aria-label="Dismiss success message"
+                >
+                  <X className="size-4 text-green-600 dark:text-green-400" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {activeTab === "assets" ? (
           // Assets Directory View
           <>

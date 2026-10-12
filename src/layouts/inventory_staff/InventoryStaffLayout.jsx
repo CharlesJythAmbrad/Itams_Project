@@ -42,7 +42,7 @@ export function InventoryStaffLayout({ children, activeTab = "dashboard", onTabC
           onToggleMobile={openMobile}
           activeTitle={activeTab === "dashboard" ? "Dashboard" : 
                       activeTab === "assets" ? "Assets" :
-                      activeTab === "disposed" ? "Dispose Assets" :
+                      activeTab === "disposed" ? "Disposed Assets" :
                       activeTab === "borrowed-return" ? "Borrowed and Assigned" :
                       activeTab === "warranty" ? "Warranty" :
                       activeTab === "repairs" ? "Repairs" :

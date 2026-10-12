@@ -708,7 +708,7 @@ export function RequestsPage() {
                     if (hasRejected) {
                       headers.push("Rejection Reason")
                     }
-                    headers.push("") // Actions column
+                    headers.push("Details") // Details column
                     return headers.map(h => (
                       <th key={h} className="px-4 py-3 text-left font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                         {h}

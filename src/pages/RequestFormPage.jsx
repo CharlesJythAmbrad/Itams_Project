@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from "react"
+import React, { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useNavigate } from "react-router-dom"
 import {
   ClipboardList,
   CheckCircle2,
@@ -120,14 +121,31 @@ function SelectInput({ id, value, onChange, required, children }) {
    PUBLIC REQUEST FORM PAGE
 ═══════════════════════════════════════════════════════════ */
 export function RequestFormPage() {
+  const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY)
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState({ type: null, message: "" })
+  const [isMobile, setIsMobile] = useState(false)
 
   // Email lookup state
   const [emailLookupLoading, setEmailLookupLoading] = useState(false)
   const [foundAssets, setFoundAssets] = useState([]) // [{tag, name, category, brand, model, type, location}]
   const [lookupDone, setLookupDone] = useState(false)
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera
+      const isMobileDevice = /android|blackberry|iphone|ipad|ipod|opera mini|iemobile|wpdesktop/i.test(userAgent) ||
+        (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /macintosh/i.test(userAgent)) ||
+        window.innerWidth <= 768
+      setIsMobile(isMobileDevice)
+    }
+
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
 
   const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }))
 
@@ -245,13 +263,25 @@ export function RequestFormPage() {
 
       if (error) throw error
 
-      setStatus({
-        type: "success",
-        message: "Your request has been submitted! The IT team will review it and get back to you.",
-      })
-      setForm(EMPTY)
-      setFoundAssets([])
-      setLookupDone(false)
+      // Success handling - redirect to dashboard with success state (except on mobile)
+      if (isMobile) {
+        // Show success message on mobile (stay on same page)
+        setStatus({
+          type: "success",
+          message: "Your request has been submitted! The IT team will review it and get back to you.",
+        })
+        setForm(EMPTY)
+        setFoundAssets([])
+        setLookupDone(false)
+      } else {
+        // Redirect to dashboard with success message on desktop
+        navigate("/dashboard", { 
+          state: { 
+            successMessage: "Request submitted successfully! The IT team will review your request and get back to you.",
+            showSuccess: true 
+          }
+        })
+      }
     } catch (err) {
       setStatus({
         type: "error",

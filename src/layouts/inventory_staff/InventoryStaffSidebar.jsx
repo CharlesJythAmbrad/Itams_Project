@@ -46,7 +46,7 @@ export function InventoryStaffSidebar({
     { id: "repairs",        label: "Repairs",             icon: HardDrive },
     { id: "requests",       label: "Service Requests",   icon: ClipboardList },
     { id: "borrow-request", label: "Borrow Request",      icon: Boxes },
-    { id: "disposed",       label: "Dispose Assets",      icon: Trash2 },
+    { id: "disposed",       label: "Disposed Assets",     icon: Trash2 },
   ]
 
   const handleConfirmSignOut = async () => {

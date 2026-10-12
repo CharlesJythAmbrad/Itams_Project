@@ -151,7 +151,7 @@ export function DisposeAssetsPage() {
 
   if (loading) {
     return (
-      <InventoryStaffLayout activeTab="dispose">
+      <InventoryStaffLayout activeTab="disposed">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
@@ -160,7 +160,7 @@ export function DisposeAssetsPage() {
   }
 
   return (
-    <InventoryStaffLayout activeTab="dispose">
+    <InventoryStaffLayout activeTab="disposed">
       <div className="space-y-4">
         {/* Header */}
         <div className="flex justify-between items-start">

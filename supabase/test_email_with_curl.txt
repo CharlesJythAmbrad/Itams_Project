@@ -1,0 +1,37 @@
+# Test Email with Curl Commands (No PowerShell Scripts Needed)
+
+## Option 1: Enable PowerShell Scripts (Recommended)
+Open PowerShell as Administrator and run:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+Then you can use:
+.\supabase\test_basic_email.ps1
+
+## Option 2: Use Curl Commands Directly
+
+### Step 1: Set your environment variables
+# Get your anon key from Supabase Dashboard > Settings > API
+$env:SUPABASE_ANON_KEY = "your-anon-key-here"
+
+### Step 2: Test direct email send
+curl -X POST "https://anzuiuoobrczdpbyjowe.supabase.co/functions/v1/send-email" ^
+  -H "Content-Type: application/json" ^
+  -H "Authorization: Bearer %SUPABASE_ANON_KEY%" ^
+  -d "{\"to\":\"chbe.ambrad.swu@phinmaed.com\",\"subject\":\"Direct Test Email\",\"html\":\"<h1>Test Email</h1><p>If you see this, the system works!</p>\"}"
+
+### Step 3: Process email queue
+curl -X POST "https://anzuiuoobrczdpbyjowe.supabase.co/functions/v1/send-email" ^
+  -H "Content-Type: application/json" ^
+  -H "Authorization: Bearer %SUPABASE_ANON_KEY%" ^
+  -d "{\"action\":\"process_queue\"}"
+
+## Option 3: Manual PowerShell Commands (No Script File)
+
+### Direct email test:
+$headers = @{"Content-Type" = "application/json"; "Authorization" = "Bearer $env:SUPABASE_ANON_KEY"}
+$body = @{to = "chbe.ambrad.swu@phinmaed.com"; subject = "Direct Test"; html = "<h1>Test</h1>"} | ConvertTo-Json
+Invoke-RestMethod -Uri "https://anzuiuoobrczdpbyjowe.supabase.co/functions/v1/send-email" -Method POST -Headers $headers -Body $body
+
+### Process queue:
+$queueBody = @{action = "process_queue"} | ConvertTo-Json
+Invoke-RestMethod -Uri "https://anzuiuoobrczdpbyjowe.supabase.co/functions/v1/send-email" -Method POST -Headers $headers -Body $queueBody

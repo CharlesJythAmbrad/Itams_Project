@@ -469,7 +469,7 @@ export function BorrowedReturnPage() {
                     <th className="px-3.5 py-2.5">Assignment Details</th>
                     <th className="px-3.5 py-2.5">Dates & Status</th>
                     <th className="px-3.5 py-2.5">Request Extend</th>
-                    <th className="px-3.5 py-2.5">Actions</th>
+                    <th className="px-3.5 py-2.5">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800">
@@ -564,7 +564,7 @@ export function BorrowedReturnPage() {
                           )}
                         </td>
 
-                        {/* Actions */}
+                        {/* Action */}
                         <td className="px-3.5 py-2.5">
                           <div className="flex items-center gap-1">
                             <Button 
@@ -579,11 +579,6 @@ export function BorrowedReturnPage() {
                             >
                               <Eye className="size-4" />
                             </Button>
-                            {assignment.status === 'active' && (
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" title="Process Return">
-                                <RotateCcw className="size-4" />
-                              </Button>
-                            )}
                           </div>
                         </td>
                       </tr>

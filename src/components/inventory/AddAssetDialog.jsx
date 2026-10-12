@@ -583,14 +583,15 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
                 </div>
                 <div>
                   <Label htmlFor="location" className="text-xs font-medium">Location <span className="text-red-600">*</span></Label>
-                  <Input
-                    id="location"
-                    required
-                    placeholder="e.g., Bay 4 - Rack A1"
-                    value={formData.location}
-                    onChange={(e) => handleInputChange("location", e.target.value)}
-                    className="rounded-[5px]"
-                  />
+                  <Select value={formData.location} onValueChange={(value) => handleInputChange("location", value)}>
+                    <SelectTrigger className="rounded-[5px]">
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ITSD Office">ITSD Office</SelectItem>
+                      <SelectItem value="Inventory Office">Inventory Office</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="status" className="text-xs font-medium">Status <span className="text-red-600">*</span></Label>

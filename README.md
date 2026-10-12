@@ -34,6 +34,8 @@ ITAMS maintains structured project and role documentation following a formal num
 | **`001`** | **[Roles & Permissions Overview](docs/001_ROLES_AND_PERMISSIONS.md)** | Multi-tier RBAC matrix, credentials, dedicated role tables (`itsd_users`, `inventory_staff_users`, `end_users`), and RLS policies. |
 | **`ARCH`** | **[Architecture & Conventions](docs/ARCHITECTURE_AND_CONVENTIONS.md)** | Coding standards, PascalCase vs camelCase conventions, React Context for Auth, Redux Toolkit, and hook-first principles. |
 | **`SEED`** | **[Database & Seed Data Guide](docs/SEED_DATA.md)** | Instructions for executing `supabase/seed.sql` to initialize schema, RLS, and default role records. |
+| **`DISP`** | **[Asset Disposal Management](docs/ASSET_DISPOSAL_MANAGEMENT.md)** | Complete asset disposal workflow, status management, and disposal tracking system. |
+| **`EMAIL`** | **[Email Notifications Setup](docs/EMAIL_NOTIFICATIONS_SETUP.md)** | Automated email reminders for borrowed asset returns with Supabase Edge Functions and scheduling. |
 | **`zz`** | **[Archives & Legacy Resolutions](docs/zz_ARCHIVES.md)** | Technical history of decommissioned modules (public signup removal, sidebar cleanup) and critical bug fixes (GoTrue 500, RLS recursion, 406 queries, portal trapping, blank redirects). |
 
 ---

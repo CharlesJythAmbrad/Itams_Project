@@ -1,5 +1,6 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useNavigate } from "react-router-dom"
 import {
   Boxes,
   CheckCircle2,
@@ -131,9 +132,26 @@ function TextArea({ id, value, onChange, placeholder, rows = 3, required }) {
 
 /* ── Main Page Component ──────────────────────────────── */
 export function BorrowRequestFormPage() {
+  const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY_FORM)
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState({ type: null, message: "" })
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera
+      const isMobileDevice = /android|blackberry|iphone|ipad|ipod|opera mini|iemobile|wpdesktop/i.test(userAgent) ||
+        (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /macintosh/i.test(userAgent)) ||
+        window.innerWidth <= 768
+      setIsMobile(isMobileDevice)
+    }
+
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
 
   const set = (field) => (e) => {
     const value = e.target.value
@@ -224,13 +242,25 @@ export function BorrowRequestFormPage() {
 
       if (error) throw error
 
-      setStatus({
-        type: "success",
-        message: "Borrow request submitted successfully! The IT team will review and contact you with available assets.",
-      })
-      
-      // Reset form
-      setForm(EMPTY_FORM)
+      // Success handling - redirect to dashboard with success state (except on mobile)
+      if (isMobile) {
+        // Show success message on mobile (stay on same page)
+        setStatus({
+          type: "success",
+          message: "Borrow request submitted successfully! The IT team will review and contact you with available assets.",
+        })
+        
+        // Reset form
+        setForm(EMPTY_FORM)
+      } else {
+        // Redirect to dashboard with success message on desktop
+        navigate("/dashboard", { 
+          state: { 
+            successMessage: "Borrow request submitted successfully! The IT team will review and contact you with available assets.",
+            showSuccess: true 
+          }
+        })
+      }
       
     } catch (err) {
       console.error("Error submitting borrow request:", err)
