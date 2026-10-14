@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Plus,
   X,
@@ -62,7 +63,7 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
   const validateForm = () => {
     if (!formData.name.trim()) return "Asset name is required"
     if (!formData.category) return "Category is required"
-    if (!formData.location.trim()) return "Location is required"
+    if (!formData.location) return "Location is required"
     if (!formData.status) return "Status is required"
     if (!formData.brand.trim()) return "Brand is required"
     if (!formData.model.trim()) return "Model is required"
@@ -127,7 +128,7 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
         purchase_cost: formData.purchase_cost ? parseFloat(formData.purchase_cost) : null,
         vendor: formData.vendor.trim() || null,
         warranty_end_date: formData.warranty_end_date || null,
-        location: formData.location.trim(),
+        location: formData.location,
         status: formData.status,
         condition: formData.condition,
         // Computer/Laptop fields
@@ -293,14 +294,15 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1">Location <span className="text-red-600">*</span></label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., Bay 4 - Rack A1, Faculty Office 201"
-                  value={formData.location}
-                  onChange={(e) => handleInputChange("location", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
-                />
+                <Select value={formData.location} onValueChange={(value) => handleInputChange("location", value)}>
+                  <SelectTrigger className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ITSD Office">ITSD Office</SelectItem>
+                    <SelectItem value="Inventory Office">Inventory Office</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1">Status <span className="text-red-600">*</span></label>
@@ -614,16 +616,16 @@ export function SimpleAddAssetDialog({ isOpen, onClose, onAssetAdded }) {
           <div className="flex justify-end gap-3 pt-4 border-t">
             <button 
               type="button" 
-              onClick={onClose} 
+              onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoading}
-              className="px-4 py-2 text-sm bg-blue-700 hover:bg-blue-800 text-white rounded-md disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center gap-2"
             >
               {isLoading ? (
                 <>

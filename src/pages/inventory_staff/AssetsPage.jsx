@@ -52,13 +52,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function AssetsPage() {
   const { profile } = useAuth()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
   
   // Initialize filters from URL params
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "all")
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get("status") || "all")
   const fromBorrowRequest = searchParams.get("fromBorrowRequest") // Check if coming from borrow request
+  const isGlobalScan = searchParams.get("globalScan") === "1"
+  const globalScanValue = searchParams.get("search")
+  const globalScanRawValue = searchParams.get("qr") || globalScanValue
   const [borrowRequestData, setBorrowRequestData] = useState(null) // Store borrow request data
   const [assets, setAssets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -131,50 +134,47 @@ export function AssetsPage() {
     setSearchTerm(scannedTag)
 
     try {
-      // Fetch comprehensive asset information including assignments, borrowing, and repairs
-      const { data: assetData, error: assetError } = await supabase
-        .from("assets")
-        .select(`
-          id,
-          asset_tag,
-          name,
-          description,
-          category,
-          brand,
-          model,
-          serial_number,
-          purchase_date,
-          purchase_cost,
-          vendor,
-          warranty_end_date,
-          location,
-          status,
-          condition,
-          processor,
-          ram_gb,
-          storage_gb,
-          operating_system,
-          computer_name,
-          mac_address,
-          ip_address,
-          camera_resolution,
-          camera_type,
-          port_count,
-          management_ip,
-          firmware_version,
-          power_consumption_watts,
-          weight_kg,
-          dimensions,
-          notes,
-          qr_code,
-          created_at,
-          updated_at,
-          assigned_to
-        `)
-        .or(`asset_tag.eq.${scannedTag},id.eq.${scannedTag},serial_number.eq.${scannedTag}`)
-        .maybeSingle()
+      // Resolve the scanned QR value against the latest asset record.
+      // QR labels normally contain the full qr_code URL, while older labels may
+      // contain only an asset tag, serial number, or database id.
+      const normalizedScanValue = (() => {
+        const value = String(scannedTag).trim()
+        try {
+          return decodeURIComponent(value)
+        } catch {
+          return value
+        }
+      })()
+      const rawQrValue = String(rawValue || "").trim()
 
-      if (assetError) throw assetError
+      const findAssetBy = async (column, value) => {
+        if (!value) return null
+
+        const { data, error } = await supabase
+          .from("assets")
+          .select("*")
+          .eq(column, value)
+          .maybeSingle()
+
+        if (error) throw error
+        return data
+      }
+
+      // Try the exact stored QR payload first so every unique QR value works,
+      // including older labels whose search value was not the current asset tag.
+      let assetData = rawQrValue ? await findAssetBy("qr_code", rawQrValue) : null
+
+      // Fall back to the identifiers supported by direct/manual scans.
+      if (!assetData) assetData = await findAssetBy("asset_tag", normalizedScanValue)
+      if (!assetData) assetData = await findAssetBy("serial_number", normalizedScanValue)
+
+      // Only query id when the value has a valid common UUID or numeric-id shape.
+      // This avoids sending malformed values to PostgREST.
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedScanValue)
+      const isNumericId = /^\d+$/.test(normalizedScanValue)
+      if (!assetData && (isUuid || isNumericId)) {
+        assetData = await findAssetBy("id", normalizedScanValue)
+      }
 
       if (assetData) {
         // Fetch additional context based on asset status
@@ -262,87 +262,13 @@ export function AssetsPage() {
           .order("created_at", { ascending: false })
         
         if (activeRepairs && activeRepairs.length > 0) {
-          repairInfo = activeRepairs[0] // Most recent active repair
-        }
-
-        // Create enhanced success message with comprehensive status details
-        let statusMessage = `📦 Asset Found: "${assetData.name}" (${assetData.asset_tag})`
-        let detailedInfo = []
-
-        // Add basic asset information
-        if (assetData.brand) {
-          detailedInfo.push(`Brand: ${assetData.brand}`)
-        }
-        if (assetData.model) {
-          detailedInfo.push(`Model: ${assetData.model}`)
-        }
-        if (assetData.serial_number) {
-          detailedInfo.push(`Serial: ${assetData.serial_number}`)
-        }
-        if (assetData.category) {
-          detailedInfo.push(`Category: ${assetData.category.replace('_', ' ').toUpperCase()}`)
-        }
-
-        // Add warranty information
-        if (assetData.warranty_end_date) {
-          const warrantyEnd = new Date(assetData.warranty_end_date)
-          const today = new Date()
-          const isWarrantyActive = warrantyEnd > today
-          detailedInfo.push(`Warranty: ${isWarrantyActive ? '✅ Active' : '⚠️ Expired'} (Ends: ${warrantyEnd.toLocaleDateString()})`)
-        }
-
-        if (assignmentInfo) {
-          statusMessage += ` - 🎯 ASSIGNED`
-          detailedInfo.push(`👤 Assigned to: ${assignmentInfo.assignee_name}`)
-          detailedInfo.push(`🏢 Department: ${assignmentInfo.assignee_department}`)
-          detailedInfo.push(`📧 Email: ${assignmentInfo.assignee_email}`)
-          if (assignmentInfo.assignee_phone) {
-            detailedInfo.push(`📞 Phone: ${assignmentInfo.assignee_phone}`)
-          }
-          detailedInfo.push(`📍 Location: ${assignmentInfo.assignment_location}`)
-          detailedInfo.push(`📅 Assigned: ${new Date(assignmentInfo.assigned_date).toLocaleDateString()}`)
-          if (assignmentInfo.purpose) {
-            detailedInfo.push(`🎯 Purpose: ${assignmentInfo.purpose}`)
-          }
-        } else if (borrowingInfo) {
-          statusMessage += ` - 📤 BORROWED`
-          detailedInfo.push(`👤 Borrowed by: ${borrowingInfo.borrower_name}`)
-          detailedInfo.push(`🏢 Department: ${borrowingInfo.borrower_department}`)
-          detailedInfo.push(`📧 Email: ${borrowingInfo.borrower_email}`)
-          if (borrowingInfo.borrower_phone) {
-            detailedInfo.push(`📞 Phone: ${borrowingInfo.borrower_phone}`)
-          }
-          detailedInfo.push(`📍 Location: ${borrowingInfo.borrow_location}`)
-          detailedInfo.push(`📅 Borrowed: ${new Date(borrowingInfo.borrowed_date).toLocaleDateString()}`)
-          detailedInfo.push(`⏰ Due: ${new Date(borrowingInfo.expected_return_date).toLocaleDateString()}`)
-          if (borrowingInfo.project_name) {
-            detailedInfo.push(`📋 Project: ${borrowingInfo.project_name}`)
-          }
-        } else {
-          statusMessage += ` - 📊 ${assetData.status.toUpperCase().replace('_', ' ')}`
-          detailedInfo.push(`📍 Current Location: ${assetData.location || 'Not specified'}`)
-          if (assetData.purchase_date) {
-            detailedInfo.push(`🛒 Purchased: ${new Date(assetData.purchase_date).toLocaleDateString()}`)
-          }
-          if (assetData.purchase_cost) {
-            detailedInfo.push(`💰 Cost: ₱${assetData.purchase_cost.toLocaleString()}`)
-          }
-        }
-
-        if (repairInfo) {
-          statusMessage += ` - IN REPAIR`
-          detailedInfo.push(`🔧 Repair: ${repairInfo.repair_ticket} (${repairInfo.work_order_number || 'No WO'})`)
-          detailedInfo.push(`Status: ${repairInfo.status.replace('_', ' ').toUpperCase()}`)
-          detailedInfo.push(`Issue: ${repairInfo.issue_description}`)
-          detailedInfo.push(`Priority: ${repairInfo.priority.toUpperCase()}`)
-          if (repairInfo.assigned_technician) {
-            detailedInfo.push(`Technician: ${repairInfo.assigned_technician}`)
-          }
-          if (repairInfo.repair_location) {
-            detailedInfo.push(`Repair Location: ${repairInfo.repair_location}`)
-          }
-          if (repairInfo.estimated_completion_date) {
-            detailedInfo.push(`Est. Completion: ${new Date(repairInfo.estimated_completion_date).toLocaleDateString()}`)
+          const latestRepair = activeRepairs[0]
+          // Normalize scan results to the field names rendered by
+          // AssetDetailsDialog while preserving the complete repair record.
+          repairInfo = {
+            ...latestRepair,
+            date_reported: latestRepair.date_reported || latestRepair.created_at,
+            technician_assigned: latestRepair.technician_assigned || latestRepair.assigned_technician
           }
         }
 
@@ -366,15 +292,11 @@ export function AssetsPage() {
           console.log('Modal state set - isDetailsDialogOpen should be true')
         }, 100) // Small delay to ensure scan dialog closes first
         
-        // Show comprehensive status message
-        const fullMessage = `${statusMessage}\n${detailedInfo.join(' • ')}`
-        setSuccessMessage(fullMessage)
-        setTimeout(() => setSuccessMessage(""), 12000) // Longer timeout for detailed message with all asset info
       } else {
-        // Asset not found - close scan dialog and show search message
+        // Asset not found - close scan dialog and show an error instead of a success banner
         setIsScanDialogOpen(false)
-        setSuccessMessage(`Scanned tag "${scannedTag}". Filter applied - asset may not be in system.`)
-        setTimeout(() => setSuccessMessage(""), 4000)
+        setError(`Scanned tag "${scannedTag}" was not found in the asset inventory.`)
+        setTimeout(() => setError(""), 4000)
       }
     } catch (err) {
       console.error("Error looking up scanned asset:", err)
@@ -383,6 +305,22 @@ export function AssetsPage() {
       setTimeout(() => setError(""), 5000)
     }
   }
+
+  // Reuse the full scan lookup when the global header scanner navigates here.
+  // Remove the one-time scan parameters first so browser history changes or
+  // subsequent renders cannot open the same modal more than once.
+  useEffect(() => {
+    if (!isGlobalScan || !globalScanValue) return
+
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams)
+      nextParams.delete("globalScan")
+      nextParams.delete("qr")
+      return nextParams
+    }, { replace: true })
+
+    handleScanSuccess(globalScanValue, globalScanRawValue)
+  }, [isGlobalScan, globalScanValue, globalScanRawValue, setSearchParams])
 
   // Reset page to 1 when filters or search change
   useEffect(() => {
@@ -1070,6 +1008,11 @@ export function AssetsPage() {
                             <MapPin className="size-3.5 text-muted-foreground shrink-0" />
                             <span className="truncate">{asset.location || 'Not specified'}</span>
                           </div>
+                          {asset.condition && (
+                            <span className={`inline-block px-2 py-0.5 rounded-[5px] text-[11px] font-medium mt-1 ${getConditionBadge(asset.condition)}`}>
+                              {asset.condition.charAt(0).toUpperCase() + asset.condition.slice(1)}
+                            </span>
+                          )}
                         </td>
 
                         {/* Actions */}

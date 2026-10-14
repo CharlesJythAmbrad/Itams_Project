@@ -143,7 +143,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
   const validateForm = () => {
     if (!formData.name.trim()) return "Asset name is required"
     if (!formData.category) return "Category is required"
-    if (!formData.location.trim()) return "Location is required"
+    if (!formData.location) return "Location is required"
     if (!formData.status) return "Status is required"
     if (!formData.brand.trim()) return "Brand is required"
     if (!formData.model.trim()) return "Model is required"
@@ -228,7 +228,7 @@ export function AddAssetDialog({ isOpen, onClose, onAssetAdded }) {
         warranty_provider: formData.warranty_provider.trim() || null,
         warranty_type: formData.warranty_type.trim() || null,
         
-        location: formData.location.trim(),
+        location: formData.location,
         status: formData.status,
         condition: formData.condition,
         

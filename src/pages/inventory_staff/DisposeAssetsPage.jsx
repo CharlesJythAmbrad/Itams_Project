@@ -74,25 +74,22 @@ export function DisposeAssetsPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const itemsPerPage = 10
+  const itemsPerPage = 5 // Reduced to 5 to make pagination more visible
 
   const fetchDisposedAssets = async () => {
     setLoading(true)
     setError("")
 
     try {
-      const { data, error: fetchError, count } = await supabase
+      const { data, error: fetchError } = await supabase
         .from("assets")
-        .select("*", { count: "exact" })
+        .select("*")
         .eq("status", "disposed")
         .order("updated_at", { ascending: false })
-        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
 
       if (fetchError) throw fetchError
 
       setAssets(data || [])
-      setTotalPages(Math.ceil(count / itemsPerPage))
     } catch (error) {
       console.error("Error fetching disposed assets:", error)
       setError("Failed to load disposed assets. Please try again.")
@@ -103,7 +100,7 @@ export function DisposeAssetsPage() {
 
   useEffect(() => {
     fetchDisposedAssets()
-  }, [currentPage])
+  }, [])
 
   const getIconComponent = (category) => {
     return categoryIcons[category?.toLowerCase()] || Package
@@ -120,6 +117,16 @@ export function DisposeAssetsPage() {
     
     return matchesSearch && matchesCategory
   })
+
+  // Paginate filtered results
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedAssets = filteredAssets.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory])
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A"
@@ -177,6 +184,48 @@ export function DisposeAssetsPage() {
               <RefreshCw className="size-4" />
               Refresh
             </Button>
+            {/* Debug: Add test disposed assets */}
+            {assets.length === 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-[5px] gap-2 bg-yellow-50 hover:bg-yellow-100 border-yellow-300" 
+                onClick={async () => {
+                  // Create test disposed assets
+                  const testAssets = []
+                  for (let i = 1; i <= 12; i++) {
+                    testAssets.push({
+                      name: `Test Disposed Asset ${i}`,
+                      asset_tag: `DISP-${String(i).padStart(3, '0')}`,
+                      category: ['laptop', 'monitor', 'printer'][i % 3],
+                      brand: ['Dell', 'HP', 'Canon'][i % 3],
+                      model: `Model ${i}`,
+                      serial_number: `SN${String(i).padStart(6, '0')}`,
+                      status: 'disposed',
+                      condition: ['poor', 'damaged'][i % 2],
+                      location: ['ITSD Office', 'Inventory Office'][i % 2],
+                      purchase_date: '2020-01-01',
+                      purchase_cost: 1000 + (i * 100),
+                      vendor: 'Test Vendor',
+                      notes: `Test disposed asset ${i} - created for pagination demo`,
+                      created_by: user?.id,
+                      updated_by: user?.id
+                    })
+                  }
+                  
+                  try {
+                    const { error } = await supabase.from('assets').insert(testAssets)
+                    if (error) throw error
+                    fetchDisposedAssets()
+                  } catch (error) {
+                    console.error('Error creating test assets:', error)
+                  }
+                }}
+              >
+                <Package className="size-4" />
+                Add Test Data
+              </Button>
+            )}
           </div>
         </div>
 
@@ -196,10 +245,11 @@ export function DisposeAssetsPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-lg text-zinc-900 dark:text-zinc-50">
-                  {assets.length} Disposed Assets
+                  {filteredAssets.length} of {assets.length} Disposed Assets
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Assets that have been completely disposed and removed from active inventory
+                  {filteredAssets.length > itemsPerPage && ` • Showing ${itemsPerPage} per page`}
                 </p>
               </div>
             </div>
@@ -270,7 +320,7 @@ export function DisposeAssetsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAssets.length === 0 ? (
+                  {paginatedAssets.length === 0 ? (
                     <tr>
                       <td colSpan="6" className="text-center py-8 text-muted-foreground">
                         <Trash2 className="size-12 mx-auto mb-4 opacity-20" />
@@ -280,7 +330,7 @@ export function DisposeAssetsPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredAssets.map((asset) => {
+                    paginatedAssets.map((asset) => {
                       const IconComponent = getIconComponent(asset.category)
                       return (
                         <tr key={asset.id} className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/30">
@@ -341,14 +391,13 @@ export function DisposeAssetsPage() {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
+            {filteredAssets.length > 0 && (
               <div className="border-t border-zinc-200 dark:border-zinc-800 p-4">
                 <DataTablePagination
                   currentPage={currentPage}
-                  totalPages={totalPages}
+                  totalItems={filteredAssets.length}
+                  pageSize={itemsPerPage}
                   onPageChange={setCurrentPage}
-                  totalItems={assets.length}
-                  itemsPerPage={itemsPerPage}
                 />
               </div>
             )}

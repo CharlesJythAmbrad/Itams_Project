@@ -257,10 +257,17 @@ export function GlobalInventorySearch() {
       <ScanAssetDialog
         isOpen={isScanOpen}
         onClose={() => setIsScanOpen(false)}
-        onScanSuccess={(scannedTag) => {
+        onScanSuccess={(scannedTag, rawValue) => {
           setIsScanOpen(false)
+          setIsOpen(false)
           setQuery(scannedTag)
-          navigate(`/dashboard/inventory/assets?search=${encodeURIComponent(scannedTag)}`)
+
+          const params = new URLSearchParams({
+            search: scannedTag,
+            globalScan: "1",
+            qr: rawValue || scannedTag
+          })
+          navigate(`/dashboard/inventory/assets?${params.toString()}`)
         }}
       />
 

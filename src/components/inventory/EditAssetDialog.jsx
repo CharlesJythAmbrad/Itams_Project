@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
 import { logAssetActivity } from "@/utils/activityLogger"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   X,
   Loader2,
@@ -99,7 +100,7 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
   const validateForm = () => {
     if (!formData.name.trim()) return "Asset name is required"
     if (!formData.category) return "Category is required"
-    if (!formData.location.trim()) return "Location is required"
+    if (!formData.location) return "Location is required"
     
     if (formData.mac_address && !/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(formData.mac_address)) {
       return "MAC address must be in format XX:XX:XX:XX:XX:XX"
@@ -132,7 +133,7 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
         purchase_cost: formData.purchase_cost ? parseFloat(formData.purchase_cost) : null,
         vendor: formData.vendor.trim() || null,
         warranty_end_date: formData.warranty_end_date || null,
-        location: formData.location.trim(),
+        location: formData.location,
         status: formData.status,
         condition: formData.condition,
         // Computer/Laptop fields
@@ -281,13 +282,15 @@ export function EditAssetDialog({ isOpen, onClose, asset, onAssetUpdated }) {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1">Location <span className="text-red-600">*</span></label>
-                <input
-                  type="text"
-                  required
-                  value={formData.location}
-                  onChange={(e) => handleInputChange("location", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent"
-                />
+                <Select value={formData.location} onValueChange={(value) => handleInputChange("location", value)}>
+                  <SelectTrigger className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-transparent">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ITSD Office">ITSD Office</SelectItem>
+                    <SelectItem value="Inventory Office">Inventory Office</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1">Status</label>

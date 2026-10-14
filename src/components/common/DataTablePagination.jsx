@@ -94,11 +94,16 @@ export function DataTablePagination({
             return (
               <Button
                 key={page}
-                variant={isCurrent ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                className={`size-8 p-0 rounded-[5px] text-xs transition-colors ${
+                style={isCurrent ? {
+                  backgroundColor: "#b91c1c",
+                  borderColor: "#b91c1c",
+                  color: "#ffffff"
+                } : undefined}
+                className={`size-8 p-0 rounded-[5px] text-xs transition-colors font-semibold ${
                   isCurrent
-                    ? "bg-red-700 hover:bg-red-800 text-white font-semibold dark:bg-red-600 shadow-xs"
+                    ? "hover:bg-red-800 dark:hover:bg-red-800 shadow-xs"
                     : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground border-zinc-200 dark:border-zinc-800"
                 }`}
                 onClick={() => onPageChange(page)}

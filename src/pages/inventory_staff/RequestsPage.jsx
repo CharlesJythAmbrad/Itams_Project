@@ -19,8 +19,6 @@ import {
   Phone,
   FileText,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   X,
   Wrench,
@@ -31,6 +29,7 @@ import {
   Filter,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { DataTablePagination } from "@/components/common/DataTablePagination"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -534,7 +533,6 @@ export function RequestsPage() {
   useEffect(() => { setCurrentPage(1) }, [searchTerm, typeFilter, statusFilter])
 
   /* ── Pagination ──────────────────────────────────────── */
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated  = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   /* ── Stats ───────────────────────────────────────────── */
@@ -800,45 +798,13 @@ export function RequestsPage() {
           </div>
 
           {/* ── Pagination ──────────────────────────────── */}
-          {!isLoading && filtered.length > PAGE_SIZE && (
-            <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-[5px]"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
-                >
-                  <ChevronLeft className="size-3.5" />
-                </Button>
-                {Array.from({ length: totalPages }, (_, idx) => (
-                  <Button
-                    key={idx}
-                    variant={currentPage === idx + 1 ? "default" : "outline"}
-                    size="sm"
-                    className={`h-7 w-7 p-0 rounded-[5px] text-xs ${
-                      currentPage === idx + 1 ? "bg-red-700 hover:bg-red-800 text-white border-red-700" : ""
-                    }`}
-                    onClick={() => setCurrentPage(idx + 1)}
-                  >
-                    {idx + 1}
-                  </Button>
-                ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-[5px]"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
-                >
-                  <ChevronRight className="size-3.5" />
-                </Button>
-              </div>
-            </div>
+          {!isLoading && filtered.length > 0 && (
+            <DataTablePagination
+              currentPage={currentPage}
+              totalItems={filtered.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
           )}
         </Card>
 

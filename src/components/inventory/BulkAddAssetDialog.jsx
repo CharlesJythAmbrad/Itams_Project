@@ -173,7 +173,7 @@ export function BulkAddAssetDialog({ isOpen, onClose, onAssetsAdded }) {
     if (!commonFields.purchase_date) return "Purchase date is required for all assets"
     if (!commonFields.purchase_cost || !commonFields.purchase_cost.toString().trim()) return "Purchase cost is required for all assets"
     if (!commonFields.vendor.trim()) return "Vendor is required for all assets"
-    if (!commonFields.location.trim()) return "Location is required for all assets"
+    if (!commonFields.location) return "Location is required for all assets"
     if (!commonFields.warranty_start_date) return "Warranty start date is required for all assets"
     if (!commonFields.warranty_end_date) return "Warranty end date is required for all assets"
     if (!commonFields.warranty_provider.trim()) return "Warranty provider is required for all assets"
@@ -251,7 +251,7 @@ export function BulkAddAssetDialog({ isOpen, onClose, onAssetsAdded }) {
         warranty_end_date: commonFields.warranty_end_date,
         warranty_provider: commonFields.warranty_provider.trim(),
         warranty_type: commonFields.warranty_type.trim() || null,
-        location: commonFields.location.trim(),
+        location: commonFields.location,
         status: commonFields.status,
         condition: commonFields.condition,
         description: commonFields.description.trim(),
@@ -461,12 +461,15 @@ export function BulkAddAssetDialog({ isOpen, onClose, onAssetsAdded }) {
 
                 <div>
                   <Label className="text-xs font-medium">Location <span className="text-red-600">*</span></Label>
-                  <Input
-                    placeholder="e.g., Building A - Floor 2"
-                    value={commonFields.location}
-                    onChange={(e) => handleCommonFieldChange("location", e.target.value)}
-                    className="rounded-[5px]"
-                  />
+                  <Select value={commonFields.location} onValueChange={(value) => handleCommonFieldChange("location", value)}>
+                    <SelectTrigger className="rounded-[5px]">
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ITSD Office">ITSD Office</SelectItem>
+                      <SelectItem value="Inventory Office">Inventory Office</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
