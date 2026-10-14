@@ -20,8 +20,7 @@ import {
   Phone,
   FileText,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
+
   Eye,
   X,
   Package,
@@ -37,6 +36,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import QRCode from "qrcode"
+import { DataTablePagination } from "@/components/common/DataTablePagination"
 
 /* ─── Constants ─────────────────────────────────────────── */
 const ASSET_TYPES = [
@@ -702,6 +702,7 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
 /* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
+
 const PAGE_SIZE = 5
 
 export function BorrowRequestPage() {
@@ -719,6 +720,7 @@ export function BorrowRequestPage() {
   const [showRejectReasonModal, setShowRejectReasonModal] = useState(false)
   const [selectedRejectReason, setSelectedRejectReason] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+
 
   /* ── Fetch borrow requests ──────────────────────────────────── */
   const fetchRequests = async () => {
@@ -762,8 +764,8 @@ export function BorrowRequestPage() {
   useEffect(() => { setCurrentPage(1) }, [searchTerm, assetTypeFilter, statusFilter])
 
   /* ── Pagination ──────────────────────────────────────── */
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated  = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
   /* ── Stats ───────────────────────────────────────────── */
   const stats = {
     total:       requests.length,
@@ -1054,45 +1056,12 @@ export function BorrowRequestPage() {
               </tbody>
             </table>
           </div>
-          {/* ── Pagination ──────────────────────────────── */}
-          {!isLoading && filtered.length > PAGE_SIZE && (
-            <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-[5px]"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
-                >
-                  <ChevronLeft className="size-3.5" />
-                </Button>
-                {Array.from({ length: totalPages }, (_, idx) => (
-                  <Button
-                    key={idx}
-                    variant={currentPage === idx + 1 ? "default" : "outline"}
-                    size="sm"
-                    className="h-7 w-7 p-0 rounded-[5px] text-xs"
-                    onClick={() => setCurrentPage(idx + 1)}
-                  >
-                    {idx + 1}
-                  </Button>
-                ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-[5px]"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
-                >
-                  <ChevronRight className="size-3.5" />
-                </Button>
-              </div>
-            </div>
-          )}
+          <DataTablePagination
+            currentPage={currentPage}
+            totalItems={filtered.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
         </Card>
 
         {/* ── Modals ──────────────────────────────────── */}
