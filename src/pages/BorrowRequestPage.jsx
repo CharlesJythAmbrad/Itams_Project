@@ -277,6 +277,7 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
   const [updating, setUpdating] = useState(false)
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState("")
+  const [rejectionSuccessMessage, setRejectionSuccessMessage] = useState("")
   const { navigate } = useRouter()
 
   if (!request) return null
@@ -339,6 +340,10 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
         }
         
         onStatusChange(request.id, newStatus)
+
+        if (newStatus === 'rejected') {
+          setRejectionSuccessMessage(`Borrow request rejected successfully. Reason: ${reason || 'Reason recorded.'}`)
+        }
         
         // If status is approved, redirect to assets page with category filter
         if (newStatus === "approved" && request.asset_type) {
@@ -398,6 +403,13 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
           </div>
 
           <div className="p-5 space-y-4">
+            {rejectionSuccessMessage && (
+              <div className="flex items-start gap-2 p-3 rounded-md bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-300">
+                <CheckCircle2 className="size-4 shrink-0 mt-0.5" />
+                <span>{rejectionSuccessMessage}</span>
+              </div>
+            )}
+
             {/* Status Badge */}
             <div className="flex flex-wrap gap-2">
               <span className="px-2.5 py-1 rounded-[5px] text-[10px] font-bold uppercase tracking-wide bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
@@ -412,7 +424,7 @@ function BorrowRequestDetailModal({ request, onClose, onStatusChange }) {
             <div className="p-4 bg-zinc-50 dark:bg-zinc-800/30 rounded-[5px] border border-zinc-200 dark:border-zinc-700">
               <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">Update Status</p>
               <div className="flex flex-wrap gap-2">
-                {["pending","approved","rejected"].map(s => (
+                {["pending", "approved", "completed", "rejected"].map(s => (
                   <button
                     key={s}
                     disabled={updating || request.status === s || !isStatusAllowed(s)}
@@ -756,7 +768,9 @@ export function BorrowRequestPage() {
       r.department?.toLowerCase().includes(q) ||
       r.purpose?.toLowerCase().includes(q)
     const matchAssetType = assetTypeFilter === "all" || r.asset_type === assetTypeFilter
-    const matchStatus = statusFilter === "all" || r.status === statusFilter
+    const matchStatus = statusFilter === "all"
+      || (statusFilter === "approved_or_completed" && ["approved", "completed"].includes(r.status))
+      || r.status === statusFilter
     return matchSearch && matchAssetType && matchStatus
   })
 
@@ -771,6 +785,7 @@ export function BorrowRequestPage() {
     total:       requests.length,
     pending:     requests.filter(r => r.status === "pending").length,
     approved:    requests.filter(r => r.status === "approved").length,
+    completed:   requests.filter(r => r.status === "completed").length,
     rejected:    requests.filter(r => r.status === "rejected").length,
   }
 
@@ -793,7 +808,8 @@ export function BorrowRequestPage() {
           message = `✅ Borrow request for ${request.full_name} has been approved successfully!`
           break
         case 'rejected':
-          message = `❌ Borrow request for ${request.full_name} has been rejected successfully!`
+          // Rejection confirmation is shown inside the details modal.
+          message = ""
           break
         case 'pending':
           message = `📝 Borrow request for ${request.full_name} has been set to pending!`
@@ -845,10 +861,10 @@ export function BorrowRequestPage() {
         {/* ── Stats Cards (clickable filters) ───────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { key: "total",       label: "Total",       value: stats.total,       color: "text-zinc-900 dark:text-zinc-100",          ring: "ring-zinc-400" },
-            { key: "pending",     label: "Pending",     value: stats.pending,     color: "text-yellow-600 dark:text-yellow-400",      ring: "ring-yellow-400" },
-            { key: "approved",    label: "Approved",    value: stats.approved,    color: "text-green-600 dark:text-green-400",        ring: "ring-green-400" },
-            { key: "rejected",    label: "Rejected",    value: stats.rejected,    color: "text-red-600 dark:text-red-400",            ring: "ring-red-400" },
+            { key: "total",                 label: "Total",                value: stats.total,                         color: "text-zinc-900 dark:text-zinc-100",          ring: "ring-zinc-400" },
+            { key: "pending",               label: "Pending",              value: stats.pending,                       color: "text-yellow-600 dark:text-yellow-400",      ring: "ring-yellow-400" },
+            { key: "approved_or_completed", label: "Approved (incl. Completed)", value: stats.approved + stats.completed, color: "text-green-600 dark:text-green-400",        ring: "ring-green-400" },
+            { key: "rejected",              label: "Rejected",              value: stats.rejected,                      color: "text-red-600 dark:text-red-400",            ring: "ring-red-400" },
           ].map(({ key, label, value, color, ring }) => {
             const isActive = key === "total" ? statusFilter === "all" : statusFilter === key
             return (
@@ -942,7 +958,7 @@ export function BorrowRequestPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              {["pending","approved","rejected"].map(s => (
+              {["pending", "approved", "completed", "rejected"].map(s => (
                 <SelectItem key={s} value={s}>{s.replace("_"," ")}</SelectItem>
               ))}
             </SelectContent>

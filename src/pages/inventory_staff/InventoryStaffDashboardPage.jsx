@@ -6,25 +6,25 @@ import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
 import {
   Package,
-  QrCode,
   HardDrive,
   UserCheck,
-  Plus,
-  Boxes,
   AlertTriangle,
-  Clock,
-  CheckCircle,
   ShieldCheck,
   Wrench,
-  Calendar,
   TrendingUp,
   Activity,
   Loader2,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   CheckCircle2,
   X,
+  Laptop,
+  Monitor,
+  Printer,
+  Network,
+  Camera,
+  Smartphone,
+  Server,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -56,9 +56,7 @@ export function InventoryStaffDashboardPage({ successMessage, showSuccess }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   
-  // Activity navigation state
-  const [activityPage, setActivityPage] = useState(0)
-  const itemsPerPage = 5
+  const [assetsByCategory, setAssetsByCategory] = useState([])
 
   // Fetch all dashboard data
   const fetchDashboardData = async () => {
@@ -164,9 +162,22 @@ export function InventoryStaffDashboardPage({ successMessage, showSuccess }) {
       // Get all assets for statistics with their current status
       const { data: allAssets, error: allAssetsError } = await supabase
         .from("assets")
-        .select("id, status, warranty_end_date")
+        .select("id, status, warranty_end_date, category")
 
       if (allAssetsError) throw allAssetsError
+
+      // Build category breakdown
+      const categoryMap = {}
+      allAssets.forEach(a => {
+        const cat = a.category || "other"
+        categoryMap[cat] = (categoryMap[cat] || 0) + 1
+      })
+      const total = allAssets.length || 1
+      setAssetsByCategory(
+        Object.entries(categoryMap)
+          .map(([category, count]) => ({ category, count, percentage: Math.round((count / total) * 100) }))
+          .sort((a, b) => b.count - a.count)
+      )
 
       // Get all repairs for statistics
       const { data: allRepairs, error: allRepairsError } = await supabase
@@ -330,55 +341,16 @@ export function InventoryStaffDashboardPage({ successMessage, showSuccess }) {
     },
   ]
 
-  // Recent activity items with pagination
-  const getRecentActivity = () => {
-    const activities = []
-    
-    // Add recent assignments
-    dashboardData.assignments.forEach(assignment => {
-      activities.push({
-        id: assignment.id,
-        type: 'assignment',
-        title: `${assignment.assignment_type === 'assign' ? 'Assigned' : 'Borrowed'}: ${assignment.assets?.name || 'Unknown Asset'}`,
-        subtitle: `To ${assignment.borrower_name} • ${assignment.borrower_department}`,
-        time: new Date(assignment.assigned_date).toLocaleDateString(),
-        icon: UserCheck,
-        color: 'red'
-      })
-    })
-    
-    // Add recent repairs
-    dashboardData.repairs.forEach(repair => {
-      activities.push({
-        id: repair.id,
-        type: 'repair',
-        title: `Repair: ${repair.assets?.name || 'Unknown Asset'}`,
-        subtitle: `${repair.issue_description} • ${repair.status}`,
-        time: new Date(repair.created_at).toLocaleDateString(),
-        icon: Wrench,
-        color: 'orange'
-      })
-    })
-    
-    // Sort by date (newest first)
-    return activities.sort((a, b) => new Date(b.time) - new Date(a.time))
-  }
-
-  // Get paginated activities
-  const allActivities = getRecentActivity()
-  const totalPages = Math.ceil(allActivities.length / itemsPerPage)
-  const paginatedActivities = allActivities.slice(
-    activityPage * itemsPerPage, 
-    (activityPage + 1) * itemsPerPage
-  )
-
-  // Navigation handlers
-  const goToPreviousPage = () => {
-    setActivityPage(prev => Math.max(0, prev - 1))
-  }
-
-  const goToNextPage = () => {
-    setActivityPage(prev => Math.min(totalPages - 1, prev + 1))
+  // Category icon map
+  const getCategoryIcon = (category) => {
+    const map = {
+      computer: Monitor, laptop: Laptop, server: Server, monitor: Monitor,
+      printer: Printer, scanner: Printer, networking: Network, cctv: Camera,
+      phone: Smartphone, tablet: Smartphone, projector: Monitor,
+      ups: HardDrive, storage: HardDrive, accessory: Package,
+      software: Package, other: Package,
+    }
+    return map[category] || Package
   }
 
   return (
@@ -554,65 +526,51 @@ export function InventoryStaffDashboardPage({ successMessage, showSuccess }) {
               </Card>
             </div>
 
-            {/* Recent Activity & Repairs Status */}
+            {/* Inventory Breakdown by Category & Repairs Status */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Recent Activity */}
+              {/* Inventory Breakdown by Category */}
               <Card className="rounded-[5px] lg:col-span-2">
-                <div className="p-3 border-b flex items-center justify-between">
+                <div className="p-3 border-b">
                   <h3 className="font-semibold text-sm flex items-center gap-2">
-                    <Activity className="size-4" />
-                    Recent Activity
+                    <HardDrive className="size-4 text-red-600" />
+                    Asset Distribution
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {activityPage + 1} of {Math.max(1, totalPages)} • {allActivities.length} total
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToPreviousPage}
-                        disabled={activityPage === 0}
-                        className="h-7 w-7 p-0 rounded-[5px]"
-                      >
-                        <ChevronLeft className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={goToNextPage}
-                        disabled={activityPage >= totalPages - 1}
-                        className="h-7 w-7 p-0 rounded-[5px]"
-                      >
-                        <ChevronRight className="size-3.5" />
-                      </Button>
-                    </div>
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Inventory breakdown by category</p>
                 </div>
                 <div className="p-3">
-                  <div className="space-y-3">
-                    {paginatedActivities.map((activity, i) => {
-                      const Icon = activity.icon
-                      return (
-                        <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md">
-                          <div className={`p-1.5 rounded-full ${{
-                            red: 'bg-red-100 dark:bg-red-950/50 text-red-600',
-                            orange: 'bg-orange-100 dark:bg-orange-950/50 text-orange-600'
-                          }[activity.color]}`}>
-                            <Icon className="size-3" />
+                  {assetsByCategory.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Package className="size-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No assets found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+                      {assetsByCategory.map((item, i) => {
+                        const Icon = getCategoryIcon(item.category)
+                        const isFirst = i === 0
+                        const isLast = i === assetsByCategory.length - 1
+                        return (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between px-3 py-2.5 rounded-[5px] hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Icon className="size-4 text-red-600 shrink-0" />
+                              <span className="text-sm font-medium text-foreground capitalize">
+                                {item.category.replace(/_/g, ' ')}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-foreground">{item.count}</span>
+                              <span className="text-xs text-muted-foreground">({item.percentage}%)</span>
+                              {isFirst && <ChevronUp className="size-3.5 text-muted-foreground" />}
+                              {isLast && <ChevronDown className="size-3.5 text-muted-foreground" />}
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{activity.title}</p>
-                            <p className="text-xs text-muted-foreground truncate">{activity.subtitle}</p>
-                            <p className="text-xs text-muted-foreground">{activity.time}</p>
-                          </div>
-                        </div>
-                      )
-                    })}
-                    {paginatedActivities.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
-                    )}
-                  </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               </Card>
 

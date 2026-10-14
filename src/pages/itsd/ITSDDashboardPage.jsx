@@ -38,13 +38,13 @@ export function ITSDDashboardPage() {
   const { profile } = useAuth()
   const { navigate } = useRouter()
   const location = useLocation()
-  
+
   // Get tab from URL hash or default to overview
   const getTabFromUrl = () => {
     const hash = location.hash.replace('#', '')
     return hash || 'overview'
   }
-  
+
   const [activeTab, setActiveTab] = useState(getTabFromUrl())
   const roleDetails = profile?.roleDetails
 
@@ -91,10 +91,10 @@ export function ITSDDashboardPage() {
   const fetchSystemData = async () => {
     try {
       setIsLoading(true)
-      
+
       // Fetch assets data
       const { data: assets } = await supabase.from("assets").select("id, status, category, created_at, updated_at, name, asset_tag")
-      
+
       // Fetch users data using admin function (bypasses RLS)
       let users = null
       try {
@@ -122,11 +122,11 @@ export function ITSDDashboardPage() {
       const totalAssets = assets?.length || 0
       const activeAssets = assets?.filter(a => ['in_stock', 'deployed', 'allocated'].includes(a.status)).length || 0
       const inMaintenance = assets?.filter(a => a.status === 'maintenance').length || 0
-      
+
       const totalUsers = users?.length || 0
       const activeUsers = users?.filter(u => u.is_deactivated !== true).length || 0
       const deactivatedUsers = users?.filter(u => u.is_deactivated === true).length || 0
-      
+
       // Debug logging for user counts
       console.log('Admin Dashboard - User Metrics:', {
         totalUsers,
@@ -134,23 +134,23 @@ export function ITSDDashboardPage() {
         deactivatedUsers,
         usersData: users
       })
-      
+
       const totalRepairs = repairs?.length || 0
       const openRepairs = repairs?.filter(r => ['pending', 'in_progress', 'quote_pending'].includes(r.status)).length || 0
       const completedRepairs = repairs?.filter(r => r.status === 'completed').length || 0
-      
+
       const assignedAssets = assignments?.filter(a => a.status === 'active').length || 0
       const borrowedAssets = borrowing?.filter(b => b.status === 'active').length || 0
-      
+
       // Check for overdue returns
       const now = new Date()
-      const overdueReturns = borrowing?.filter(b => 
+      const overdueReturns = borrowing?.filter(b =>
         b.status === 'active' && new Date(b.expected_return_date) < now
       ).length || 0
 
       setSystemMetrics({
         totalAssets,
-        activeAssets, 
+        activeAssets,
         inMaintenance,
         totalUsers,
         activeUsers,
@@ -168,7 +168,7 @@ export function ITSDDashboardPage() {
       assets?.forEach(asset => {
         categoryStats[asset.category] = (categoryStats[asset.category] || 0) + 1
       })
-      
+
       setAssetsByCategory(Object.entries(categoryStats).map(([category, count]) => ({
         category,
         count,
@@ -177,7 +177,7 @@ export function ITSDDashboardPage() {
 
       // Generate recent activity (last 7 days)
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      
+
       const recentActivities = [
         ...(assets?.filter(a => new Date(a.created_at) > sevenDaysAgo).map(a => ({
           id: a.id,
@@ -236,7 +236,7 @@ export function ITSDDashboardPage() {
 
   useEffect(() => {
     fetchSystemData()
-    
+
     // Auto-refresh every 5 minutes
     const interval = setInterval(fetchSystemData, 5 * 60 * 1000)
     return () => clearInterval(interval)
@@ -276,7 +276,7 @@ export function ITSDDashboardPage() {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'healthy': return CheckCircle2
-      case 'warning': return AlertCircle  
+      case 'warning': return AlertCircle
       case 'critical': return XCircle
       default: return AlertCircle
     }
@@ -358,7 +358,7 @@ export function ITSDDashboardPage() {
                 </div>
               </div>
             </Card>
-            
+
             {/* Asset Category Breakdown */}
             <Card variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
               <div className="p-6">
@@ -532,7 +532,7 @@ export function ITSDDashboardPage() {
 
             {/* System Health & Asset Distribution */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              
+
               {/* System Health Status */}
               <Card variant="elevated" className="rounded-[5px] border-zinc-200/90 dark:border-zinc-800">
                 <div className="p-4 border-b border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between">
@@ -655,9 +655,8 @@ export function ITSDDashboardPage() {
                               key={idx}
                               variant={activityPage === idx + 1 ? "default" : "outline"}
                               size="sm"
-                              className={`h-7 w-7 p-0 rounded-[5px] text-xs ${
-                                activityPage === idx + 1 ? "bg-red-700 hover:bg-red-800 text-white border-red-700" : ""
-                              }`}
+                              className={`h-7 w-7 p-0 rounded-[5px] text-xs ${activityPage === idx + 1 ? "bg-red-700 hover:bg-red-800 text-white border-red-700" : ""
+                                }`}
                               onClick={() => setActivityPage(idx + 1)}
                             >
                               {idx + 1}
