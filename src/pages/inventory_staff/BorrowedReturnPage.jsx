@@ -587,14 +587,6 @@ export function BorrowedReturnPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination */}
-            <DataTablePagination
-              currentPage={currentPage}
-              totalItems={filteredAssignments.length}
-              pageSize={pageSize}
-              onPageChange={setCurrentPage}
-            />
           </>
         )}
         </Card>
@@ -609,6 +601,15 @@ export function BorrowedReturnPage() {
               </p>
             </CardContent>
           </Card>
+        )}
+
+        {filteredAssignments.length > 0 && !isLoading && !error && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalItems={filteredAssignments.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
         )}
 
         {/* Assignment / Borrowing Details Modal */}

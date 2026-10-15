@@ -1090,14 +1090,6 @@ export function AssetsPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination */}
-            <DataTablePagination
-              currentPage={currentPage}
-              totalItems={filteredAssets.length}
-              pageSize={pageSize}
-              onPageChange={setCurrentPage}
-            />
           </>
         )}
         </Card>
@@ -1112,6 +1104,15 @@ export function AssetsPage() {
               </p>
             </CardContent>
           </Card>
+        )}
+
+        {filteredAssets.length > 0 && !isLoading && !error && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalItems={filteredAssets.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
         )}
 
         {/* Add Asset Dialog */}

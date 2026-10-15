@@ -126,6 +126,14 @@ export function AppRoutes() {
               }
             />
             <Route
+              path="/dashboard/inventory/activity-logs"
+              element={
+                <ProtectedRoute allowedRoles={["inventory_staff"]}>
+                  <ActivityLogsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/dashboard/inventory/assets"
               element={
                 <ProtectedRoute allowedRoles={["inventory_staff"]}>

@@ -409,12 +409,6 @@ export function WarrantyPage() {
                   </tbody>
                 </table>
               </div>
-              <DataTablePagination
-                currentPage={currentPage}
-                totalItems={filteredAssets.length}
-                pageSize={pageSize}
-                onPageChange={setCurrentPage}
-              />
             </>
           )}
         </Card>
@@ -429,6 +423,15 @@ export function WarrantyPage() {
               </p>
             </CardContent>
           </Card>
+        )}
+
+        {filteredAssets.length > 0 && !isLoading && !error && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalItems={filteredAssets.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
         )}
       </div>
     </InventoryStaffLayout>

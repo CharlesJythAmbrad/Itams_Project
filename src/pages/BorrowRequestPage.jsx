@@ -1072,12 +1072,14 @@ export function BorrowRequestPage() {
               </tbody>
             </table>
           </div>
-          <DataTablePagination
-            currentPage={currentPage}
-            totalItems={filtered.length}
-            pageSize={PAGE_SIZE}
-            onPageChange={setCurrentPage}
-          />
+          {filtered.length > 0 && !isLoading && (
+            <DataTablePagination
+              currentPage={currentPage}
+              totalItems={filtered.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </Card>
 
         {/* ── Modals ──────────────────────────────────── */}

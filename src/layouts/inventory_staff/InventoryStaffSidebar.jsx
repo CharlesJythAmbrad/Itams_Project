@@ -12,6 +12,7 @@ import {
   LogOut,
   Boxes,
   ClipboardList,
+  FileText,
   Trash2,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
@@ -46,6 +47,7 @@ export function InventoryStaffSidebar({
     { id: "repairs",        label: "Repairs",             icon: HardDrive },
     { id: "requests",       label: "Service Requests",   icon: ClipboardList },
     { id: "borrow-request", label: "Borrow Request",      icon: Boxes },
+    { id: "activity-logs",   label: "Activity Logs",        icon: FileText },
     { id: "disposed",       label: "Disposed Assets",     icon: Trash2 },
   ]
 

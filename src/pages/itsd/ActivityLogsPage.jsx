@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { ITSDLayout } from "@/layouts/itsd/ITSDLayout"
+import { InventoryStaffLayout } from "@/layouts/inventory_staff/InventoryStaffLayout"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/lib/supabaseClient"
 import { DataTablePagination } from "@/components/common/DataTablePagination"
@@ -37,7 +38,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function ActivityLogsPage() {
-  const { profile } = useAuth()
+  const { profile, role } = useAuth()
+  const Layout = role === "inventory_staff" ? InventoryStaffLayout : ITSDLayout
   const [logs, setLogs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -72,6 +74,11 @@ export function ActivityLogsPage() {
           created_at
         `)
         .order("created_at", { ascending: false })
+
+      // Inventory staff should see staff/operational activity only, not ITSD Admin logs.
+      if (role === "inventory_staff") {
+        query = query.neq("user_role", "itsd")
+      }
 
       // Apply date filter
       if (dateFilter !== "all") {
@@ -112,7 +119,7 @@ export function ActivityLogsPage() {
 
   useEffect(() => {
     fetchLogs()
-  }, [dateFilter])
+  }, [dateFilter, role])
 
   // Reset page when filters change
   useEffect(() => {
@@ -249,7 +256,7 @@ export function ActivityLogsPage() {
   const uniqueUserRoles = [...new Set(logs.map(log => log.user_role))].sort()
 
   return (
-    <ITSDLayout activeTab="activity-logs">
+    <Layout activeTab="activity-logs">
       <div className="space-y-4">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -544,7 +551,7 @@ export function ActivityLogsPage() {
           </CardContent>
         </Card>
       </div>
-    </ITSDLayout>
+    </Layout>
   )
 }
 

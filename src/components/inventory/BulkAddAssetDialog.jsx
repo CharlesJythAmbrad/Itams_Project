@@ -496,12 +496,16 @@ export function BulkAddAssetDialog({ isOpen, onClose, onAssetsAdded }) {
 
                 <div>
                   <Label className="text-xs font-medium">Vendor <span className="text-red-600">*</span></Label>
-                  <Input
-                    placeholder="e.g., Tech Solutions Inc."
-                    value={commonFields.vendor}
-                    onChange={(e) => handleCommonFieldChange("vendor", e.target.value)}
-                    className="rounded-[5px]"
-                  />
+                  <Select value={commonFields.vendor} onValueChange={(value) => handleCommonFieldChange("vendor", value)}>
+                    <SelectTrigger className="rounded-[5px]">
+                      <SelectValue placeholder="Select vendor..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Dell Technologies Inc.">Dell Technologies Inc.</SelectItem>
+                      <SelectItem value="HP Inc.">HP Inc.</SelectItem>
+                      <SelectItem value="Lenovo Group Limited">Lenovo Group Limited</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>

@@ -577,12 +577,6 @@ export function RepairsPage() {
                   </tbody>
                 </table>
               </div>
-              <DataTablePagination
-                currentPage={currentPage}
-                totalItems={filteredRepairs.length}
-                pageSize={pageSize}
-                onPageChange={setCurrentPage}
-              />
             </>
           )}
         </Card>
@@ -597,6 +591,15 @@ export function RepairsPage() {
               </p>
             </CardContent>
           </Card>
+        )}
+
+        {filteredRepairs.length > 0 && !isLoading && !error && (
+          <DataTablePagination
+            currentPage={currentPage}
+            totalItems={filteredRepairs.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
         )}
 
         {/* Add Repair Dialog */}

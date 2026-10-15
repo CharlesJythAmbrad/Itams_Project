@@ -1031,7 +1031,7 @@ export function UserManagementPage() {
                   {newUserData.role === "inventory_staff" && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-[11px] text-muted-foreground">Warehouse Location</Label>
+                        <Label className="text-[11px] text-muted-foreground">Assigned Department</Label>
                         <Input
                           value={newUserData.warehouse_location}
                           onChange={(e) => setNewUserData({...newUserData, warehouse_location: e.target.value})}
@@ -1040,7 +1040,7 @@ export function UserManagementPage() {
                         />
                       </div>
                       <div>
-                        <Label className="text-[11px] text-muted-foreground">Inventory Tier</Label>
+                        <Label className="text-[11px] text-muted-foreground">Role</Label>
                         <Input
                           value={newUserData.inventory_tier}
                           onChange={(e) => setNewUserData({...newUserData, inventory_tier: e.target.value})}
