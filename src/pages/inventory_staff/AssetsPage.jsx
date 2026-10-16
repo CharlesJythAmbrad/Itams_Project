@@ -71,6 +71,7 @@ export function AssetsPage() {
   const [successMessage, setSuccessMessage] = useState("")
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState(null)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  const [isScannedAssetDetails, setIsScannedAssetDetails] = useState(false)
   const [showInStockOnly, setShowInStockOnly] = useState(false)
   const [activeFilter, setActiveFilter] = useState("in_stock") // "all", "in_stock", "deployed", "allocated"
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
@@ -288,6 +289,7 @@ export function AssetsPage() {
         // Open the details modal with enhanced asset data
         setTimeout(() => {
           setSelectedAssetForDetails(enhancedAsset)
+          setIsScannedAssetDetails(true)
           setIsDetailsDialogOpen(true)
           console.log('Modal state set - isDetailsDialogOpen should be true')
         }, 100) // Small delay to ensure scan dialog closes first
@@ -321,6 +323,22 @@ export function AssetsPage() {
 
     handleScanSuccess(globalScanValue, globalScanRawValue)
   }, [isGlobalScan, globalScanValue, globalScanRawValue, setSearchParams])
+
+  const handleAssetDetailsClose = () => {
+    setIsDetailsDialogOpen(false)
+    setSelectedAssetForDetails(null)
+
+    if (isScannedAssetDetails) {
+      setSearchTerm("")
+      setIsScannedAssetDetails(false)
+
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete("search")
+      nextParams.delete("globalScan")
+      nextParams.delete("qr")
+      setSearchParams(nextParams, { replace: true })
+    }
+  }
 
   // Reset page to 1 when filters or search change
   useEffect(() => {
@@ -1002,6 +1020,7 @@ export function AssetsPage() {
                               size="sm" 
                               className="h-8 px-2 text-xs" 
                               onClick={() => {
+                                setIsScannedAssetDetails(false)
                                 setSelectedAssetForDetails(asset)
                                 setIsDetailsDialogOpen(true)
                               }}
@@ -1158,7 +1177,7 @@ export function AssetsPage() {
         {/* Asset Details Modal */}
         <AssetDetailsDialog
           isOpen={isDetailsDialogOpen}
-          onClose={() => setIsDetailsDialogOpen(false)}
+          onClose={handleAssetDetailsClose}
           asset={selectedAssetForDetails}
           onAssign={(asset) => handleAssignAsset(asset, 'assign')}
           onBorrow={(asset) => handleAssignAsset(asset, 'borrow')}

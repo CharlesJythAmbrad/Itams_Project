@@ -216,7 +216,7 @@ export function WarrantyPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Active Warranties</p>
-                  <p className="text-xl font-bold text-red-600">{activeWarranties}</p>
+                  <p className="text-xl font-bold text-green-600">{activeWarranties}</p>
                 </div>
                 <CheckCircle className="size-7 text-red-600" />
               </div>
